@@ -18,13 +18,13 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [weakdeps]
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 MITgcm = "dce5fa8e-68ce-4431-a242-9469c69627a0"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
 DriftersClimatologyExt = ["Climatology"]
-DriftersMakieExt = ["Makie"]
 DriftersMITgcmExt = ["MITgcm"]
+DriftersMakieExt = ["Makie"]
 
 [compat]
 CSV = "0.10"
@@ -35,9 +35,9 @@ DataFrames = "1"
 Dataverse = "0.2"
 Glob = "1"
 JLD2 = "0.5"
-Makie = "0.21"
-MeshArrays = "0.3"
 MITgcm = "0.5"
+Makie = "0.21, 0.22"
+MeshArrays = "0.3"
 NetCDF = "0.12"
 OrdinaryDiffEq = "6"
 julia = "^1.10"
