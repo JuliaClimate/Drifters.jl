@@ -1,6 +1,26 @@
 
-println("MYKEY")
-println(ENV["MYKEY"])
+##
+
+fil=joinpath(ENV["HOME"],".netrc")
+println("1.  isfile(fil) $(isfile(fil)) $(fil)")
+if !isfile(fil)
+  l=ENV["EARTHDATA_USERNAME"]
+  p=ENV["EARTHDATA_PASSWORD"]
+  abc = open(fil, "w")
+  write(abc, "machine urs.earthdata.nasa.gov\n")
+  write(abc, "    login $l\n")
+  write(abc, "    password $p\n")
+  close(abc)
+end
+println("2.  isfile(fil) $(isfile(fil)) $(fil)")
+
+using Downloads
+url="https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/OSCAR_L4_OC_FINAL_V2.0/oscar_currents_final_20220504.nc"
+println("1. url $(url)")
+fil_out=Downloads.download(url,tempname()*".nc")
+println("2. isfile(fil_out) $(isfile(fil_out)) $(fil_out)")
+
+##
 
 using Test, Documenter, Drifters, Suppressor, CairoMakie
 import Climatology, MITgcm
