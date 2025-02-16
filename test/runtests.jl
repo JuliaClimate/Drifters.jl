@@ -1,6 +1,9 @@
 
 ##
 
+fil=joinpath(ENV["HOME"],".netrc_fake")
+println("0.  isfile(fil) $(isfile(fil)) $(fil)")
+
 fil=joinpath(ENV["HOME"],".netrc")
 println("1.  isfile(fil) $(isfile(fil)) $(fil)")
 if !isfile(fil)
@@ -13,6 +16,8 @@ if !isfile(fil)
   close(abc)
 end
 println("2.  isfile(fil) $(isfile(fil)) $(fil)")
+
+println.(readlines(fil))
 
 using Downloads
 url="https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/OSCAR_L4_OC_FINAL_V2.0/oscar_currents_final_20220504.nc"
