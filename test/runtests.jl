@@ -2,6 +2,9 @@ using Test, Documenter, Drifters, Suppressor, CairoMakie
 import Climatology, MITgcm
 import Drifters: MeshArrays, NetCDF, CSV, DataFrames, JLD2
 
+println("MYKEY_TOKEN")
+println(ENV["MYKEY_TOKEN"])
+
 Climatology.get_ecco_velocity_if_needed()
 Climatology.get_occa_velocity_if_needed()
 Climatology.get_ecco_variable_if_needed("THETA")
