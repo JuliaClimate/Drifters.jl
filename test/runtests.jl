@@ -1,9 +1,10 @@
-using Test, Documenter, Drifters, Suppressor, CairoMakie
-import Climatology, MITgcm
-import Drifters: MeshArrays, NetCDF, CSV, DataFrames, JLD2
 
 println("MYKEY")
 println(ENV["MYKEY"])
+
+using Test, Documenter, Drifters, Suppressor, CairoMakie
+import Climatology, MITgcm
+import Drifters: MeshArrays, NetCDF, CSV, DataFrames, JLD2
 
 Climatology.get_ecco_velocity_if_needed()
 Climatology.get_occa_velocity_if_needed()
