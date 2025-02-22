@@ -1,6 +1,20 @@
 
 ##
 
+if "slow_tests" in ARGS
+    # run slow tests
+    include("slow_tests.jl")
+end
+
+if "quality assurance" in ARGS
+    # run quality assurance tests
+    include("qa.jl")
+end
+
+println("ARGS[3] : $(ARGS[3]")
+
+##
+
 env_nonempty(key) = !isempty(get(ENV, key, ""))
 
 fil=joinpath(ENV["HOME"],".netrc_fake")
