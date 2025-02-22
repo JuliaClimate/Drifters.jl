@@ -41,8 +41,8 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - run: julia -e 'println("x1")'
       - run: julia -e '
-             fil=joinpath(ENV["HOME"],".netrc")
-             println("1.  isfile(fil) $(isfile(fil)) $(fil)")
+             fil=joinpath(ENV["HOME"],".netrc");
+             println("1.  isfile(fil) $(isfile(fil)) $(fil)");
              l=ENV["EARTHDATA_USERNAME"];
              p=ENV["EARTHDATA_PASSWORD"];
              abc = open(fil, "w");
