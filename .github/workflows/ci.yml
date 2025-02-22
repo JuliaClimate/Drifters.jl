@@ -44,7 +44,7 @@ jobs:
              println(readdir(pwd()))
              write(".netrc_fake","aa\nbb")
              '
-        with:
+        env:
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
       - run: julia -e 'println.(readlines(".netrc_fake"))'
