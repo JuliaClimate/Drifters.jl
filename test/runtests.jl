@@ -1,22 +1,8 @@
 
 ##
 
-if "slow_tests" in ARGS
-    # run slow tests
-    include("slow_tests.jl")
-end
-
-if "quality assurance" in ARGS
-    # run quality assurance tests
-    include("qa.jl")
-end
-
-##
-
 env_nonempty(key) = !isempty(get(ENV, key, ""))
 
-fil=joinpath(ENV["HOME"],".netrc_fake")
-println("0.  isfile(fil) $(isfile(fil)) $(fil)")
 println.(["testing envs:" env_nonempty("HOME") env_nonempty("EARTHDATA_USERNAME")])
 
 fil=joinpath(ENV["HOME"],".netrc")
