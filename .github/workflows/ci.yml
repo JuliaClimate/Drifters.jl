@@ -40,9 +40,9 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - run: julia -e 'println("x1")'
-      - run: julia -e 'println(pwd())
-             println(readdir(pwd()))
-             write(".netrc_fake","aa\nbb")
+      - run: julia -e 'println(pwd());
+             println(readdir(pwd()));
+             write(".netrc_fake","aa\nbb");
              '
         env:
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
