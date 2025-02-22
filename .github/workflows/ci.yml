@@ -58,6 +58,14 @@ jobs:
              fil=joinpath(ENV["HOME"],".netrc");
              println("2.  isfile(fil) $(isfile(fil)) $(fil)");
              println.(readlines(fil));'
+      - name: Configure API Keys 🔒
+        shell: bash
+        run: |
+          echo "url: ${{ secrets.EARTHDATA_USERNAME }}" > ~/.cdsapirc
+      - run: julia -e '
+             fil=joinpath(ENV["HOME"],".cdsapirc");
+             println("3.  isfile(fil) $(isfile(fil)) $(fil)");
+             println.(readlines(fil));'
       - uses: julia-actions/julia-runtest@v1
         with:
           test_args: 'slow_tests "quality assurance" ${{ secrets.EARTHDATA_USERNAME }}'
