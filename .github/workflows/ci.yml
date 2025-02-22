@@ -40,7 +40,7 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - run: julia -e 'println("x1")'
-      - run: julia -e 'println(pwd())"
+      - run: julia -e 'println(pwd())'
       - run: julia -e 'println.(readlines(".netrc_fake"))'
       - run: julia -e 'println("x2")'
       - uses: julia-actions/julia-runtest@v1
