@@ -55,9 +55,9 @@ jobs:
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
       - run: julia -e '
-             fil=joinpath(ENV["HOME"],".netrc")
-             println("2.  isfile(fil) $(isfile(fil)) $(fil)")
-             println.(readlines(fil))'
+             fil=joinpath(ENV["HOME"],".netrc");
+             println("2.  isfile(fil) $(isfile(fil)) $(fil)");
+             println.(readlines(fil));'
       - uses: julia-actions/julia-runtest@v1
         with:
           test_args: 'slow_tests "quality assurance" ${{ secrets.EARTHDATA_USERNAME }}'
