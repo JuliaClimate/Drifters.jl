@@ -11,8 +11,6 @@ if "quality assurance" in ARGS
     include("qa.jl")
 end
 
-println("ARGS[3] : $(ARGS[3]")
-
 ##
 
 env_nonempty(key) = !isempty(get(ENV, key, ""))
