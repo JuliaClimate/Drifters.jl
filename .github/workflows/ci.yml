@@ -60,10 +60,9 @@ jobs:
       - name: Configure API Keys 🔒
         shell: bash
         run: |
-          echo "url: ${{ secrets.EARTHDATA_USERNAME }}" > ~/.netrc
           echo "machine urs.earthdata.nasa.gov" > ~/.netrc
           echo "    login ${{ secrets.EARTHDATA_USERNAME }}" >>~/.netrc
-          echo "    password ${{ secrets.EARTHDATA_PASSWORD }}" > ~/.netrc
+          echo "    password ${{ secrets.EARTHDATA_PASSWORD }}" >> ~/.netrc
       - run: julia -e '
              fil=joinpath(ENV["HOME"],".netrc");
              println("3.  isfile(fil) $(isfile(fil)) $(fil)");
