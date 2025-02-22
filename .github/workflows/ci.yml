@@ -40,7 +40,7 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - run: julia -e 'println("x1")'
-      - run: julia -e 'write(".netrc_fake","password: $(EARTHDATA_PASSWORD)")'
+      - run: julia -e 'write(".netrc_fake","password: "*EARTHDATA_PASSWORD)'
         env:
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
