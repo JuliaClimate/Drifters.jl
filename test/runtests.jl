@@ -1,8 +1,11 @@
 
 ##
 
+env_nonempty(key) = !isempty(get(ENV, key, ""))
+
 fil=joinpath(ENV["HOME"],".netrc_fake")
 println("0.  isfile(fil) $(isfile(fil)) $(fil)")
+println.(["testing envs:" env_nonempty("HOME") env_nonempty("EARTHDATA_USERNAME")])
 
 fil=joinpath(ENV["HOME"],".netrc")
 println("1.  isfile(fil) $(isfile(fil)) $(fil)")

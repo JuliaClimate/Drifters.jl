@@ -39,7 +39,13 @@ jobs:
             ${{ runner.os }}-test-
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
+      - run: echo "Hi there" > .netrc_fake 
+        env:
+          EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
+          EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
       - uses: julia-actions/julia-runtest@v1
+        with:
+          test_args: 'slow_tests "quality assurance" ${{ secrets.EARTHDATA_USERNAME }}'
         env:
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
