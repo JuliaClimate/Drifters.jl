@@ -523,6 +523,6 @@ Base.@kwdef struct DriftersDataset <: AbstractDriftersDataset
 end
 
 #to avoid unicode try these:
-DiffEqBase.solve!(I::Individuals,args...)=∫!(I::Individuals,args...)
+OrdinaryDiffEq.OrdinaryDiffEqCore.solve!(I::Individuals,args...)=∫!(I::Individuals,args...)
 DataFrames.groupby(I::Individuals,args...) = groupby(I.🔴,args...)
 DataFrames.DataFrame(I::Individuals) = I.🔴
