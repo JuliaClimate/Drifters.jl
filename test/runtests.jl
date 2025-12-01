@@ -10,8 +10,8 @@ Climatology.get_occa_velocity_if_needed()
 Climatology.get_ecco_variable_if_needed("THETA")
 Climatology.get_ecco_variable_if_needed("SALT")
 
-MeshArrays.GridLoad(MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90))
-MeshArrays.GridLoad(MeshArrays.GridSpec("PeriodicChannel",MeshArrays.GRID_LL360))
+MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LLC90))
+MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LL360))
 
 @testset "Oscar" begin
     fil=joinpath(Drifters.datadeps.getdata("Oscar_2021_small"),"Drifters_Oscar_small.csv")
