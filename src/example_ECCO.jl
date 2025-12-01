@@ -300,7 +300,7 @@ Set up Global Ocean particle simulation in 2D with seasonally varying flow field
 function init_FlowFields(; k=1, backward_time=false)
   
   #read grid and set up connections between subdomains
-  γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+  γ=MeshArrays.GridSpec(ID=:LLC90)
   Γ=MeshArrays.GridLoad(γ,option="full")
   f(x,y)=Float32.(MeshArrays.GridLoadVar(x,y))
   tmp=( DXC=f("DXC",γ),DYC=f("DYC",γ),hFacC=f("hFacC",γ),

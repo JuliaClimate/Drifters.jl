@@ -183,7 +183,7 @@ Use MeshArrays.Interpolate() to interpolate to arbitrary positions (e.g., a regu
 ```jldoctest
 using Drifters
 import Drifters: MeshArrays
-γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+γ=MeshArrays.GridSpec(ID=:LLC90)
 Γ=MeshArrays.GridLoad(γ,option="full")
 
 lon=[i for i=20.:20.0:380., j=-70.:10.0:70.]
