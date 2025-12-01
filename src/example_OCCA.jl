@@ -45,7 +45,7 @@ import Drifters.OrdinaryDiffEq: ODEProblem, EnsembleProblem
 
 function setup(;backward_in_time::Bool=false,nmax=Inf)
 
-   γ=MeshArrays.GridSpec(ID=:LL360)
+   γ=MeshArrays.GridSpec(ID=:onedegree)
    Γ=MeshArrays.GridLoad(γ;option="full")
    n=length(Γ.RC)
    isfinite(nmax) ? n=min(n,Int(nmax)) : nothing
