@@ -11,7 +11,7 @@ Climatology.get_ecco_variable_if_needed("THETA")
 Climatology.get_ecco_variable_if_needed("SALT")
 
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LLC90))
-MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LL360))
+MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
 
 @testset "Oscar" begin
     fil=joinpath(Drifters.datadeps.getdata("Oscar_2021_small"),"Drifters_Oscar_small.csv")
