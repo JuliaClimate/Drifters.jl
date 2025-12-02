@@ -137,7 +137,7 @@ md"""## Appendix
 """
 
 # ╔═╡ 4a122475-11ab-4d1e-9ce6-c12148339430
-isdir(MeshArrays.GRID_LLC90) ? "all set for plotting" : "missing background data for plotting"
+isdir(MeshArrays.Dataset("GRID_LLC90")) ? "all set for plotting" : "missing background data for plotting"
 
 # ╔═╡ 1f479c36-f021-464c-a279-0d62a1f33359
 md"""### Software : Drifters.jl ($(Pkg.pkgversion(Drifters)))

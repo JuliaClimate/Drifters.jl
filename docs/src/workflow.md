@@ -22,9 +22,11 @@ summary(I.🔴)
 Plotting functions are provided in the `Makie.jl` extension, and operated via `DriftersDataset`.
 
 ```@example ex1
-using MeshArrays, GeoJSON
-fil=joinpath(MeshArrays.mydatadep("countries_geojson1"),"countries.geojson")
-pol=MeshArrays.read_polygons(fil);
+using MeshArrays, GeoJSON, DataDeps
+pol=MeshArrays.Dataset("countries_geojson1")
+
+MeshArraysMakieExt = Base.get_extension(MeshArrays, :MeshArraysMakieExt)
+pol=MeshArraysMakieExt.pol_to_Makie([p for p in pol])
 
 #prefix="real "; gdf=Drifters.groupby(P.obs,:ID)
 prefix="virtual "; gdf=Drifters.groupby(I.🔴,:ID)
