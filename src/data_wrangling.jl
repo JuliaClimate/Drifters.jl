@@ -7,7 +7,7 @@ from time `t0=0` to time `t1`.
 """
 function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
     np,nq=size(U)
-    Γ=Grids_simple.periodic_domain(np,nq)
+    Γ=MeshArrays.Grids_simple.periodic_domain(np,nq)
 
     g=Γ.XC.grid
     u=MeshArray(g,[U])
