@@ -101,12 +101,12 @@ function setup(;backward_in_time::Bool=false,nmax=Inf)
    t0=0.0; t1=86400*366*2.0;
 
    for k=1:n
-    (tmpu,tmpv)=MeshArrays.exchange(u[:,k],v[:,k],1)
+    (tmpu,tmpv)=MeshArrays.exchange_main(u[:,k],v[:,k],1)
     u[:,k]=tmpu.MA
     v[:,k]=tmpv.MA
    end
    for k=1:n+1
-    tmpw=MeshArrays.exchange(w[:,k],1)
+    tmpw=MeshArrays.exchange(w[:,k])
     w[:,k]=tmpw.MA
    end
 

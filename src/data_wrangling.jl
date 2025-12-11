@@ -7,12 +7,12 @@ from time `t0=0` to time `t1`.
 """
 function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
     np,nq=size(U)
-    Γ=Grids_simple.periodic_domain(np,nq)
+    Γ=MeshArrays.Grids_simple.periodic_domain(np,nq)
 
     g=Γ.XC.grid
     u=MeshArray(g,[U])
     v=MeshArray(g,[V])
-    (u,v)=exchange(u,v,1)
+    (u,v)=MeshArrays.exchange_main(u,v,1)
     func=(u -> MeshArrays.update_location_dpdo!(u,g))
 
     uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,[0,t1],func)

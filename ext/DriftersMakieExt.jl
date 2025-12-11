@@ -237,7 +237,7 @@ function plot_drifters_jcon(gdf ; 	plot_type="jcon_drifters", prefix="",pol=[],
     end
 
     xlims!(xlims...); ylims!(ylims...)
-    !isempty(pol) ? lines!(pol,color=:mediumpurple,linewidth=4) : nothing
+	isa(pol,Array) ? nothing : lines!(pol,color=:mediumpurple,linewidth=4)
 	Colorbar(fi0[1,2], colorrange=cr, colormap=cm, height = Relative(0.65))
 	
 	fi0
