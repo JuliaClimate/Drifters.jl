@@ -63,9 +63,9 @@ I=Individuals(F,x,y,fill(1,length(x)))
 function random_flow_field(;component=:Rotational,np=12,nq=18,format=:Array)
 
 	#define gridded domain
-	Γ=Grids_simple.periodic_domain(np,nq)
+	Γ=MeshArrays.Grids_simple.periodic_domain(np,nq)
 	γ=Γ.XC.grid
-	Γ=Grids_simple.UnitGrid(γ;option="full")
+	Γ=MeshArrays.Grids_simple.UnitGrid(γ;option="full")
 
     #initialize 2D field of random numbers
     tmp1=randn(Float64,Tuple(γ.ioSize))

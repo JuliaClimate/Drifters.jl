@@ -25,8 +25,6 @@ end
 
 @testset "ECCO" begin
     ECCOmodule = Drifters.ECCO
-    CSV = Drifters.CSV
-    DataFrames = Drifters.DataFrames
     Individuals = Drifters.Individuals
 
     k=0
