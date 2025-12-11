@@ -25,9 +25,6 @@ Plotting functions are provided in the `Makie.jl` extension, and operated via `D
 using MeshArrays, GeoJSON, DataDeps
 pol=MeshArrays.Dataset("countries_geojson1")
 
-MeshArraysMakieExt = Base.get_extension(MeshArrays, :MeshArraysMakieExt)
-pol=MeshArraysMakieExt.pol_to_Makie([p for p in pol])
-
 #prefix="real "; gdf=Drifters.groupby(P.obs,:ID)
 prefix="virtual "; gdf=Drifters.groupby(I.🔴,:ID)
 options=(plot_type="jcon_drifters",prefix=prefix,xlims=(-98,-78),ylims=(18,31),pol=pol)
