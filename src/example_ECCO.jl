@@ -131,13 +131,13 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::AbstractFloat)
     u0=velocity_factor*U[:,D.k]; v0=velocity_factor*V[:,D.k]
     u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
     u0=u0.*D.iDXC; v0=v0.*D.iDYC; #normalize to grid units
-    (u0,v0)=exchange(u0,v0,1) #add 1 point at each edge for u and v
+    (u0,v0)=MeshArrays.exchange_main(u0,v0,1) #add 1 point at each edge for u and v
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth)
     u1=velocity_factor*U[:,D.k]; v1=velocity_factor*V[:,D.k]
     u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
     u1=u1.*D.iDXC; v1=v1.*D.iDYC; #normalize to grid units
-    (u1,v1)=exchange(u1,v1,1) #add 1 point at each edge for u and v
+    (u1,v1)=MeshArrays.exchange_main(u1,v1,1) #add 1 point at each edge for u and v
 
     P.u0[:]=Float32.(u0.MA[:])
     P.u1[:]=Float32.(u1.MA[:])
@@ -206,7 +206,7 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::AbstractFloat)
     u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
     for k=1:nr
         u0[:,k]=u0[:,k].*D.iDXC; v0[:,k]=v0[:,k].*D.iDYC; #normalize to grid units
-        (tmpu,tmpv)=exchange(u0[:,k],v0[:,k],1) #add 1 point at each edge for u and v
+        (tmpu,tmpv)=MeshArrays.exchange_main(u0[:,k],v0[:,k],1) #add 1 point at each edge for u and v
         u0[:,k]=tmpu.MA
         v0[:,k]=tmpv.MA
     end
@@ -218,7 +218,7 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::AbstractFloat)
     u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
     for k=1:nr
         u1[:,k]=u1[:,k].*D.iDXC; v1[:,k]=v1[:,k].*D.iDYC; #normalize to grid units
-        (tmpu,tmpv)=exchange(u1[:,k],v1[:,k],1) #add 1 point at each edge for u and v
+        (tmpu,tmpv)=MeshArrays.exchange_main(u1[:,k],v1[:,k],1) #add 1 point at each edge for u and v
         u1[:,k]=tmpu.MA
         v1[:,k]=tmpv.MA
     end
@@ -230,15 +230,15 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::AbstractFloat)
     P.v0[:,:]=Float32.(v0[:,:])
     P.v1[:,:]=Float32.(v1[:,:])
     for k=1:nr
-        tmpw=exchange(-w0[:,k],1).MA
+        tmpw=exchange(-w0[:,k]).MA
         P.w0[:,k]=Float32.(tmpw./D.Γ.DRC[k])
-        tmpw=exchange(-w1[:,k],1).MA
+        tmpw=exchange(-w1[:,k]).MA
         P.w1[:,k]=Float32.(tmpw./D.Γ.DRC[k])
     end
-    P.w0[:,1]=0*exchange(-w0[:,1],1).MA
-    P.w1[:,1]=0*exchange(-w1[:,1],1).MA
-    P.w0[:,nr+1]=0*exchange(-w0[:,1],1).MA
-    P.w1[:,nr+1]=0*exchange(-w1[:,1],1).MA
+    P.w0[:,1]=0*exchange(-w0[:,1]).MA
+    P.w1[:,1]=0*exchange(-w1[:,1]).MA
+    P.w0[:,nr+1]=0*exchange(-w0[:,1]).MA
+    P.w1[:,nr+1]=0*exchange(-w1[:,1]).MA
 
     θ0=read_data_ECCO(m0,"THETA",joinpath(D.pth,"THETA"),P.u0.grid,:)
     θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
