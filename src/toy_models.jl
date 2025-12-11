@@ -45,7 +45,7 @@ function vortex_flow_field(; np=12,nz=4,format=:Array)
 end
 
 """
-    random_flow_field(;component=:Rotational,np=12,nq=18,format=:Array)
+    random_flow_field(;component=:Rotational,np=20,format=:Array)
 
 Generate random flow fields on a grid of `np x nq` points for use in simple examples.
 
@@ -60,12 +60,11 @@ F=convert_to_FlowFields(U,V,10.0)
 I=Individuals(F,x,y,fill(1,length(x)))
 ```
 """
-function random_flow_field(;component=:Rotational,np=12,nq=18,format=:Array)
+function random_flow_field(;component=:Rotational,np=20,format=:Array)
 
 	#define gridded domain
-	Γ=MeshArrays.Grids_simple.periodic_domain(np,nq)
-	γ=Γ.XC.grid
-	Γ=MeshArrays.Grids_simple.UnitGrid(γ;option="full")
+    γ=MeshArrays.GridSpec_ones("PeriodicDomain",1,np)
+    Γ=MeshArrays.GridLoad_ones(γ;option="full")
 
     #initialize 2D field of random numbers
     tmp1=randn(Float64,Tuple(γ.ioSize))
@@ -93,7 +92,7 @@ function random_flow_field(;component=:Rotational,np=12,nq=18,format=:Array)
 		error("non-recognized option")
 	end
 
-    pos0=[np*1/3,nq*1/3]
+    pos0=[np*1/3,np*1/3]
     func=(u -> MeshArrays.update_location_dpdo!(u,γ))
 
     if format==:Array
