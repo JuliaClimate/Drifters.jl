@@ -11,9 +11,8 @@ u,v,w,func=vortex_flow_field(format=:MeshArray)
 ```
 """
 function vortex_flow_field(; np=12,nz=4,format=:Array)
-    Γ=MeshArrays.Grids_simple.periodic_domain(np)
-    Γ=MeshArrays.Grids_simple.UnitGrid(Γ.XC.grid;option="full")
-    γ=Γ.XC.grid;
+    γ=MeshArrays.GridSpec_ones("PeriodicDomain",1,np)
+    Γ=MeshArrays.GridLoad_ones(γ;option="full")
 
     #Solid-body rotation around central location ...
     i=Int(np/2+1)
