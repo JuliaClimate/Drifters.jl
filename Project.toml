@@ -1,7 +1,7 @@
 name = "Drifters"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.6.8"
+version = "0.6.9"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
