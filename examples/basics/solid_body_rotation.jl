@@ -1,11 +1,23 @@
 ### A Pluto.jl notebook ###
-# v0.20.17
+# v0.20.21
 
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    #! format: off
+    return quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+    #! format: on
+end
+
 # ╔═╡ 0fea38f6-2c9e-43c6-bfc1-267ff220a0cc
-begin
+begin    
 	using Drifters, PlutoUI, CairoMakie
 	"done with loading packages"
 end
@@ -39,13 +51,24 @@ md"""## 1. Problem Configuration
 Set up an idealized flow field which consists of 
 [rigid body rotation](https://en.wikipedia.org/wiki/Rigid_body), 
 plus a convergent term, plus a sinking term.
+
+#### Select an Array Type
 """
+
+# ╔═╡ cb617ebf-203f-4123-9ef7-07fa52f51c21
+@bind format Select([:Array,:MeshArray])
 
 # ╔═╡ 2200503c-605c-4dfd-878f-ffea2431f7ba
 begin
 	(np,nz)=(24,16) #gridded domain size (horizontal and vertical)
-	u,v,w=Drifters.vortex_flow_field(np=np,nz=nz) #staggered velocity arrays
-	F=FlowFields(u,u,v,v,0*w,1*w,[0,19.95*2*pi]); #FlowFields data structure
+	u,v,w,pos0,func=Drifters.vortex_flow_field(np=np,nz=nz,format=format) #staggered velocity arrays
+
+	#FlowFields data structure
+	if format==:MeshArray
+		F=FlowFields(u,u,v,v,0*w,1*w,[0,19.95*2*pi],func); #FlowFields data structure
+	else
+		F=FlowFields(u,u,v,v,0*w,1*w,[0,19.95*2*pi]); 
+	end
 	"Done with defining the flow fields."
 end
 
@@ -57,7 +80,11 @@ Here just one individual is initialized at [np*1/3,np*1/3,nz*1/3] in the three-d
 # ╔═╡ c60a48e0-6f51-44b0-bd6e-332e04d2d332
 begin
 	(x,y,z)=(np*1/3,np*1/3,nz*1/3)
-	I=Individuals(F,x,y,z)
+	if format==:MeshArray
+		I=Individuals(F,x,y,z,ones(size(x)))
+	else
+		I=Individuals(F,x,y,z)
+	end
 end
 
 # ╔═╡ 45762eb1-7404-4524-8d1d-788a70f8f5ef
@@ -170,9 +197,9 @@ Drifters = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
-CairoMakie = "~0.13.2"
-Drifters = "~0.6.1"
-PlutoUI = "~0.7.60"
+CairoMakie = "~0.15.8"
+Drifters = "~0.6.9"
+PlutoUI = "~0.7.78"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -181,7 +208,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "d2d6d0d7f4da2c23fa8c1ab8672ce443eb2d6622"
+project_hash = "59afaea5f78c9fb29be3d6e330d8032501fce573"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -412,9 +439,9 @@ version = "1.1.1"
 
 [[deps.CairoMakie]]
 deps = ["CRC32c", "Cairo", "Cairo_jll", "Colors", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "PrecompileTools"]
-git-tree-sha1 = "9bd45574379e50579a78774334f4a1f1238c0af5"
+git-tree-sha1 = "5017d6849aff775febd36049f7d926a5fb6677ec"
 uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-version = "0.13.10"
+version = "0.15.8"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -544,6 +571,12 @@ weakdeps = ["InverseFunctions"]
 
     [deps.CompositionsBase.extensions]
     CompositionsBaseInverseFunctionsExt = "InverseFunctions"
+
+[[deps.ComputePipeline]]
+deps = ["Observables", "Preferences"]
+git-tree-sha1 = "76dab592fa553e378f9dd8adea16fe2591aa3daa"
+uuid = "95dc2771-c249-4cd0-9c9f-1f3b4330693c"
+version = "0.1.6"
 
 [[deps.ConcreteStructs]]
 git-tree-sha1 = "f749037478283d372048690eb3b5f92a79432b34"
@@ -872,9 +905,9 @@ version = "0.1.6"
 
 [[deps.FFMPEG_jll]]
 deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
-git-tree-sha1 = "eaa040768ea663ca695d442be1bc97edfe6824f2"
+git-tree-sha1 = "01ba9d15e9eae375dc1eb9589df76b3572acd3f2"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
-version = "6.1.3+0"
+version = "8.0.1+0"
 
 [[deps.FFTW]]
 deps = ["AbstractFFTs", "FFTW_jll", "Libdl", "LinearAlgebra", "MKL_jll", "Preferences", "Reexport"]
@@ -939,10 +972,20 @@ weakdeps = ["HTTP"]
     HTTPExt = "HTTP"
 
 [[deps.FilePaths]]
-deps = ["FilePathsBase", "MacroTools", "Reexport", "Requires"]
-git-tree-sha1 = "919d9412dbf53a2e6fe74af62a73ceed0bce0629"
+deps = ["FilePathsBase", "MacroTools", "Reexport"]
+git-tree-sha1 = "a1b2fbfe98503f15b665ed45b3d149e5d8895e4c"
 uuid = "8fc22ac5-c921-52a6-82fd-178b2807b824"
-version = "0.8.3"
+version = "0.9.0"
+
+    [deps.FilePaths.extensions]
+    FilePathsGlobExt = "Glob"
+    FilePathsURIParserExt = "URIParser"
+    FilePathsURIsExt = "URIs"
+
+    [deps.FilePaths.weakdeps]
+    Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
+    URIParser = "30578b45-9adc-5946-b283-645ec420af67"
+    URIs = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
 
 [[deps.FilePathsBase]]
 deps = ["Compat", "Dates"]
@@ -1076,9 +1119,14 @@ version = "0.4.5"
 
 [[deps.GeoInterface]]
 deps = ["DataAPI", "Extents", "GeoFormatTypes"]
-git-tree-sha1 = "294e99f19869d0b0cb71aef92f19d03649d028d5"
+git-tree-sha1 = "b7c5cdf45298877bb683bdda3f871ff7070985c4"
 uuid = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
-version = "1.4.1"
+version = "1.6.0"
+weakdeps = ["GeometryBasics", "Makie", "RecipesBase"]
+
+    [deps.GeoInterface.extensions]
+    GeoInterfaceMakieExt = ["Makie", "GeometryBasics"]
+    GeoInterfaceRecipesBaseExt = "RecipesBase"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "Extents", "IterTools", "LinearAlgebra", "PrecompileTools", "Random", "StaticArrays"]
@@ -1265,13 +1313,14 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
 [[deps.Interpolations]]
-deps = ["Adapt", "AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "Requires", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
-git-tree-sha1 = "88a101217d7cb38a7b481ccd50d21876e1d1b0e0"
+deps = ["Adapt", "AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
+git-tree-sha1 = "65d505fa4c0d7072990d659ef3fc086eb6da8208"
 uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
-version = "0.15.1"
-weakdeps = ["Unitful"]
+version = "0.16.2"
+weakdeps = ["ForwardDiff", "Unitful"]
 
     [deps.Interpolations.extensions]
+    InterpolationsForwardDiffExt = "ForwardDiff"
     InterpolationsUnitfulExt = "Unitful"
 
 [[deps.IntervalArithmetic]]
@@ -1666,16 +1715,16 @@ uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 version = "0.5.16"
 
 [[deps.Makie]]
-deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "Dates", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Format", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageBase", "ImageIO", "InteractiveUtils", "Interpolations", "IntervalSets", "InverseFunctions", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "MakieCore", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "PNGFiles", "Packing", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "Showoff", "SignedDistanceFields", "SparseArrays", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun", "Unitful"]
-git-tree-sha1 = "1d7d16f0e02ec063becd7a140f619b2ffe5f2b11"
+deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "ComputePipeline", "Contour", "Dates", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Format", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageBase", "ImageIO", "InteractiveUtils", "Interpolations", "IntervalSets", "InverseFunctions", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "PNGFiles", "Packing", "Pkg", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "Showoff", "SignedDistanceFields", "SparseArrays", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun", "Unitful"]
+git-tree-sha1 = "d1b974f376c24dad02c873e951c5cd4e351cd7c2"
 uuid = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-version = "0.22.10"
+version = "0.24.8"
 
-[[deps.MakieCore]]
-deps = ["ColorTypes", "GeometryBasics", "IntervalSets", "Observables"]
-git-tree-sha1 = "c3159eb1e3aa3e409edbb71f4035ed8b1fc16e23"
-uuid = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
-version = "0.9.5"
+    [deps.Makie.extensions]
+    MakieDynamicQuantitiesExt = "DynamicQuantities"
+
+    [deps.Makie.weakdeps]
+    DynamicQuantities = "06fc5a27-2a28-4c7c-a15d-362465fb6821"
 
 [[deps.ManualMemory]]
 git-tree-sha1 = "bcaef4fc7a0cfe2cba636d84cda54b5e4e4ca3cd"
@@ -3140,11 +3189,12 @@ version = "4.1.0+0"
 # ╔═╡ Cell order:
 # ╟─abdcae13-40fe-495a-bf6c-dba5549c558a
 # ╟─5c7e4e72-3f69-11ec-258b-6bcfdc7b1d65
-# ╠═0fea38f6-2c9e-43c6-bfc1-267ff220a0cc
+# ╟─0fea38f6-2c9e-43c6-bfc1-267ff220a0cc
 # ╟─aadd082a-3ed9-41b7-ba5e-7c5f77d59508
-# ╠═2200503c-605c-4dfd-878f-ffea2431f7ba
+# ╟─cb617ebf-203f-4123-9ef7-07fa52f51c21
+# ╟─2200503c-605c-4dfd-878f-ffea2431f7ba
 # ╟─bde49eaf-3747-4edf-b712-3ee6f08ffe20
-# ╠═c60a48e0-6f51-44b0-bd6e-332e04d2d332
+# ╟─c60a48e0-6f51-44b0-bd6e-332e04d2d332
 # ╟─45762eb1-7404-4524-8d1d-788a70f8f5ef
 # ╟─b70d76d1-09f3-462a-b550-8fa51cb90c2c
 # ╟─8cc54cc2-5284-40b1-9a30-0ad6f725053f

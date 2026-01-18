@@ -51,7 +51,7 @@ function setup(;backward_in_time::Bool=false,nmax=Inf)
    isfinite(nmax) ? n=min(n,Int(nmax)) : nothing
 
    g=Γ.XC.grid
-   func=(u -> MeshArrays.update_location_dpdo!(u,g))
+   func=(u -> MeshArrays.update_location_PeriodicDomain!(u,g))
 
    jj=[:hFacC, :hFacW, :hFacS, :DXG, :DYG, :RAC, :RAZ, :RAS]
    ii=findall([!in(i,jj) for i in keys(Γ)])
