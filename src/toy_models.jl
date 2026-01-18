@@ -11,7 +11,7 @@ u,v,w,func=vortex_flow_field(format=:MeshArray)
 ```
 """
 function vortex_flow_field(; np=12,nz=4,format=:Array)
-    γ=MeshArrays.GridSpec_ones("PeriodicDomain",1,np)
+    γ=MeshArrays.GridSpec_ones("PeriodicDomain",nF=1,nP=np)
     Γ=MeshArrays.GridLoad_ones(γ;option="full")
 
     #Solid-body rotation around central location ...
@@ -62,7 +62,7 @@ I=Individuals(F,x,y,fill(1,length(x)))
 function random_flow_field(;component=:Rotational,np=20,format=:Array)
 
 	#define gridded domain
-    γ=MeshArrays.GridSpec_ones("PeriodicDomain",1,np)
+    γ=MeshArrays.GridSpec_ones("PeriodicDomain",nF=1,nP=np)
     Γ=MeshArrays.GridLoad_ones(γ;option="full")
 
     #initialize 2D field of random numbers

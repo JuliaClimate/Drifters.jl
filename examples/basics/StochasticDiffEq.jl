@@ -4,109 +4,24 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 6bf88b5c-3abc-4b03-90bb-a7eb8cb68577
-using StochasticDiffEq, UnicodePlots, Statistics
-
 # ╔═╡ 803e2bc6-2efd-429f-8bad-fe61fbbd0d52
 begin
-	using CairoMakie
+	using StochasticDiffEq, Statistics
+	using CairoMakie, PlutoUI
+	"Done with packages"
 end
 
-# ╔═╡ 96c9b046-6e40-44b1-a19c-b7061f22470d
-md"""## Eulerian Model
-
-
-Starting from a step function we integrate a diffusion equation in one dimension, `z`, with closed boundary at the top and bottom.
-"""
-
-# ╔═╡ d78532b9-b17e-4a4a-bbab-e249bf852eba
-begin
-	## Eulerian
-	
-	function EulerianModel(nt=1)
-	    N=20
-	    dt=1e-4
-	    dx=1.0/2/N
-	    T=[zeros(N);ones(N)]
-	    T0=deepcopy(T)
-	    for tt in 1:nt
-	        dTr=(circshift(T,-1)-T); dTr[end]=0;
-	        dTl=(T-circshift(T,+1)); dTl[1]=0;
-	        T.+=(dTr-dTl)*dt/dx/dx
-	    end
-	    return T,T0
-	end
-	
-	function plot_EulerianModel(T,T0)
-		z=(1:length(T0)).-length(T0)
-		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-	    lines!(T0,z); lines!(T,z)
-	    return fig
-	end
-	
-	T,T0=EulerianModel(1000);
-	f=plot_EulerianModel(T,T0)
-	
-	"Eulerian Model Has Completed"
-end
-
-# ╔═╡ 9ef462b4-a99c-43e8-9fea-6ba63a1393eb
-f
+# ╔═╡ 6bf88b5c-3abc-4b03-90bb-a7eb8cb68577
+PlutoUI.TableOfContents()
 
 # ╔═╡ 41487611-deba-49fc-a5f7-f4f63f7935c6
 md"""## Lagrangian Model
 
 
-Starting from a step-like distribution of two particle groups over the `z=(0,1)` interval. Particle positions evolve according to a standard `Wiener` process. They bounce at the top and bottom boundaries. The charge of particles in one group is 0 at the start; 1 in the other group. Afterwards particles can interact with one another within each model layer. 
+Starting from a step-like distribution of two particle groups over the `z=(0,1)` interval. Particle positions evolve according to a standard `Wiener` process. Boundary Condition : exiting particles bounce at the top and bottom boundaries. The initial charge of particles is 0 in one group of particles; 1 in the other. Afterwards particles can interact with one another within each model layer. 
 
 _Credits: the presented model is a simplified version of the `aquacosm` model from Paparella & Vichi M (2020) Stirring, Mixing, Growing: Microscale Processes Change Larger Scale Phytoplankton Dynamics. doi: 10.3389/fmars.2020.00654_
 """
-
-# ╔═╡ c86cf1e9-d0b6-48e8-8a01-0dcc591afc85
-begin
-	## Plotting
-
-	function plot_paths(z)
-		np=size(z,1)
-		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-		lines!(z[1,:])
-		np>1 ? lines!(z[2,:]) : nothing
-		fig
-	end
-
-	function plot_paths(sol::RODESolution)
-		np=size(sol,1)
-		plt=lineplot(sol(0:0.01:1)[1,:],ylim=(-0.1,1.1))
-		np>1 ? lineplot!(plt,sol(0:0.01:1)[2,:]) : nothing
-		plt
-	end
-
-	function gridded_stats(za,ca,zb,cb)
-		out=zeros(10,2)
-		dz=0.1
-		t=size(za,2)
-		for i0=1:10
-			z0=0+dz*(i0-1)
-			ia=findall( (za[:,t].>z0).*(za[:,t].<=z0+dz) );
-			ib=findall( (zb[:,t].>z0).*(zb[:,t].<=z0+dz) );
-			tmp=[ca[ia,t];cb[ib,t]]
-			out[i0,1]=mean(tmp)
-			out[i0,2]=std(tmp)
-		end
-		out
-	end
-
-	function plot_stats(st)
-		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-		z=(1:size(st,1)).-size(st,1)
-		lines!(st[:,1],z)#,ylim=(-0.1,1.1))
-		lines!(st[:,1].+st[:,2],z)
-		lines!(st[:,1].-st[:,2],z)
-		fig
-	end	
-	
-	"Plotting functions"
-end
 
 # ╔═╡ 2195a7a4-30d6-47fe-92db-d7ebef67ef03
 begin
@@ -187,6 +102,104 @@ end
 # Main model run 	
 main_loop(p=0.1,nt=10)
 
+# ╔═╡ 96c9b046-6e40-44b1-a19c-b7061f22470d
+md"""## Eulerian Model
+
+For comparison, we apply vertical diffusion. Starting from a step function, the model integrates a diffusion equation in one dimension, `z`, with closed boundary at the top and bottom.
+"""
+
+# ╔═╡ d78532b9-b17e-4a4a-bbab-e249bf852eba
+begin
+	## Eulerian
+	
+	function EulerianModel(nt=1)
+	    N=20
+	    dt=1e-4
+	    dx=1.0/2/N
+	    T=[zeros(N);ones(N)]
+	    T0=deepcopy(T)
+	    for tt in 1:nt
+	        dTr=(circshift(T,-1)-T); dTr[end]=0;
+	        dTl=(T-circshift(T,+1)); dTl[1]=0;
+	        T.+=(dTr-dTl)*dt/dx/dx
+	    end
+	    return T,T0
+	end
+	
+	function plot_EulerianModel(T,T0)
+		z=(1:length(T0)).-length(T0)
+		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
+	    lines!(T0,z); lines!(T,z)
+	    return fig
+	end
+	
+	T,T0=EulerianModel(1000);
+	f=plot_EulerianModel(T,T0)
+	
+	"Eulerian Model Has Completed"
+end
+
+# ╔═╡ 9ef462b4-a99c-43e8-9fea-6ba63a1393eb
+f
+
+# ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
+md"""## Summary
+
+Plots from left to right:
+
+- solution of the Eulerian model
+- solution of the Lagrangian model (with irreversible mixing)
+- pair or Lagrangian trajectories
+- pair or Lagrangian trajectories
+"""
+
+# ╔═╡ 082d6309-c7fe-4a90-94c0-e65336e43a3c
+md"""## Appendix
+
+Includes `Julia` packages and helper functions.
+"""
+
+# ╔═╡ c86cf1e9-d0b6-48e8-8a01-0dcc591afc85
+begin
+	## Plotting
+
+	to_depth(z)=-10*z
+	
+	function plot_paths(z)
+		np=size(z,1)
+		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
+		lines!(to_depth(z[1,:]))
+		np>1 ? lines!(to_depth(z[2,:])) : nothing
+		fig
+	end
+
+	function gridded_stats(za,ca,zb,cb)
+		out=zeros(10,2)
+		dz=0.1
+		t=size(za,2)
+		for i0=1:10
+			z0=0+dz*(i0-1)
+			ia=findall( (za[:,t].>z0).*(za[:,t].<=z0+dz) );
+			ib=findall( (zb[:,t].>z0).*(zb[:,t].<=z0+dz) );
+			tmp=[ca[ia,t];cb[ib,t]]
+			out[i0,1]=mean(tmp)
+			out[i0,2]=std(tmp)
+		end
+		out
+	end
+
+	function plot_stats(st)
+		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
+		z=(1:size(st,1)).-size(st,1)
+		lines!(st[:,1],z)#,ylim=(-0.1,1.1))
+		lines!(st[:,1].+st[:,2],z)
+		lines!(st[:,1].-st[:,2],z)
+		fig
+	end	
+	
+	"Plotting functions"
+end
+
 # ╔═╡ 5ab5321a-15b9-11ec-3321-b7d7cab1ba35
 begin	
 	# Another run of the dispersion model just for plotting
@@ -212,19 +225,19 @@ begin
 	
 	#εf(z)C(1−C)
 	
-	"figures generated : f, fs, fa, fb"
+	"figures generated : fs, fa, fb"
+	
+#	typeof(zb)
 end
 
-# ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
-md"""## Summary / Plot Collection
+# ╔═╡ a66406d2-4533-4f39-80ab-9e1e7247ea2f
+fs
 
-From left to right:
+# ╔═╡ b5095c28-f7b5-4701-bc3d-8276fe8c598d
+fa
 
-- solution of the Eulerian model
-- solution of the Lagrangian model (with irreversible mixing)
-- pair or Lagrangian trajectories
-- pair or Lagrangian trajectories
-"""
+# ╔═╡ 2b58038f-5974-4b19-acce-2d8e8a99f2fe
+fb
 
 # ╔═╡ 1df22a2f-c344-4d71-b44d-9a821c14e548
 (f,fs,fa,fb)
@@ -233,14 +246,14 @@ From left to right:
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
-UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
 CairoMakie = "~0.15.8"
+PlutoUI = "~0.7.78"
 StochasticDiffEq = "~6.90.0"
-UnicodePlots = "~3.8.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -249,7 +262,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "b268322c636dbd9bcc10cedd69e7ab7466657276"
+project_hash = "869e09e032a997e41ff3927eb39c5c9f6d2de85d"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -267,14 +280,17 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "d92ad398961a3ed262d8bf04a1a2b8340f915fef"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 version = "1.5.0"
+weakdeps = ["ChainRulesCore", "Test"]
 
     [deps.AbstractFFTs.extensions]
     AbstractFFTsChainRulesCoreExt = "ChainRulesCore"
     AbstractFFTsTestExt = "Test"
 
-    [deps.AbstractFFTs.weakdeps]
-    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-    Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+[[deps.AbstractPlutoDingetjes]]
+deps = ["Pkg"]
+git-tree-sha1 = "6e1d2a35f2f90a4bc7c2ed98079b2ba09c35b83a"
+uuid = "6e696c72-6542-2067-7265-42206c756150"
+version = "1.3.2"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "2d9c9a55f9c93e8887ad391fbae72f8ef55e1177"
@@ -603,11 +619,6 @@ git-tree-sha1 = "fcbb72b032692610bfbdb15018ac16a36cf2e406"
 uuid = "adafc99b-e345-5852-983c-f28acb93d879"
 version = "0.3.1"
 
-[[deps.Crayons]]
-git-tree-sha1 = "249fe38abf76d48563e2f4556bebd215aa317e15"
-uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
-version = "4.1.1"
-
 [[deps.DataAPI]]
 git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
@@ -637,9 +648,9 @@ version = "1.6.6"
 
 [[deps.DiffEqBase]]
 deps = ["ArrayInterface", "BracketingNonlinearSolve", "ConcreteStructs", "DocStringExtensions", "EnzymeCore", "FastBroadcast", "FastClosures", "FastPower", "FunctionWrappers", "FunctionWrappersWrappers", "LinearAlgebra", "Logging", "Markdown", "MuladdMacro", "PrecompileTools", "Printf", "RecursiveArrayTools", "Reexport", "SciMLBase", "SciMLOperators", "SciMLStructures", "Setfield", "Static", "StaticArraysCore", "SymbolicIndexingInterface", "TruncatedStacktraces"]
-git-tree-sha1 = "3eb2bd06f21ee2e9110e95fc344b86b79b9767f4"
+git-tree-sha1 = "0514bf55835444420ce81f8e32c5e2369d4af456"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "6.197.0"
+version = "6.199.0"
 
     [deps.DiffEqBase.extensions]
     DiffEqBaseCUDAExt = "CUDA"
@@ -926,14 +937,11 @@ deps = ["Compat", "Dates"]
 git-tree-sha1 = "3bab2c5aa25e7840a4b065805c0cdfc01f3068d2"
 uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
 version = "0.9.24"
+weakdeps = ["Mmap", "Test"]
 
     [deps.FilePathsBase.extensions]
     FilePathsBaseMmapExt = "Mmap"
     FilePathsBaseTestExt = "Test"
-
-    [deps.FilePathsBase.weakdeps]
-    Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
-    Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -941,14 +949,15 @@ version = "1.11.0"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "5bfcd42851cf2f1b303f51525a54dc5e98d408a3"
+git-tree-sha1 = "2f979084d1e13948a3352cf64a25df6bd3b4dca3"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "1.15.0"
-weakdeps = ["PDMats", "SparseArrays", "Statistics"]
+version = "1.16.0"
+weakdeps = ["PDMats", "SparseArrays", "StaticArrays", "Statistics"]
 
     [deps.FillArrays.extensions]
     FillArraysPDMatsExt = "PDMats"
     FillArraysSparseArraysExt = "SparseArrays"
+    FillArraysStaticArraysExt = "StaticArrays"
     FillArraysStatisticsExt = "Statistics"
 
 [[deps.FiniteDiff]]
@@ -1117,6 +1126,24 @@ git-tree-sha1 = "68c173f4f449de5b438ee67ed0c9c748dc31a2ec"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 version = "0.3.28"
 
+[[deps.Hyperscript]]
+deps = ["Test"]
+git-tree-sha1 = "179267cfa5e712760cd43dcae385d7ea90cc25a4"
+uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
+version = "0.0.5"
+
+[[deps.HypertextLiteral]]
+deps = ["Tricks"]
+git-tree-sha1 = "7134810b1afce04bbc1045ca1985fbe81ce17653"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.5"
+
+[[deps.IOCapture]]
+deps = ["Logging", "Random"]
+git-tree-sha1 = "0ee181ec08df7d7c911901ea38baf16f755114dc"
+uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
+version = "1.0.0"
+
 [[deps.IfElse]]
 git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
 uuid = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
@@ -1229,14 +1256,11 @@ weakdeps = ["Random", "RecipesBase", "Statistics"]
 git-tree-sha1 = "a779299d77cd080bf77b97535acecd73e1c5e5cb"
 uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
 version = "0.1.17"
+weakdeps = ["Dates", "Test"]
 
     [deps.InverseFunctions.extensions]
     InverseFunctionsDatesExt = "Dates"
     InverseFunctionsTestExt = "Test"
-
-    [deps.InverseFunctions.weakdeps]
-    Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-    Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.IrrationalConstants]]
 git-tree-sha1 = "b2d91fe939cae05960e760110b328288867b5758"
@@ -1540,6 +1564,11 @@ git-tree-sha1 = "f00544d95982ea270145636c181ceda21c4e2575"
 uuid = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 version = "1.2.0"
 
+[[deps.MIMEs]]
+git-tree-sha1 = "c64d943587f7187e751162b3b84445bbbd79f691"
+uuid = "6c6e2e6c-3030-632d-7369-2d6c69616d65"
+version = "1.1.0"
+
 [[deps.MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "oneTBB_jll"]
 git-tree-sha1 = "282cadc186e7b2ae0eeadbd7a4dffed4196ae2aa"
@@ -1572,12 +1601,6 @@ version = "0.1.8"
 git-tree-sha1 = "0ee4497a4e80dbd29c058fcee6493f5219556f40"
 uuid = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
 version = "0.4.3"
-
-[[deps.MarchingCubes]]
-deps = ["PrecompileTools", "StaticArrays"]
-git-tree-sha1 = "0e893025924b6becbae4109f8020ac0e12674b01"
-uuid = "299715c1-40a9-479a-aaf9-4a633d36f717"
-version = "0.1.11"
 
 [[deps.Markdown]]
 deps = ["Base64", "JuliaSyntaxHighlighting", "StyledStrings"]
@@ -1682,9 +1705,9 @@ version = "4.14.0"
 
 [[deps.NonlinearSolveBase]]
 deps = ["ADTypes", "Adapt", "ArrayInterface", "CommonSolve", "Compat", "ConcreteStructs", "DifferentiationInterface", "EnzymeCore", "FastClosures", "LinearAlgebra", "Markdown", "MaybeInplace", "Preferences", "Printf", "RecursiveArrayTools", "SciMLBase", "SciMLJacobianOperators", "SciMLLogging", "SciMLOperators", "SciMLStructures", "Setfield", "StaticArraysCore", "SymbolicIndexingInterface", "TimerOutputs"]
-git-tree-sha1 = "db10be07416f36da7928e2a934047948cb6430ad"
+git-tree-sha1 = "c003d5609ffc15d4181ba0578ecf83ee38dc4613"
 uuid = "be0214bd-f91f-a760-ac4e-3421ce2b2da0"
-version = "2.9.1"
+version = "2.9.2"
 
     [deps.NonlinearSolveBase.extensions]
     NonlinearSolveBaseBandedMatricesExt = "BandedMatrices"
@@ -1909,6 +1932,12 @@ deps = ["ColorSchemes", "Colors", "Dates", "PrecompileTools", "Printf", "Random"
 git-tree-sha1 = "26ca162858917496748aad52bb5d3be4d26a228a"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.4.4"
+
+[[deps.PlutoUI]]
+deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Downloads", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
+git-tree-sha1 = "6122f9423393a2294e26a4efdf44960c5f8acb70"
+uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+version = "0.7.78"
 
 [[deps.PoissonRandom]]
 deps = ["LogExpFunctions", "Random"]
@@ -2135,9 +2164,9 @@ version = "0.1.0"
 
 [[deps.SciMLBase]]
 deps = ["ADTypes", "Accessors", "Adapt", "ArrayInterface", "CommonSolve", "ConstructionBase", "Distributed", "DocStringExtensions", "EnumX", "FunctionWrappersWrappers", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "Markdown", "Moshi", "PreallocationTools", "PrecompileTools", "Preferences", "Printf", "RecipesBase", "RecursiveArrayTools", "Reexport", "RuntimeGeneratedFunctions", "SciMLLogging", "SciMLOperators", "SciMLPublic", "SciMLStructures", "StaticArraysCore", "Statistics", "SymbolicIndexingInterface"]
-git-tree-sha1 = "0da1baef2a9900e81747f15fce11c25c1172d4e8"
+git-tree-sha1 = "9923adc7defeba6a52a99eb493ec317ac6c65942"
 uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
-version = "2.132.0"
+version = "2.134.0"
 
     [deps.SciMLBase.extensions]
     SciMLBaseChainRulesCoreExt = "ChainRulesCore"
@@ -2501,6 +2530,11 @@ git-tree-sha1 = "1feb45f88d133a655e001435632f019a9a1bcdb6"
 uuid = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 version = "0.1.1"
 
+[[deps.Test]]
+deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
+uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+version = "1.11.0"
+
 [[deps.ThreadingUtilities]]
 deps = ["ManualMemory"]
 git-tree-sha1 = "d969183d3d244b6c33796b5ed01ab97328f2db85"
@@ -2530,6 +2564,11 @@ git-tree-sha1 = "0c45878dcfdcfa8480052b6ab162cdd138781742"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 version = "0.11.3"
 
+[[deps.Tricks]]
+git-tree-sha1 = "311349fd1c93a31f783f977a71e8b062a57d4101"
+uuid = "410a4b4d-49e4-4fbc-ab6d-cb71b17b3775"
+version = "0.1.13"
+
 [[deps.TriplotBase]]
 git-tree-sha1 = "4d4ed7f294cda19382ff7de4c137d24d16adc89b"
 uuid = "981d1d27-644d-49a2-9326-4793e63143c3"
@@ -2540,6 +2579,11 @@ deps = ["InteractiveUtils", "MacroTools", "Preferences"]
 git-tree-sha1 = "ea3e54c2bdde39062abf5a9758a23735558705e1"
 uuid = "781d530d-4396-4725-bb49-402e4bee1e77"
 version = "1.4.0"
+
+[[deps.URIs]]
+git-tree-sha1 = "bef26fb046d031353ef97a82e3fdb6afe7f21b1a"
+uuid = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
+version = "1.6.1"
 
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
@@ -2555,27 +2599,6 @@ deps = ["REPL"]
 git-tree-sha1 = "53915e50200959667e78a92a418594b428dffddf"
 uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.1"
-
-[[deps.UnicodePlots]]
-deps = ["ColorSchemes", "ColorTypes", "Contour", "Crayons", "Dates", "LinearAlgebra", "MarchingCubes", "NaNMath", "PrecompileTools", "Printf", "SparseArrays", "StaticArrays", "StatsBase"]
-git-tree-sha1 = "0087c82cf98f2c2bb7df350c02b0b1fc6ae087d6"
-uuid = "b8865327-cd53-5732-bb35-84acbb429228"
-version = "3.8.1"
-
-    [deps.UnicodePlots.extensions]
-    FreeTypeExt = ["FileIO", "FreeType"]
-    ImageInTerminalExt = "ImageInTerminal"
-    IntervalSetsExt = "IntervalSets"
-    TermExt = "Term"
-    UnitfulExt = "Unitful"
-
-    [deps.UnicodePlots.weakdeps]
-    FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-    FreeType = "b38be410-82b0-50bf-ab77-7b57e271db43"
-    ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
-    IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
-    Term = "22787eb5-b846-44ae-b979-8e399b8463ab"
-    Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [[deps.Unitful]]
 deps = ["Dates", "LinearAlgebra", "Random"]
@@ -2754,18 +2777,22 @@ version = "4.1.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╠═6bf88b5c-3abc-4b03-90bb-a7eb8cb68577
-# ╟─96c9b046-6e40-44b1-a19c-b7061f22470d
-# ╠═d78532b9-b17e-4a4a-bbab-e249bf852eba
-# ╠═9ef462b4-a99c-43e8-9fea-6ba63a1393eb
+# ╟─6bf88b5c-3abc-4b03-90bb-a7eb8cb68577
 # ╟─41487611-deba-49fc-a5f7-f4f63f7935c6
 # ╟─32a692ab-4835-4943-8b46-8345ce881eb5
-# ╠═c86cf1e9-d0b6-48e8-8a01-0dcc591afc85
 # ╟─2195a7a4-30d6-47fe-92db-d7ebef67ef03
 # ╟─fd2db517-2282-43da-a543-a1ef59a439c2
-# ╠═5ab5321a-15b9-11ec-3321-b7d7cab1ba35
+# ╟─5ab5321a-15b9-11ec-3321-b7d7cab1ba35
+# ╠═a66406d2-4533-4f39-80ab-9e1e7247ea2f
+# ╠═b5095c28-f7b5-4701-bc3d-8276fe8c598d
+# ╠═2b58038f-5974-4b19-acce-2d8e8a99f2fe
+# ╟─96c9b046-6e40-44b1-a19c-b7061f22470d
+# ╟─d78532b9-b17e-4a4a-bbab-e249bf852eba
+# ╠═9ef462b4-a99c-43e8-9fea-6ba63a1393eb
 # ╟─aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
 # ╠═1df22a2f-c344-4d71-b44d-9a821c14e548
-# ╠═803e2bc6-2efd-429f-8bad-fe61fbbd0d52
+# ╟─082d6309-c7fe-4a90-94c0-e65336e43a3c
+# ╟─803e2bc6-2efd-429f-8bad-fe61fbbd0d52
+# ╟─c86cf1e9-d0b6-48e8-8a01-0dcc591afc85
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
