@@ -145,7 +145,7 @@ In general, user defined `uC, vC` fields may have both rotational and divergent 
 
 # ╔═╡ e927ba74-2c88-493e-b25b-910e23a63045
 let
-	(U,V,Φ)=random_flow_field(component=:Rotational,np=2*nx,nq=nx)
+	(U,V,Φ)=random_flow_field(component=:Rotational,np=2*nx)
 	F=convert_to_FlowFields(U,V,10.0)
 	I=Individuals(F,x,y,fill(1,length(x)))
 	∫!(I)
