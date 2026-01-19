@@ -61,6 +61,7 @@ plot( DriftersDataset( data=(I=I,), options=(plot_type=:plot_start_end,) ) )
 
 
 
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -712,9 +713,9 @@ version = "1.6.0"
 
 [[deps.Drifters]]
 deps = ["CSV", "CyclicArrays", "DataDeps", "DataFrames", "Dataverse", "Glob", "JLD2", "MeshArrays", "NetCDF", "OrdinaryDiffEq", "Random"]
-git-tree-sha1 = "6b882a97082d8032316222a530417ecbd22ce83f"
+git-tree-sha1 = "50f9e63a0f37c587b21f2c4fa4565129ca513d81"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
-version = "0.6.9"
+version = "0.6.10"
 
     [deps.Drifters.extensions]
     DriftersClimatologyExt = ["Climatology"]
@@ -1663,9 +1664,9 @@ version = "2.28.1010+0"
 
 [[deps.MeshArrays]]
 deps = ["CatViews", "Dates", "Distributed", "GeoInterface", "Glob", "LazyArtifacts", "NearestNeighbors", "Pkg", "Printf", "SharedArrays", "SparseArrays", "Statistics", "Unitful"]
-git-tree-sha1 = "d333bc6aa00ba7be0636af73698d85b306ff49f4"
+git-tree-sha1 = "19e7464371ad3af9f0c0f3a2aac718a772f6c578"
 uuid = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
-version = "0.5.2"
+version = "0.5.3"
 
     [deps.MeshArrays.extensions]
     MeshArraysDataDepsExt = ["DataDeps"]
