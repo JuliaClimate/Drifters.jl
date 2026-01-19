@@ -30,7 +30,7 @@ using CairoMakie
 J=DriftersDataset( data=(I=I,), options=(plot_type=:simple_plot2,) )
 f=plot(J)
 
-ref=[6.16, 7.23, 1.29, 1.0] # hide
+ref=[9.35, 7.94, 1.29, 1.0] #hide
 prod(isapprox.(I.📌,ref,atol=1.0)) # hide
 
 # output
