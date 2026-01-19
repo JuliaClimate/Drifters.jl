@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Detailed Look · Drifters.jl</title><meta name="title" content="Detailed Look · Drifters.jl"/><meta property="og:title" content="Detailed Look · Drifters.jl"/><meta property="twitter:title" content="Detailed Look · Drifters.jl"/><meta name="description" content="Documentation for Drifters.jl."/><meta property="og:description" content="Documentation for Drifters.jl."/><meta property="twitter:description" content="Documentation for Drifters.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Drifters.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../workflow/">User Guide</a></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../API/">Tool Box</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Detailed Look</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Detailed Look</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaClimate/Drifters.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaClimate/Drifters.jl/blob/master/docs/src/detailed_look.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Detailed-Look"><a class="docs-heading-anchor" href="#Detailed-Look">Detailed Look</a><a id="Detailed-Look-1"></a><a class="docs-heading-anchor-permalink" href="#Detailed-Look" title="Permalink"></a></h1><p><a href="https://mybinder.org/v2/gh/JuliaClimate/Drifters.jl/gh-pages?filepath=v0.6.10/notebooks/detailed_look.ipynb"><img src="https://mybinder.org/badge_logo.svg" alt/></a> <a href="https://nbviewer.jupyter.org/github/JuliaClimate/Drifters.jl/blob/gh-pages/v0.6.10/notebooks/detailed_look.ipynb"><img src="https://img.shields.io/badge/show-nbviewer-579ACA.svg" alt/></a></p><p>A more detailed look at spatial interpolation, integration through time, and I/O. For additional documentation e.g. see <a href="https://JuliaClimate.github.io/Drifters.jl/dev/">1</a>, <a href="https://JuliaClimate.github.io/MeshArrays.jl/dev/">2</a>, <a href="https://docs.juliadiffeq.org/latest/solvers/ode_solve.html">3</a>, <a href="https://en.wikipedia.org/wiki/Displacement_(vector)">4</a>. Here we illustrate a few things in more detail:</p><ul><li>reading velocities from file.<ul><li>gridded velocity output (U<em>data, V</em>data)</li><li>pre-computed trajectory output (<code>float_traj*data</code>)</li></ul></li><li>interpolating <code>U,V</code> from gridded output to individual locations<ul><li>compared with <code>u,v</code> from <code>float_traj*data</code></li></ul></li><li>computing trajectories (location v time) using <code>OrdinaryDiffEq.jl</code><ul><li>compared with <code>x(t),y(t)</code> from <code>float_traj*data</code></li></ul></li></ul><h2 id="1.-Import-Software"><a class="docs-heading-anchor" href="#1.-Import-Software">1. Import Software</a><a id="1.-Import-Software-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Import-Software" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Drifters, MITgcm
+import Drifters.OrdinaryDiffEq as OrdinaryDiffEq
+import Drifters.DataFrames as DataFrames
+p=dirname(pathof(Drifters))
+include(joinpath(p,&quot;../examples/more/example123.jl&quot;))
+include(joinpath(p,&quot;../examples/more/recipes_plots.jl&quot;))</code></pre><h2 id="2.-Read-Trajectory-Output"><a class="docs-heading-anchor" href="#2.-Read-Trajectory-Output">2. Read Trajectory Output</a><a id="2.-Read-Trajectory-Output-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Read-Trajectory-Output" title="Permalink"></a></h2><p>from <code>MITgcm/pkg/flt</code></p><pre><code class="language-julia hljs">flt_example_path = Drifters.datadeps.getdata(&quot;flt_example&quot;)
+prec=Float32
+df=read_flt(flt_example_path*&quot;/&quot;,prec);
+
+plt=plot_paths(df,300,100000.0)</code></pre><h2 id="3.-Read-Gridded-Variables"><a class="docs-heading-anchor" href="#3.-Read-Gridded-Variables">3. Read Gridded Variables</a><a id="3.-Read-Gridded-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Read-Gridded-Variables" title="Permalink"></a></h2><p>using <code>MeshArrays.jl</code> and e.g. a NamedTyple</p><pre><code class="language-julia hljs">𝑃,Γ=example2_setup();</code></pre><h2 id="4.-Visualize-Velocity-Fields"><a class="docs-heading-anchor" href="#4.-Visualize-Velocity-Fields">4. Visualize Velocity Fields</a><a id="4.-Visualize-Velocity-Fields-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Visualize-Velocity-Fields" title="Permalink"></a></h2><pre><code class="nohighlight hljs">plt=heatmap(Γ.mskW[1,1].*𝑃.u0,title=&quot;U at the start&quot;)
+plt=heatmap(Γ.mskW[1,1].*𝑃.u1-𝑃.u0,title=&quot;U end - U start&quot;)</code></pre><h2 id="5.-Visualize-Trajectories"><a class="docs-heading-anchor" href="#5.-Visualize-Trajectories">5. Visualize Trajectories</a><a id="5.-Visualize-Trajectories-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Visualize-Trajectories" title="Permalink"></a></h2><p>(select one trajectory)</p><pre><code class="language-julia hljs">tmp=df[df.ID .== 200, :]
+tmp[1:4,:]</code></pre><p>Super-impose trajectory over velocity field (first for u ...)</p><pre><code class="language-julia hljs">x=Γ.XG.f[1][:,1]
+y=Γ.YC.f[1][1,:]
+z=transpose(Γ.mskW[1].*𝑃.u0);
+
+plt=contourf(x,y,z,c=:delta)
+plot!(tmp[:,:lon],tmp[:,:lat],c=:red,w=4,leg=false)</code></pre><p>Super-impose trajectory over velocity field (... then for v)</p><pre><code class="language-julia hljs">x=Γ.XC.f[1][:,1]
+y=Γ.YG.f[1][1,:]
+z=transpose(Γ.mskW[1].*𝑃.v0);
+
+plt=contourf(x,y,z,c=:delta)
+plot!(tmp[:,:lon],tmp[:,:lat],c=:red,w=4,leg=false)</code></pre><h2 id="6.-Interpolate-Velocities"><a class="docs-heading-anchor" href="#6.-Interpolate-Velocities">6. Interpolate Velocities</a><a id="6.-Interpolate-Velocities-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Interpolate-Velocities" title="Permalink"></a></h2><pre><code class="language-julia hljs">dx=Γ.dx
+uInit=[tmp[1,:lon];tmp[1,:lat]]./dx
+nSteps=Int32(tmp[end,:time]/3600)-2
+du=fill(0.0,2);</code></pre><p>Visualize and compare with actual grid point values – jumps on the tangential component are expected with linear scheme:</p><pre><code class="language-julia hljs">tmpu=fill(0.0,100)
+tmpv=fill(0.0,100)
+tmpx=fill(0.0,100)
+for i=1:100
+    tmpx[i]=500.0 *i./dx
+    dxdt!(du,[tmpx[i];0.499./dx],𝑃,0.0)
+    tmpu[i]=du[1]
+    tmpv[i]=du[2]
+end
+
+plt=plot(tmpx,tmpu,label=&quot;u (interp)&quot;)
+plot!(Γ.XG.f[1][1:10,1]./dx,𝑃.u0[1:10,1],marker=:o,label=&quot;u (C-grid)&quot;)
+plot!(tmpx,tmpv,label=&quot;v (interp)&quot;)
+plot!(Γ.XG.f[1][1:10,1]./dx,𝑃.v0[1:10,1],marker=:o,label=&quot;v (C-grid)&quot;)</code></pre><p>And similarly in the other direction</p><pre><code class="language-julia hljs">tmpu=fill(0.0,100)
+tmpv=fill(0.0,100)
+tmpy=fill(0.0,100)
+for i=1:100
+    tmpy[i]=500.0 *i./dx
+    dxdt!(du,[0.499./dx;tmpy[i]],𝑃,0.0)
+    tmpu[i]=du[1]
+    tmpv[i]=du[2]
+end
+
+plt=plot(tmpx,tmpu,label=&quot;u (interp)&quot;)
+plot!(Γ.YG.f[1][1,1:10]./dx,𝑃.u0[1,1:10],marker=:o,label=&quot;u (C-grid)&quot;)
+plot!(tmpx,tmpv,label=&quot;v (interp)&quot;)
+plot!(Γ.YG.f[1][1,1:10]./dx,𝑃.v0[1,1:10],marker=:o,label=&quot;v (C-grid)&quot;)</code></pre><p>Compare recomputed velocities with those from <code>pkg/flt</code></p><pre><code class="language-julia hljs">nSteps=2998
+tmpu=fill(0.0,nSteps); tmpv=fill(0.0,nSteps);
+tmpx=fill(0.0,nSteps); tmpy=fill(0.0,nSteps);
+refu=fill(0.0,nSteps); refv=fill(0.0,nSteps);
+for i=1:nSteps
+    dxy_dt_replay(du,[tmp[i,:lon],tmp[i,:lat]],tmp,tmp[i,:time])
+    refu[i]=du[1]./dx
+    refv[i]=du[2]./dx
+    dxdt!(du,[tmp[i,:lon],tmp[i,:lat]]./dx,𝑃,Float64(tmp[i,:time]))
+    tmpu[i]=du[1]
+    tmpv[i]=du[2]
+end
+
+plt=plot(tmpu,label=&quot;u&quot;)
+plot!(tmpv,label=&quot;v&quot;)
+plot!(refu,label=&quot;u (ref)&quot;)
+plot!(refv,label=&quot;v (ref)&quot;)</code></pre><h2 id="6.-Compute-Trajectories"><a class="docs-heading-anchor" href="#6.-Compute-Trajectories">6. Compute Trajectories</a><a id="6.-Compute-Trajectories-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Compute-Trajectories" title="Permalink"></a></h2><p>Solve through time using <code>OrdinaryDiffEq.jl</code> with</p><ul><li><code>dxdt!</code> is the function computing <code>d(position)/dt</code></li><li><code>uInit</code> is the initial condition <code>u @ tspan[1]</code></li><li><code>tspan</code> is the time interval</li><li><code>𝑃</code> are parameters for <code>dxdt!</code></li><li><code>Tsit5</code> is the time-stepping scheme</li><li><code>reltol</code> and <code>abstol</code> are tolerance parameters</li></ul><pre><code class="language-julia hljs">tspan = (0.0,nSteps*3600.0)
+#prob = OrdinaryDiffEq.ODEProblem(dxy_dt_replay,uInit,tspan,tmp)
+prob = OrdinaryDiffEq.ODEProblem(dxdt!,uInit,tspan,𝑃)
+sol = OrdinaryDiffEq.solve(prob,OrdinaryDiffEq.Tsit5(),reltol=1e-8,abstol=1e-8)
+sol[1:4]</code></pre><p>Compare recomputed trajectories with originals from <code>MITgcm/pkg/flt</code></p><pre><code class="language-julia hljs">ref=transpose([tmp[1:nSteps,:lon] tmp[1:nSteps,:lat]])
+maxLon=80*5.e3
+maxLat=42*5.e3
+#show(size(ref))
+for i=1:nSteps-1
+    ref[1,i+1]-ref[1,i]&gt;maxLon/2 ? ref[1,i+1:end]-=fill(maxLon,(nSteps-i)) : nothing
+    ref[1,i+1]-ref[1,i]&lt;-maxLon/2 ? ref[1,i+1:end]+=fill(maxLon,(nSteps-i)) : nothing
+    ref[2,i+1]-ref[2,i]&gt;maxLat/2 ? ref[2,i+1:end]-=fill(maxLat,(nSteps-i)) : nothing
+    ref[2,i+1]-ref[2,i]&lt;-maxLat/2 ? ref[2,i+1:end]+=fill(maxLat,(nSteps-i)) : nothing
+end
+ref=ref./dx;
+
+plt=plot(sol[1,:],sol[2,:],linewidth=5,title=&quot;Using Recomputed Velocities&quot;,
+     xaxis=&quot;lon&quot;,yaxis=&quot;lat&quot;,label=&quot;Julia Solution&quot;) # legend=false
+plot!(ref[1,:],ref[2,:],lw=3,ls=:dash,label=&quot;MITgcm Solution&quot;)</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 19 January 2026 02:02">Monday 19 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
