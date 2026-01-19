@@ -198,7 +198,6 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
 CairoMakie = "~0.15.8"
-Drifters = "~0.6.9"
 PlutoUI = "~0.7.78"
 """
 
@@ -208,7 +207,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "59afaea5f78c9fb29be3d6e330d8032501fce573"
+project_hash = "127d84b962de4055f30e4675eed61c0d40759cf5"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -1771,9 +1770,9 @@ version = "2.28.1010+0"
 
 [[deps.MeshArrays]]
 deps = ["CatViews", "Dates", "Distributed", "GeoInterface", "Glob", "LazyArtifacts", "NearestNeighbors", "Pkg", "Printf", "SharedArrays", "SparseArrays", "Statistics", "Unitful"]
-git-tree-sha1 = "d333bc6aa00ba7be0636af73698d85b306ff49f4"
+git-tree-sha1 = "19e7464371ad3af9f0c0f3a2aac718a772f6c578"
 uuid = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
-version = "0.5.2"
+version = "0.5.3"
 
     [deps.MeshArrays.extensions]
     MeshArraysDataDepsExt = ["DataDeps"]
