@@ -13,7 +13,7 @@ function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
     u=MeshArray(g,[U])
     v=MeshArray(g,[V])
     (u,v)=MeshArrays.exchange_main(u,v,1)
-    func=(u -> MeshArrays.update_location_dpdo!(u,g))
+    func=(u -> MeshArrays.update_location_PeriodicDomain!(u,g))
 
     uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,[0,t1],func)
 end
