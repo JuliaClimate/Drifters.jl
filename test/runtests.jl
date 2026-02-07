@@ -1,4 +1,5 @@
 using Test, Documenter, Drifters, Suppressor, CairoMakie
+import StochasticDiffEq
 
 import Drifters: MeshArrays, NetCDF, CSV, DataFrames, JLD2
 
@@ -12,6 +13,15 @@ Climatology.get_ecco_variable_if_needed("SALT")
 
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LLC90))
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
+
+@testset "SDE" begin
+	np=100
+	u₀a=0.5*rand(np)
+	ca=zeros(np)
+    SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
+    SDE.step!(u₀a)
+    @test isa(u₀a,Vector)
+end
 
 @testset "Oscar" begin
     fil=joinpath(Drifters.datadeps.getdata("Oscar_2021_small"),"Drifters_Oscar_small.csv")
