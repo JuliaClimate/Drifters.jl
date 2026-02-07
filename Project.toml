@@ -1,6 +1,6 @@
 name = "Drifters"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
-version = "0.6.10"
+version = "0.6.11"
 authors = ["gaelforget <gforget@mit.edu>"]
 
 [deps]
