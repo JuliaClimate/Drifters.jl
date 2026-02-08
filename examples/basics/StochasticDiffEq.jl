@@ -217,7 +217,9 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 
 [compat]
 CairoMakie = "~0.15.8"
-PlutoUI = "~0.7.78"
+Drifters = "~0.6.11"
+PlutoUI = "~0.7.79"
+StochasticDiffEq = "~6.93.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -226,7 +228,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "81ab1cdd8fdd2edfe600ae5fa2116a527288ef5b"
+project_hash = "083cc3934e47ccf84eaea68ad1843729a78f133b"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -875,7 +877,7 @@ version = "1.6.0"
 
 [[deps.Drifters]]
 deps = ["CSV", "CyclicArrays", "DataDeps", "DataFrames", "Dataverse", "Glob", "JLD2", "MeshArrays", "NetCDF", "OrdinaryDiffEq", "Random"]
-path = "/Users/gaelforget/work/code/julia_pkg/Drifters.jl/"
+git-tree-sha1 = "0ec06fe222889e7998aedab0ac55a28fd76f86b0"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
 version = "0.6.11"
 
