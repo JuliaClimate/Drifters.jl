@@ -23,46 +23,15 @@ Starting from a step-like distribution of two particle groups over the `z=(0,1)`
 _Credits: the presented model is a simplified version of the `aquacosm` model from Paparella & Vichi M (2020) Stirring, Mixing, Growing: Microscale Processes Change Larger Scale Phytoplankton Dynamics. doi: 10.3389/fmars.2020.00654_
 """
 
-# ╔═╡ 2195a7a4-30d6-47fe-92db-d7ebef67ef03
-begin
-	# initial conditions
-	np=10000
-	u₀a=0.5*rand(np)
-	ca=zeros(np)
-	u₀b=0.5 .+ 0.5*rand(np)
-	cb=ones(np)
-	"done with initialization"
-end
-
-# ╔═╡ 96c9b046-6e40-44b1-a19c-b7061f22470d
-md"""## Eulerian Model
-
-For comparison, we apply vertical diffusion. Starting from a step function, the model integrates a diffusion equation in one dimension, `z`, with closed boundary at the top and bottom.
-"""
-
-# ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
-md"""## Summary
-
-Plots from left to right:
-
-- solution of the Eulerian model
-- solution of the Lagrangian model (with irreversible mixing)
-- pair or Lagrangian trajectories
-- pair or Lagrangian trajectories
-"""
-
-# ╔═╡ 082d6309-c7fe-4a90-94c0-e65336e43a3c
-md"""## Appendix
-
-Includes `Julia` packages and helper functions.
-"""
-
-# ╔═╡ 9670d192-f7cd-44e3-9beb-36d59d8626dc
-SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
-
 # ╔═╡ 32a692ab-4835-4943-8b46-8345ce881eb5
 begin
-	## mix between cells that are at the same level
+    ## Lagrangian Model
+
+    """
+        function mix_neighbors(za,ca,zb,cb,p)
+
+    Mix properties between cells that are within the same grid cell (`dz`).
+    """
 	function mix_neighbors(za,ca,zb,cb,p)
 	    dz=0.1
 	    for i0 in 1:10
@@ -95,9 +64,46 @@ begin
 	"Lagrangian model formulated"
 end
 
+# ╔═╡ 2195a7a4-30d6-47fe-92db-d7ebef67ef03
+begin
+	# initial conditions
+	np=10000
+	u₀a=0.5*rand(np)
+	ca=zeros(np)
+	u₀b=0.5 .+ 0.5*rand(np)
+	cb=ones(np)
+	"done with initialization"
+end
+
 # ╔═╡ fd2db517-2282-43da-a543-a1ef59a439c2
 # Main model run 	
 main_loop(p=0.1,nt=10)
+
+# ╔═╡ 96c9b046-6e40-44b1-a19c-b7061f22470d
+md"""## Eulerian Model
+
+For comparison, we apply vertical diffusion. Starting from a step function, the model integrates a diffusion equation in one dimension, `z`, with closed boundary at the top and bottom.
+"""
+
+# ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
+md"""## Summary
+
+Plots from left to right:
+
+- solution of the Eulerian model
+- solution of the Lagrangian model (with irreversible mixing)
+- pair or Lagrangian trajectories
+- pair or Lagrangian trajectories
+"""
+
+# ╔═╡ 082d6309-c7fe-4a90-94c0-e65336e43a3c
+md"""## Appendix
+
+Includes `Julia` packages and helper functions.
+"""
+
+# ╔═╡ 9670d192-f7cd-44e3-9beb-36d59d8626dc
+SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 
 # ╔═╡ c86cf1e9-d0b6-48e8-8a01-0dcc591afc85
 begin
@@ -147,13 +153,21 @@ begin
 		end
 		fig
 	end	
+
+    function plot_EulerianModel(T,T0)
+		kk=((1:length(T)).-0.5)./length(T)
+		zz=to_depth(kk)
+		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
+	    lines!(T0,zz); lines!(T,zz)
+	    return fig
+	end
 	
 	"Plotting functions"
 end
 
 # ╔═╡ d78532b9-b17e-4a4a-bbab-e249bf852eba
 begin
-	## Eulerian
+	## Eulerian Model
 	
 	function EulerianModel(nt=1)
 	    N=20
@@ -168,15 +182,7 @@ begin
 	    end
 	    return T,T0
 	end
-	
-	function plot_EulerianModel(T,T0)
-		kk=((1:length(T)).-0.5)./length(T)
-		zz=to_depth(kk)
-		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-	    lines!(T0,zz); lines!(T,zz)
-	    return fig
-	end
-	
+		
 	T,T0=EulerianModel(500);
 	f=plot_EulerianModel(T,T0)
 	
@@ -185,13 +191,10 @@ end
 
 # ╔═╡ 5ab5321a-15b9-11ec-3321-b7d7cab1ba35
 begin	
-	# Another run of the dispersion model just for plotting
-	u₀=u₀a
-	za=SDE.solve_paths(u₀)
+	# Another run of the dispersion model, just for plotting trajectories
+	za=SDE.solve_paths(u₀a)
 	SDE.fold_tails(za)
-	
-	u₀=u₀b
-	zb=SDE.solve_paths(u₀)
+    zb=SDE.solve_paths(u₀b)
 	SDE.fold_tails(zb)
 	fb=plot_paths(za,zb=zb)
 	
