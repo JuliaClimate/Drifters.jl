@@ -40,40 +40,6 @@ md"""## Eulerian Model
 For comparison, we apply vertical diffusion. Starting from a step function, the model integrates a diffusion equation in one dimension, `z`, with closed boundary at the top and bottom.
 """
 
-# ╔═╡ d78532b9-b17e-4a4a-bbab-e249bf852eba
-begin
-	## Eulerian
-	
-	function EulerianModel(nt=1)
-	    N=20
-	    dt=1e-4
-	    dx=1.0/2/N
-	    T=[zeros(N);ones(N)]
-	    T0=deepcopy(T)
-	    for tt in 1:nt
-	        dTr=(circshift(T,-1)-T); dTr[end]=0;
-	        dTl=(T-circshift(T,+1)); dTl[1]=0;
-	        T.+=(dTr-dTl)*dt/dx/dx
-	    end
-	    return T,T0
-	end
-	
-	function plot_EulerianModel(T,T0)
-		z=(1:length(T0)).-length(T0)
-		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-	    lines!(T0,z); lines!(T,z)
-	    return fig
-	end
-	
-	T,T0=EulerianModel(1000);
-	f=plot_EulerianModel(T,T0)
-	
-	"Eulerian Model Has Completed"
-end
-
-# ╔═╡ 9ef462b4-a99c-43e8-9fea-6ba63a1393eb
-f
-
 # ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
 md"""## Summary
 
@@ -139,11 +105,16 @@ begin
 
 	to_depth(z)=-10*z
 	
-	function plot_paths(z)
+	function plot_paths(z;zb=missing,dz=100,lw=0.5)
 		np=size(z,1)
+		pp=1:dz:np
 		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-		lines!(to_depth(z[1,:]))
-		np>1 ? lines!(to_depth(z[2,:])) : nothing
+#		[lines!(to_depth(z[p,:].-z[p,1]),color=:blue,linewidth=1) for p in pp]
+		[lines!(to_depth(z[p,:]),color=:blue,linewidth=lw) for p in pp]
+		if !ismissing(zb)
+			ax=Axis(fig[1,2])
+			[lines!(to_depth(zb[p,:]),color=:red,linewidth=lw) for p in pp]		
+		end
 		fig
 	end
 
@@ -162,16 +133,54 @@ begin
 		out
 	end
 
-	function plot_stats(st)
+	function plot_stats(st;T=missing)
 		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-		z=(1:size(st,1)).-size(st,1)
+		dz=0.1; k=[0+dz*(i0-1) for i0 in 1:10].+dz/2
+		z=to_depth(k)
 		lines!(st[:,1],z)#,ylim=(-0.1,1.1))
 		lines!(st[:,1].+st[:,2],z)
 		lines!(st[:,1].-st[:,2],z)
+		if !ismissing(T)
+			kk=((1:length(T)).-0.5)./length(T)
+			zz=to_depth(kk)
+			lines!(T,zz,color=:black,linestyle=:dash)
+		end
 		fig
 	end	
 	
 	"Plotting functions"
+end
+
+# ╔═╡ d78532b9-b17e-4a4a-bbab-e249bf852eba
+begin
+	## Eulerian
+	
+	function EulerianModel(nt=1)
+	    N=20
+	    dt=1e-4
+	    dx=1.0/2/N
+	    T=[zeros(N);ones(N)]
+	    T0=deepcopy(T)
+	    for tt in 1:nt
+	        dTr=(circshift(T,-1)-T); dTr[end]=0;
+	        dTl=(T-circshift(T,+1)); dTl[1]=0;
+	        T.+=(dTr-dTl)*dt/dx/dx
+	    end
+	    return T,T0
+	end
+	
+	function plot_EulerianModel(T,T0)
+		kk=((1:length(T)).-0.5)./length(T)
+		zz=to_depth(kk)
+		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
+	    lines!(T0,zz); lines!(T,zz)
+	    return fig
+	end
+	
+	T,T0=EulerianModel(500);
+	f=plot_EulerianModel(T,T0)
+	
+	"Eulerian Model Has Completed"
 end
 
 # ╔═╡ 5ab5321a-15b9-11ec-3321-b7d7cab1ba35
@@ -180,31 +189,30 @@ begin
 	u₀=u₀a
 	za=SDE.solve_paths(u₀)
 	SDE.fold_tails(za)
-	fa=plot_paths(za)
 	
 	u₀=u₀b
 	zb=SDE.solve_paths(u₀)
 	SDE.fold_tails(zb)
-	fb=plot_paths(zb)
+	fb=plot_paths(za,zb=zb)
 	
 	# Compute population statistics	
 	st=gridded_stats(u₀a,ca,u₀b,cb)
-	fs=plot_stats(st)	
+	fs=plot_stats(st,T=T)	
 	
-	"figures generated : fs, fa, fb"
+	"figures generated : fs, fb"
 end
 
 # ╔═╡ a66406d2-4533-4f39-80ab-9e1e7247ea2f
 fs
 
-# ╔═╡ b5095c28-f7b5-4701-bc3d-8276fe8c598d
-fa
-
 # ╔═╡ 2b58038f-5974-4b19-acce-2d8e8a99f2fe
 fb
 
+# ╔═╡ 9ef462b4-a99c-43e8-9fea-6ba63a1393eb
+f
+
 # ╔═╡ 1df22a2f-c344-4d71-b44d-9a821c14e548
-(f,fs,fa,fb)
+(f,fs,fb)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -3315,11 +3323,10 @@ version = "4.1.0+0"
 # ╟─fd2db517-2282-43da-a543-a1ef59a439c2
 # ╟─5ab5321a-15b9-11ec-3321-b7d7cab1ba35
 # ╠═a66406d2-4533-4f39-80ab-9e1e7247ea2f
-# ╠═b5095c28-f7b5-4701-bc3d-8276fe8c598d
 # ╠═2b58038f-5974-4b19-acce-2d8e8a99f2fe
 # ╟─96c9b046-6e40-44b1-a19c-b7061f22470d
 # ╟─d78532b9-b17e-4a4a-bbab-e249bf852eba
-# ╠═9ef462b4-a99c-43e8-9fea-6ba63a1393eb
+# ╟─9ef462b4-a99c-43e8-9fea-6ba63a1393eb
 # ╟─aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
 # ╠═1df22a2f-c344-4d71-b44d-9a821c14e548
 # ╟─082d6309-c7fe-4a90-94c0-e65336e43a3c
