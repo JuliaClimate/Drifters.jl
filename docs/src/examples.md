@@ -58,6 +58,7 @@ See the `User Guide` section.
 
 ## Additional Examples
 
+- StochasticDiffEq : [notebook (html)](StochasticDiffEq.html) ➭ [notebook (code)](https://github.com/JuliaClimate/Drifters.jl/blob/master/examples/basics/StochasticDiffEq.jl)
 - Interactivity : [notebook (html)](interactive_UI.html) ➭ [notebook (code)](https://github.com/JuliaClimate/Drifters.jl/blob/master/examples/worldwide/interactive_UI.jl)
 - Atmosphere : [notebook (html)](https://gaelforget.github.io/MITgcm.jl/dev/examples/HS94_particles.html) ➭ [notebook (code)](https://raw.githubusercontent.com/gaelforget/MITgcm.jl/master/examples/HS94_particles.jl)
 - MITgcm : [Particle cloud](../particle_cloud/index.html), [Detailed look](../detailed_look/index.html) 
