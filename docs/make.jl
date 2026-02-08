@@ -56,9 +56,9 @@ pth_in = joinpath(@__DIR__, "..","examples")
 pth_out = joinpath(@__DIR__, "build","examples")
 lst=("global_ocean_circulation.jl","three_dimensional_ocean.jl",
      "solid_body_rotation.jl","random_flow_field.jl",
-     "interactive_UI.jl","Oscar_model.jl")
-subpth=("worldwide","worldwide","basics","basics","worldwide","worldwide")
-for ii in 1:length(lst)
+     "interactive_UI.jl","Oscar_model.jl","StochasticDiffEq.jl")
+subpth=("worldwide","worldwide","basics","basics","worldwide","worldwide","basics")
+for ii in length(lst):length(lst)
     fil_in=joinpath(pth_in,subpth[ii],lst[ii])
     fil_out=joinpath(pth_out,lst[ii][1:end-2]*"html")
     PlutoSliderServer.export_notebook(fil_in)
