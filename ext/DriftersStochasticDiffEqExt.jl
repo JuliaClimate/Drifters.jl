@@ -2,6 +2,7 @@ module DriftersStochasticDiffEqExt
 
 import StochasticDiffEq, Drifters
 import StochasticDiffEq: EnsembleProblem, SDEProblem, EM, solve, stack
+import Drifters: _SDEProblem
 
 notes()=println("""
 - For now : `step!(u₀)` is the sequence of `solve_paths` and `fold_tails`.
@@ -53,15 +54,16 @@ function fold_tails(z)
 end
 
 """
-    set_prob(f,g,u₀,tspan)=SDEProblem(f,g,u₀,tspan)
+    _SDEProblem(f::Function,g::Vector,u₀,tspan)
+    
+Calls `StochasticDiffEq.SDEProblem(f,g,u₀,tspan)``
 
 ```
 using Drifters, StochasticDiffEq
-SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
-?SDE.set_prob
+?Drifters._SDEProblem
 ```
 """
-set_prob(f,g,u₀,tspan)=SDEProblem(f,g,u₀,tspan)
+_SDEProblem(f::Function,g::Vector,u₀,tspan)=SDEProblem(f,g,u₀,tspan)
 
 """
     solve_prob(prob,dt=dt)=solve(prob,EM(),dt=dt)

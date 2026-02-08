@@ -6,6 +6,22 @@ import NetCDF, CSV
 function data_path end
 function read_data_ECCO end
 
+"""
+    _SDEProblem(a,b,c,d)
+    
+Placeholder for the `StochasticDiffEq` extension, which
+calls `StochasticDiffEq.SDEProblem(f,g,u₀,tspan)`.
+
+```
+using Drifters, StochasticDiffEq
+?Drifters._SDEProblem
+```
+"""
+function _SDEProblem(a,b,c,d)
+    @warn "requires using StochasticDiffEq"
+    error("Placeholder function for _SDEProblem should not be used")
+end
+
 include("API.jl")
 include("compute.jl")
 include("data_wrangling.jl")
