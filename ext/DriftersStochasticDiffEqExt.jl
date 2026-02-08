@@ -2,11 +2,11 @@ module DriftersStochasticDiffEqExt
 
 import StochasticDiffEq, Drifters
 import StochasticDiffEq: EnsembleProblem, SDEProblem, EM, solve, stack
-import Drifters: _SDEProblem
+import Drifters: _SDEProblem, default_solver, ensemble_solver
 
 notes()=println("""
 - For now : `step!(u₀)` is the sequence of `solve_paths` and `fold_tails`.
-- For deeper integration into Drifters, these will need to overloaded.
+- For deeper integration into Drifters (WIP), we need `_SDEProblem`, `default_solver`, `ensemble_solver`.
 
 ```
 function ∫!(I::Individuals,T::Tuple)
@@ -74,7 +74,13 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 ?SDE.solve_prob
 ```
 """
-solve_prob(prob,dt=dt)=solve(prob,EM(),dt=dt)
+default_solver(prob::SDEProblem) = error("yet to be implemented")
+#solve(prob,EM(),dt=dt)
+
+function ensemble_solver(prob::SDEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8,safetycopy=false)
+    error("yet to be implemented")
+end
+
 
 end
 

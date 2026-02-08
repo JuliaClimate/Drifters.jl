@@ -19,9 +19,17 @@ using Drifters, StochasticDiffEq
 """
 function _SDEProblem(a,b,c,d)
     @warn "requires using StochasticDiffEq"
-    error("Placeholder function for _SDEProblem should not be used")
+    error("Placeholder for _SDEProblem should never be used")
 end
 
+function default_solver(prob)
+    error("Placeholder for default_solver should never be used")
+end
+
+function ensemble_solver(prob;kwargs...)
+    error("Placeholder for ensemble_solver should never be used")
+end
+    
 include("API.jl")
 include("compute.jl")
 include("data_wrangling.jl")
