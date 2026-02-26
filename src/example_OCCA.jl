@@ -62,7 +62,7 @@ function setup(;backward_in_time::Bool=false,nmax=Inf)
    pth=data_path(:OCCA)
   
    u=s*read(read_data("u",pth,n),MeshArray(γ,Float32,n))
-   v=s*read(read_data("u",pth,n),MeshArray(γ,Float32,n))
+   v=s*read(read_data("v",pth,n),MeshArray(γ,Float32,n))
 
    w=s*read_data("w",pth,n)
    w=-cat(w,zeros(360, 160),dims=3)
