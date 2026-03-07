@@ -230,15 +230,15 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::AbstractFloat)
     P.v0[:,:]=Float32.(v0[:,:])
     P.v1[:,:]=Float32.(v1[:,:])
     for k=1:nr
-        tmpw=exchange(-w0[:,k]).MA
+        tmpw=MeshArrays.exchange_main(-w0[:,k]).MA
         P.w0[:,k]=Float32.(tmpw./D.Γ.DRC[k])
-        tmpw=exchange(-w1[:,k]).MA
+        tmpw=MeshArrays.exchange_main(-w1[:,k]).MA
         P.w1[:,k]=Float32.(tmpw./D.Γ.DRC[k])
     end
-    P.w0[:,1]=0*exchange(-w0[:,1]).MA
-    P.w1[:,1]=0*exchange(-w1[:,1]).MA
-    P.w0[:,nr+1]=0*exchange(-w0[:,1]).MA
-    P.w1[:,nr+1]=0*exchange(-w1[:,1]).MA
+    P.w0[:,1]=0*MeshArrays.exchange_main(-w0[:,1]).MA
+    P.w1[:,1]=0*MeshArrays.exchange_main(-w1[:,1]).MA
+    P.w0[:,nr+1]=0*MeshArrays.exchange_main(-w0[:,1]).MA
+    P.w1[:,nr+1]=0*MeshArrays.exchange_main(-w1[:,1]).MA
 
     θ0=read_data_ECCO(m0,"THETA",joinpath(D.pth,"THETA"),P.u0.grid,:)
     θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
