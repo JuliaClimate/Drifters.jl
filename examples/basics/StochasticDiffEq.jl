@@ -23,6 +23,43 @@ Starting from a step-like distribution of two particle groups over the `z=(0,1)`
 _Credits: the presented model is a simplified version of the `aquacosm` model from Paparella & Vichi M (2020) Stirring, Mixing, Growing: Microscale Processes Change Larger Scale Phytoplankton Dynamics. doi: 10.3389/fmars.2020.00654_
 """
 
+# ╔═╡ 2195a7a4-30d6-47fe-92db-d7ebef67ef03
+begin
+	# initial conditions
+	np=10000
+	u₀a=0.5*rand(np)
+	ca=zeros(np)
+	u₀b=0.5 .+ 0.5*rand(np)
+	cb=ones(np)
+	"done with initialization"
+end
+
+# ╔═╡ 96c9b046-6e40-44b1-a19c-b7061f22470d
+md"""## Eulerian Model
+
+For comparison, we apply vertical diffusion. Starting from a step function, the model integrates a diffusion equation in one dimension, `z`, with closed boundary at the top and bottom.
+"""
+
+# ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
+md"""## Summary
+
+Plots from left to right:
+
+- solution of the Eulerian model
+- solution of the Lagrangian model (with irreversible mixing)
+- pair or Lagrangian trajectories
+- pair or Lagrangian trajectories
+"""
+
+# ╔═╡ 082d6309-c7fe-4a90-94c0-e65336e43a3c
+md"""## Appendix
+
+Includes `Julia` packages and helper functions.
+"""
+
+# ╔═╡ 9670d192-f7cd-44e3-9beb-36d59d8626dc
+SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
+
 # ╔═╡ 32a692ab-4835-4943-8b46-8345ce881eb5
 begin
     ## Lagrangian Model
@@ -64,46 +101,9 @@ begin
 	"Lagrangian model formulated"
 end
 
-# ╔═╡ 2195a7a4-30d6-47fe-92db-d7ebef67ef03
-begin
-	# initial conditions
-	np=10000
-	u₀a=0.5*rand(np)
-	ca=zeros(np)
-	u₀b=0.5 .+ 0.5*rand(np)
-	cb=ones(np)
-	"done with initialization"
-end
-
 # ╔═╡ fd2db517-2282-43da-a543-a1ef59a439c2
 # Main model run 	
 main_loop(p=0.1,nt=10)
-
-# ╔═╡ 96c9b046-6e40-44b1-a19c-b7061f22470d
-md"""## Eulerian Model
-
-For comparison, we apply vertical diffusion. Starting from a step function, the model integrates a diffusion equation in one dimension, `z`, with closed boundary at the top and bottom.
-"""
-
-# ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
-md"""## Summary
-
-Plots from left to right:
-
-- solution of the Eulerian model
-- solution of the Lagrangian model (with irreversible mixing)
-- pair or Lagrangian trajectories
-- pair or Lagrangian trajectories
-"""
-
-# ╔═╡ 082d6309-c7fe-4a90-94c0-e65336e43a3c
-md"""## Appendix
-
-Includes `Julia` packages and helper functions.
-"""
-
-# ╔═╡ 9670d192-f7cd-44e3-9beb-36d59d8626dc
-SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 
 # ╔═╡ c86cf1e9-d0b6-48e8-8a01-0dcc591afc85
 begin

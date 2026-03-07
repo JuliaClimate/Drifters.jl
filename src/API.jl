@@ -187,12 +187,13 @@ end
     defaults for Individuals constructor
 """
 
-default_solver(prob) = solve(prob,Tsit5(),reltol=1e-8,abstol=1e-8)
+default_solver(prob::ODEProblem) = solve(prob,Tsit5(),reltol=1e-8,abstol=1e-8)
 
-function ensemble_solver(prob;solver=Tsit5(),reltol=1e-8,abstol=1e-8,safetycopy=false)
+function ensemble_solver(prob::ODEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8,safetycopy=false)
 	u0 = prob.u0
 	prob_func(prob,i,repeat) = remake(prob,u0=u0[i])
 	indiv_prob = ODEProblem(prob.f,u0[1],prob.tspan,prob.p)
+#	indiv_prob = _SDEProblem(prob.f,u0[1],prob.tspan,prob.p)
 	ensemble_prob = EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=safetycopy)
 	solve(ensemble_prob, solver, reltol=reltol, abstol=abstol, trajectories=length(u0))
 end
@@ -414,6 +415,7 @@ function ∫!(I::Individuals,T::Tuple)
     (; 🚄,📌,P, D, 🔧, 🆔, 🔴, ∫) = I
 
     prob = ODEProblem(🚄,📌, T ,P)
+#    prob = _SDEProblem(🚄,📌, T ,P)
     sol = ∫(prob)
 
     tmp = 🔧(sol,P,D, id=🆔, T=T)
