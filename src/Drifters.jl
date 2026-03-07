@@ -41,6 +41,7 @@ include("example_ECCO.jl")
 include("example_OCCA.jl")
 include("example_GOM.jl")
 include("example_Oscar.jl")
+include("example_SDE.jl")
 
 export Individuals, ∫!, solve!, DataFrame, groupby
 export FlowFields, convert_to_FlowFields, to_C_grid!
