@@ -63,7 +63,7 @@ begin
 	fb=MK.plot_paths(za=tmp.za,zb=tmp.zb)
 	
 	# Compute population statistics	
-	st=ex_SDE.gridded_stats(IC,tmp.za,tmp.zb)
+	st=ex_SDE.gridded_stats(tmp.za,tmp.zb)
 	fs=MK.plot_stats(st,T=T)	
 	
 	"figures generated : fs, fb"
@@ -778,7 +778,7 @@ version = "1.6.0"
 
 [[deps.Drifters]]
 deps = ["CSV", "CyclicArrays", "DataDeps", "DataFrames", "Dataverse", "Glob", "JLD2", "MeshArrays", "NetCDF", "OrdinaryDiffEq", "Random", "Statistics"]
-path = "/Users/gaelforget/work/code/julia_pkg/Drifters.jl"
+git-tree-sha1 = "0ec06fe222889e7998aedab0ac55a28fd76f86b0"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
 version = "0.6.12"
 
