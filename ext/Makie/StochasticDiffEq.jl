@@ -5,11 +5,11 @@ begin
 	to_depth(z)=-10*z
 	
 	function plot_paths(;za=missing,zb=missing,dz=100,lw=0.5)
-		np=size(z,1)
+		np=size(za,1)
 		pp=1:dz:np
 		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-#		[lines!(to_depth(z[p,:].-z[p,1]),color=:blue,linewidth=1) for p in pp]
-		[lines!(to_depth(z[p,:]),color=:blue,linewidth=lw) for p in pp]
+#		[lines!(to_depth(za[p,:].-za[p,1]),color=:blue,linewidth=1) for p in pp]
+		[lines!(to_depth(za[p,:]),color=:blue,linewidth=lw) for p in pp]
 		if !ismissing(zb)
 			ax=Axis(fig[1,2])
 			[lines!(to_depth(zb[p,:]),color=:red,linewidth=lw) for p in pp]		

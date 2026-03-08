@@ -33,7 +33,8 @@ function mix_neighbors(za,ca,zb,cb,p)
     end
 end
 
-function gridded_stats(za,ca,zb,cb)
+function gridded_stats(IC::NamedTuple)
+    (; u₀a,u₀b,ca,cb,np) = IC
     out=zeros(10,2)
     dz=0.1
     t=size(za,2)
