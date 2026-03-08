@@ -6,6 +6,30 @@ import NetCDF, CSV
 function data_path end
 function read_data_ECCO end
 
+"""
+    _SDEProblem(a,b,c,d)
+    
+Placeholder for the `StochasticDiffEq` extension, which
+calls `StochasticDiffEq.SDEProblem(f,g,u₀,tspan)`.
+
+```
+using Drifters, StochasticDiffEq
+?Drifters._SDEProblem
+```
+"""
+function _SDEProblem(a,b,c,d)
+    @warn "requires using StochasticDiffEq"
+    error("Placeholder for _SDEProblem should never be used")
+end
+
+function default_solver(prob)
+    error("Placeholder for default_solver should never be used")
+end
+
+function ensemble_solver(prob;kwargs...)
+    error("Placeholder for ensemble_solver should never be used")
+end
+    
 include("API.jl")
 include("compute.jl")
 include("data_wrangling.jl")
@@ -17,6 +41,7 @@ include("example_ECCO.jl")
 include("example_OCCA.jl")
 include("example_GOM.jl")
 include("example_Oscar.jl")
+include("example_SDE.jl")
 
 export Individuals, ∫!, solve!, DataFrame, groupby
 export FlowFields, convert_to_FlowFields, to_C_grid!

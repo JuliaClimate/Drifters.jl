@@ -2,10 +2,11 @@ module DriftersStochasticDiffEqExt
 
 import StochasticDiffEq, Drifters
 import StochasticDiffEq: EnsembleProblem, SDEProblem, EM, solve, stack
+import Drifters: _SDEProblem, default_solver, ensemble_solver, ex_SDE
 
 notes()=println("""
 - For now : `step!(u₀)` is the sequence of `solve_paths` and `fold_tails`.
-- For deeper integration into Drifters, these will need to overloaded.
+- For deeper integration into Drifters (WIP), we need `_SDEProblem`, `default_solver`, `ensemble_solver`.
 
 ```
 function ∫!(I::Individuals,T::Tuple)
@@ -16,6 +17,25 @@ indiv_prob = ODEProblem(prob.f,u0[1],prob.tspan,prob.p)
 ensemble_prob = EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=safetycopy)
 ```
 """)
+
+"""
+    main_loop(IC;p=0.5,nt=5)
+
+```
+IC is a NamedTuple providing u₀a,u₀b,ca,cb,np
+p=0.5 # fraction of mass exchanged with neighbors every time step
+nt=5 # number of time steps
+```
+"""
+function main_loop(IC;p=0.5,nt=5)
+    (; u₀a,u₀b,ca,cb,np) = IC
+    for tt in 1:nt
+        step!(u₀a)
+        step!(u₀b)
+        ex_SDE.mix_neighbors(u₀a,ca,u₀b,cb,p)
+    end
+    return "done with model run"
+end
 
 """
     step!(u₀)
@@ -30,7 +50,7 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 """
 function step!(u₀)
     za=solve_paths(u₀)
-    fold_tails(za)
+    ex_SDE.fold_tails(za)
     u₀[:]=za[:,end]
 end
 
@@ -45,23 +65,26 @@ function solve_paths(u₀)
     stack(sol(0:0.01:1))
 end
 
-function fold_tails(z)
-    while !isempty(findall( xor.(z.>1.0,z.<0.0) ))
-        z[findall(z.<0.0)].=-z[findall(z.<0.0)]
-        z[findall(z.>1.0)].=(2.0 .- z[findall(z.>1.0)])
-    end
+function demo_paths(IC::NamedTuple)
+    (; u₀a,u₀b,ca,cb,np) = IC
+    za=solve_paths(u₀a)
+    ex_SDE.fold_tails(za)
+    zb=solve_paths(u₀b)
+    ex_SDE.fold_tails(zb)
+    (za=za,zb=zb)
 end
 
 """
-    set_prob(f,g,u₀,tspan)=SDEProblem(f,g,u₀,tspan)
+    _SDEProblem(f::Function,g::Vector,u₀,tspan)
+    
+Calls `StochasticDiffEq.SDEProblem(f,g,u₀,tspan)``
 
 ```
 using Drifters, StochasticDiffEq
-SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
-?SDE.set_prob
+?Drifters._SDEProblem
 ```
 """
-set_prob(f,g,u₀,tspan)=SDEProblem(f,g,u₀,tspan)
+_SDEProblem(f::Function,g::Vector,u₀,tspan)=SDEProblem(f,g,u₀,tspan)
 
 """
     solve_prob(prob,dt=dt)=solve(prob,EM(),dt=dt)
@@ -72,7 +95,12 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 ?SDE.solve_prob
 ```
 """
-solve_prob(prob,dt=dt)=solve(prob,EM(),dt=dt)
+default_solver(prob::SDEProblem) = error("yet to be implemented")
+#solve(prob,EM(),dt=dt)
+
+function ensemble_solver(prob::SDEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8,safetycopy=false)
+    error("yet to be implemented")
+end
 
 end
 

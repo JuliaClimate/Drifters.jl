@@ -15,12 +15,26 @@ MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LLC90))
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
 
 @testset "SDE" begin
-	np=100
-	u₀a=0.5*rand(np)
-	ca=zeros(np)
+    import Drifters: ex_SDE
     SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
-    SDE.step!(u₀a)
-    @test isa(u₀a,Vector)
+    MK = Base.get_extension(Drifters, :DriftersMakieExt)
+
+    IC=ex_SDE.initial_conditions(100)
+    SDE.main_loop(IC,p=0.1,nt=2)
+
+    # Another run of the dispersion model, just for plotting trajectories
+    tmp=SDE.demo_paths(IC)
+	fb=MK.plot_paths(za=tmp.za,zb=tmp.zb)
+	
+    # Eulerian model for comparison
+    T,T0=ex_SDE.EulerianModel(10);
+	f=MK.plot_EulerianModel(T,T0)
+
+    # Compute population statistics	
+	st=ex_SDE.gridded_stats(IC)
+	fs=MK.plot_stats(st,T=T)	
+
+    @test isa(IC.u₀a,Vector)
 end
 
 @testset "Oscar" begin
