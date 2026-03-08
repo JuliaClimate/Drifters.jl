@@ -63,7 +63,7 @@ begin
 	fb=MK.plot_paths(za=tmp.za,zb=tmp.zb)
 	
 	# Compute population statistics	
-	st=ex_SDE.gridded_stats(tmp.za,tmp.zb)
+	st=ex_SDE.gridded_stats(IC)
 	fs=MK.plot_stats(st,T=T)	
 	
 	"figures generated : fs, fb"
@@ -115,7 +115,6 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 
 [compat]
 CairoMakie = "~0.15.8"
-Drifters = "~0.6.11"
 PlutoUI = "~0.7.79"
 """
 
@@ -125,7 +124,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "4e7076b86549d4f69c5c6633f0a6faeb95c4cd0f"
+project_hash = "f05e73d7055290767e51c0d6bd5018ed8f00369c"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
