@@ -60,10 +60,10 @@ end
 begin	
 	# Another run of the dispersion model, just for plotting trajectories
     tmp=SDE.demo_paths(IC)
-	fb=MK.plot_paths(tmp.za,zb=tmp.zb)
+	fb=MK.plot_paths(za=tmp.za,zb=tmp.zb)
 	
 	# Compute population statistics	
-	st=ex_SDE.gridded_stats(IC.u₀a,IC.ca,IC.u₀b,IC.cb)
+	st=ex_SDE.gridded_stats(IC,tmp.za,tmp.zb)
 	fs=MK.plot_stats(st,T=T)	
 	
 	"figures generated : fs, fb"

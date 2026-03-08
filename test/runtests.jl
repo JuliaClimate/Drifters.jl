@@ -31,7 +31,7 @@ MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
 	f=MK.plot_EulerianModel(T,T0)
 
     # Compute population statistics	
-	st=ex_SDE.gridded_stats(IC)
+	st=ex_SDE.gridded_stats(tmp.za,tmp.zb)
 	fs=MK.plot_stats(st,T=T)	
 
     @test isa(IC.u₀a,Vector)

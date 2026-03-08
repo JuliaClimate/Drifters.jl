@@ -33,8 +33,7 @@ function mix_neighbors(za,ca,zb,cb,p)
     end
 end
 
-function gridded_stats(IC::NamedTuple)
-    (; u₀a,u₀b,ca,cb,np) = IC
+function gridded_stats(za,zb)
     out=zeros(10,2)
     dz=0.1
     t=size(za,2)
@@ -42,7 +41,7 @@ function gridded_stats(IC::NamedTuple)
         z0=0+dz*(i0-1)
         ia=findall( (za[:,t].>z0).*(za[:,t].<=z0+dz) );
         ib=findall( (zb[:,t].>z0).*(zb[:,t].<=z0+dz) );
-        tmp=[ca[ia,t];cb[ib,t]]
+        tmp=[za[ia,t];zb[ib,t]]
         out[i0,1]=mean(tmp)
         out[i0,2]=std(tmp)
     end
