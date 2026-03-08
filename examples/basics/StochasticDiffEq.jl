@@ -58,17 +58,12 @@ end
 
 # ╔═╡ 5ab5321a-15b9-11ec-3321-b7d7cab1ba35
 begin	
-    (; u₀a,u₀b,ca,cb,np) = IC
-
 	# Another run of the dispersion model, just for plotting trajectories
-	za=SDE.solve_paths(u₀a)
-	ex_SDE.fold_tails(za)
-    zb=SDE.solve_paths(u₀b)
-	ex_SDE.fold_tails(zb)
-	fb=MK.plot_paths(za,zb=zb)
+    tmp=SDE.demo_paths(IC)
+	fb=MK.plot_paths(tmp.za,zb=tmp.zb)
 	
 	# Compute population statistics	
-	st=ex_SDE.gridded_stats(u₀a,ca,u₀b,cb)
+	st=ex_SDE.gridded_stats(IC.u₀a,IC.ca,IC.u₀b,IC.cb)
 	fs=MK.plot_stats(st,T=T)	
 	
 	"figures generated : fs, fb"

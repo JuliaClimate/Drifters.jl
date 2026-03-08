@@ -65,6 +65,15 @@ function solve_paths(u₀)
     stack(sol(0:0.01:1))
 end
 
+function demo_paths(IC::NamedTuple)
+    (; u₀a,u₀b,ca,cb,np) = IC
+    za=solve_paths(u₀a)
+    ex_SDE.fold_tails(za)
+    zb=solve_paths(u₀b)
+    ex_SDE.fold_tails(zb)
+    (za=za,zb=zb)
+end
+
 """
     _SDEProblem(f::Function,g::Vector,u₀,tspan)
     

@@ -4,7 +4,7 @@ begin
 
 	to_depth(z)=-10*z
 	
-	function plot_paths(z;zb=missing,dz=100,lw=0.5)
+	function plot_paths(;za=missing,zb=missing,dz=100,lw=0.5)
 		np=size(z,1)
 		pp=1:dz:np
 		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])

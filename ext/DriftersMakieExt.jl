@@ -29,9 +29,9 @@ module DriftersMakieExt
 
 ##
 
-include("DriftersMakieExt_examples/StochasticDiffEq.jl")
-include("DriftersMakieExt_examples/simple.jl")
-include("DriftersMakieExt_examples/global.jl")
-include("DriftersMakieExt_examples/jcon_paper.jl")
+include("Makie/StochasticDiffEq.jl")
+include("Makie/simple.jl")
+include("Makie/global.jl")
+include("Makie/jcon_paper.jl")
 
 end
