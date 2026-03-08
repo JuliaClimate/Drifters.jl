@@ -2,7 +2,7 @@ module DriftersStochasticDiffEqExt
 
 import StochasticDiffEq, Drifters
 import StochasticDiffEq: EnsembleProblem, SDEProblem, EM, solve, stack
-import Drifters: _SDEProblem, default_solver, ensemble_solver, SDE_example
+import Drifters: _SDEProblem, default_solver, ensemble_solver, ex_SDE
 
 notes()=println("""
 - For now : `step!(u₀)` is the sequence of `solve_paths` and `fold_tails`.
@@ -19,6 +19,25 @@ ensemble_prob = EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=safety
 """)
 
 """
+    main_loop(IC;p=0.5,nt=5)
+
+```
+IC is a NamedTuple providing u₀a,u₀b,ca,cb,np
+p=0.5 # fraction of mass exchanged with neighbors every time step
+nt=5 # number of time steps
+```
+"""
+function main_loop(IC;p=0.5,nt=5)
+    (; u₀a,u₀b,ca,cb,np) = IC
+    for tt in 1:nt
+        step!(u₀a)
+        step!(u₀b)
+        ex_SDE.mix_neighbors(u₀a,ca,u₀b,cb,p)
+    end
+    return "done with model run"
+end
+
+"""
     step!(u₀)
 
 Sequence of `solve_paths` and `fold_tails`.
@@ -31,7 +50,7 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 """
 function step!(u₀)
     za=solve_paths(u₀)
-    SDE_example.fold_tails(za)
+    ex_SDE.fold_tails(za)
     u₀[:]=za[:,end]
 end
 
