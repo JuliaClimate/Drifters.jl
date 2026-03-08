@@ -104,6 +104,7 @@ Includes `Julia` packages and helper functions.
 # ╔═╡ c86cf1e9-d0b6-48e8-8a01-0dcc591afc85
 
 
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -777,7 +778,7 @@ version = "1.6.0"
 
 [[deps.Drifters]]
 deps = ["CSV", "CyclicArrays", "DataDeps", "DataFrames", "Dataverse", "Glob", "JLD2", "MeshArrays", "NetCDF", "OrdinaryDiffEq", "Random", "Statistics"]
-git-tree-sha1 = "0ec06fe222889e7998aedab0ac55a28fd76f86b0"
+git-tree-sha1 = "dca7ed6a55e792c6cfd374e7ce6aa315c21aae1a"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
 version = "0.6.12"
 
