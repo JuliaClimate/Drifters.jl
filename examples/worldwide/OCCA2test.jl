@@ -2,9 +2,9 @@
 """
 using Pkg; Pkg.activate("/Users/yysong/Documents/julia/Julia_Project_Lagrangian/")
 using Drifters, MeshArrays, Climatology, MAT, CSV
-include("examples/worldwide/OCCA2_yysong.jl")
-using Main.OCCA2_yysong
-include("examples/worldwide/OCCA2test_yysong.jl")
+include("examples/worldwide/example_OCCA2.jl")
+using Main.example_OCCA2
+include("examples/worldwide/OCCA2test.jl")
 out_path=joinpath("/Users/yysong/Desktop/data/ENSO/Lagrangian/Tropical_1998Jan_backward/")
 !ispath(out_path) ? mkdir(out_path) : nothing
 kk=1
@@ -31,7 +31,7 @@ np_0=30000
 ny=2 #number of years
 nm=12 #number of months
 
-P,D=Main.OCCA2_yysong.init_FlowFields(k=k,t=t,backward_time=backward_time)
+P,D=Main.example_OCCA2.init_FlowFields(k=k,t=t,backward_time=backward_time)
 
 #----------------- mask df -----------------------------------------------#
 
