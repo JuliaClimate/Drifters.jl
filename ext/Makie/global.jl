@@ -13,7 +13,7 @@ function background()
 end
 
 """
-    global_plot1(I::Individuals)
+    global_plot1_yys(🔴::DataFrame)
 
 Plot initial and final positions, superimposed on a globalmap of ocean depth log.
 
@@ -21,7 +21,7 @@ Plot initial and final positions, superimposed on a globalmap of ocean depth log
 using Drifters, GLMakie
 include("worldwide/global_ocean_circulation.jl")
 
-x=DriftersDataset( data=(I=𝐼,df=tmp_🔴,), options=(plot_type=:global_plot1,) )
+x=DriftersDataset( data=(I=𝐼,df=tmp_🔴,), options=(plot_type=:global_plot1_yys,) )
 fig,tt=plot(x)
 fig
 
@@ -31,34 +31,38 @@ record(fig, file_output_mp4, -50:nt, framerate = 25) do t
 end
 ```
 """
-function global_plot1(I::Individuals,🔴::DataFrame;
+function global_plot1(🔴::DataFrame;
 	time=0,xlims=(0.0,360.0),ylims=(-80.0,90.0),
     colormap=:linear_wcmr_100_45_c42_n256,
 	colorrange=(-1300,00),add_colorbar=false)
 
     fig,ax=background()
 
-    np=Int(maximum(🔴.ID))
+    sort!(🔴, [:t, :ID])
+    🔴 = unique(🔴, [:t, :ID])
+
     nt=length(unique(🔴.t))
-    ii=1:min(10000,np)
-
-    tmp1=🔴[np*0 .+ ii,:lon].!==🔴[np*(nt-1) .+ ii,:lon]
-    tmp2=🔴[np*0 .+ ii,:lat].!==🔴[np*(nt-1) .+ ii,:lat]
-    jj=ii[findall(tmp1.*tmp2)] 
-
     🔴_by_t=groupby(🔴, :t)
+    all_ids = Int.(🔴_by_t[1].ID)
+    np=length(all_ids)
+	ii= np <= 10000 ? collect(1:np) : sort(randperm(np)[1:10000])
+    rows_ii = ii
+    tmp1=🔴_by_t[1][rows_ii,:lon].!==🔴_by_t[nt][rows_ii,:lon]
+    tmp2=🔴_by_t[1][rows_ii,:lat].!==🔴_by_t[nt][rows_ii,:lat]
+    jj_rows=rows_ii[findall(tmp1.*tmp2)]
+
     time==0 ? tt=Observable(nt) : tt=Observable(time)    
     for tx in -12:0 
         ttt=@lift(max(1,$tt+tx))
-        lon_tt=@lift(lon360.(🔴_by_t[$ttt][jj,:lon]))
-        lat_tt=@lift(🔴_by_t[$ttt][jj,:lat])
-        d_tt=@lift(max.(🔴_by_t[$ttt][jj,:d],Ref(-1200)))
+        lon_tt=@lift(lon360.(🔴_by_t[$ttt][jj_rows,:lon]))
+        lat_tt=@lift(🔴_by_t[$ttt][jj_rows,:lat])
+        d_tt=@lift(max.(🔴_by_t[$ttt][jj_rows,:d],Ref(-1200)))
         scatter!(ax,lon_tt,lat_tt,markersize=4.0,
         color=d_tt,colorrange=colorrange,colormap=colormap)
     end
 
-    lon_t1=🔴_by_t[1][jj,:lon]
-    lat_t1=🔴_by_t[1][jj,:lat]
+    lon_t1=lon360.(🔴_by_t[1][jj_rows,:lon])
+    lat_t1=🔴_by_t[1][jj_rows,:lat]
     scatter!(ax,lon_t1,lat_t1,markersize=1.0,color=:lightblue)
 
     limits!(ax,xlims...,ylims...)
