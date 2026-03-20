@@ -1,6 +1,8 @@
 
 ## Flow field parameters
 
+using Dates
+
 """
     abstract type FlowFields
 
@@ -39,7 +41,7 @@ struct uvArrays{Ty} <: FlowFields
     u1::Array{Ty,2}
     v0::Array{Ty,2}
     v1::Array{Ty,2}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
 end
 
 function FlowFields(u0::Array{Ty,2},u1::Array{Ty,2},
@@ -60,7 +62,7 @@ struct uvwArrays{Ty} <: FlowFields
     v1::Array{Ty,3}
     w0::Array{Ty,3}
     w1::Array{Ty,3}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
 end
 
 """
@@ -142,7 +144,7 @@ struct uvMeshArrays{Ty} <: FlowFields
     u1::AbstractMeshArray{Ty,1}
     v0::AbstractMeshArray{Ty,1}
     v1::AbstractMeshArray{Ty,1}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
     update_location!::Function
 end
 
@@ -165,7 +167,7 @@ struct uvwMeshArrays{Ty} <: FlowFields
     v1::AbstractMeshArray{Ty,2}
     w0::AbstractMeshArray{Ty,2}
     w1::AbstractMeshArray{Ty,2}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
     update_location!::Function
 end
 
