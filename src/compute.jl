@@ -112,7 +112,7 @@ Interpolate velocity from gridded fields (2D; with halos) to position `u`
 ```jldoctest; output = false
 using Drifters
 u,v,w,pos,func=random_flow_field(format=:MeshArray)
-F=FlowFields(u,u,v,v,[0,1.0],func)
+F=FlowFields(u.MA,u.MA,v.MA,v.MA,[0,1.0],func)
 I=Individuals(F,pos...)
 ∫!(I)
 
