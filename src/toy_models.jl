@@ -74,17 +74,16 @@ F=FlowFields(u,u,v,v,[0,1.0])
 I=Individuals(F,pos...)
 solve!(I)
 
-#MeshArray example
-(u,v,ϕ,pos,func)=random_flow_field(component=:rotational,format=:MeshArray)
-    #G=uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,[0.0,1.0],func)
-G=FlowFields(u.MA,u.MA,v.MA,v.MA,[0.0,1.0],func)
-J=Individuals(G,pos[1],pos[2],fill(1,length(pos[1])))
-solve!(J)
-
-(u,v,ϕ,pos)=random_flow_field(component=:rotational)
+#MeshArray via convert_to_FlowFields
 G=convert_to_FlowFields(u,v,1.0)
 J=Individuals(G,pos[1],pos[2],fill(1,length(pos[1])))
 solve!(J)
+
+#MeshArray example
+(u,v,ϕ,pos,func)=random_flow_field(component=:rotational,format=:MeshArray)
+H=FlowFields(u.MA,u.MA,v.MA,v.MA,[0.0,1.0],func)
+K=Individuals(H,pos[1],pos[2],fill(1,length(pos[1])))
+solve!(K)
 ```
 """
 function random_flow_field(;component=:rotational,np=20,format=:Array)

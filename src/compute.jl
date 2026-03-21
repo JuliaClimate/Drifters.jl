@@ -102,7 +102,7 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
 end
 
 """
-    dxdt!(du,u,p::uvMeshArrays,tim)
+    dxdt!(du,u,P::uvMeshArrays,tim)
 
 Interpolate velocity from gridded fields (2D; with halos) to position `u`
 (`x,y,fIndex`) to compute the derivative of position v time  `du_dt`.
