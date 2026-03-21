@@ -159,6 +159,13 @@ struct uvMeshArrays{Ty} <: FlowFields
     update_location!::Function
 end
 
+function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
+    v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
+    T::Union{Array,Tuple},update_location!::Function)
+
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,T,update_location!)
+end
+
 function FlowFields(u0::AbstractMeshArray{Ty,1},u1::AbstractMeshArray{Ty,1},
     v0::AbstractMeshArray{Ty,1},v1::AbstractMeshArray{Ty,1},
     T::Union{Array,Tuple},update_location!::Function) where Ty
@@ -180,6 +187,14 @@ struct uvwMeshArrays{Ty} <: FlowFields
     w1::AbstractMeshArray{Ty,2}
     T::Union{Array{Ty},Array{DateTime}}
     update_location!::Function
+end
+
+function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
+    v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
+    w0::MeshArrays.MeshArray_wh,w1::MeshArrays.MeshArray_wh,
+    T::Union{Array,Tuple},update_location!::Function)
+
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,w0.MA,w1.MA,T,update_location!)
 end
 
 function FlowFields(u0::AbstractMeshArray{Ty,2},u1::AbstractMeshArray{Ty,2},
