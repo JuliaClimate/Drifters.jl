@@ -158,8 +158,8 @@ end
     J=similar(I)
     @test isa(J,Individuals)
 
-    𝐺=convert_to_FlowFields(u,v,10.0)
-    tmp2=nearest_to_xy(𝐺.u0,3.,3.,1.)
+    G=convert_to_FlowFields(u,v,10.0)
+    tmp2=nearest_to_xy(G.u0,3.,3.,1.)
     @test isa(tmp2,Array)
     tmp3=nearest_to_xy(F.u0,3.,3.)
     @test isa(tmp3,Array)

@@ -1,11 +1,16 @@
 """
-    convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
+    convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T; time_option=:default) where T
 
 Convert a pair of U,V arrays (staggered C-grid velocity field in 2D) to
-a `uvMeshArrays` struct ready for integration of individual displacements
-from time `t0=0` to time `t1`.
+a `uvMeshArrays` struct ready for use in `Individuals`.
+
+- This applies `MeshArrays.exchange_main` to U,V.
+- Flow fields are assumed time invariant. 
+- The time interval for integration can be set     
+  - (default) Time interval is in seconds (0 to t1)
+  - (time_option==:DateTime) Time interval is from d0=2000-1-1 to d0+t1 seconds
 """
-function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
+function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T; time_option=:default) where T
     np,nq=size(U)
     Γ=MeshArrays.Grids_simple.periodic_domain(np,nq)
 
@@ -15,7 +20,17 @@ function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
     (u,v)=MeshArrays.exchange_main(u,v,1)
     func=(u -> MeshArrays.update_location_PeriodicDomain!(u,g))
 
-    uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,[0,t1],func)
+    TT=(if time_option==:default
+        [0,t1]
+    elseif time_option==:DateTime
+        D0=Drifters.DateTime(2000,1,1)
+        D1=Drifters.DateTime(2000,1,1,0,0,t1)
+        [D0,D1]
+    else
+        error("unknown time_option")
+    end
+    )
+    uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,TT,func)
 end
 
 """
