@@ -46,8 +46,8 @@ end
 
 function FlowFields(u0::Array{Ty,2},u1::Array{Ty,2},
     v0::Array{Ty,2},v1::Array{Ty,2},T::Union{Array,Tuple}) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
@@ -129,8 +129,8 @@ end
 
 function FlowFields(u0::Array{Ty,3},u1::Array{Ty,3},v0::Array{Ty,3},v1::Array{Ty,3},
     w0::Array{Ty,3},w1::Array{Ty,3},T::Union{Array,Tuple}) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,0,1)) for tmp in (w0,w1)])
@@ -151,8 +151,8 @@ end
 function FlowFields(u0::AbstractMeshArray{Ty,1},u1::AbstractMeshArray{Ty,1},
     v0::AbstractMeshArray{Ty,1},v1::AbstractMeshArray{Ty,1},
     T::Union{Array,Tuple},update_location!::Function) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
@@ -175,8 +175,8 @@ function FlowFields(u0::AbstractMeshArray{Ty,2},u1::AbstractMeshArray{Ty,2},
     v0::AbstractMeshArray{Ty,2},v1::AbstractMeshArray{Ty,2},
     w0::AbstractMeshArray{Ty,2},w1::AbstractMeshArray{Ty,2},
     T::Union{Array,Tuple},update_location!::Function) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size consistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,1))*(u0.fSize==tmp.fSize) for tmp in (w0,w1)])
@@ -404,6 +404,23 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
     Individuals{T,ndims(📌)}(P=F,📌=📌,🔴=🔴,🆔=🆔,🚄=dxdt!,∫=∫,🔧=🔧,D=D)
 end
 
+function time_in_seconds(T)
+    #collect(datetime2julian.(T))
+    t=if isa(T,DateTime)
+        86400*datetime2julian.(T)
+    else
+        T
+    end
+end
+
+function time_set_type(T,Ty)
+    t=if isa(T,DateTime)
+        T
+    else
+        convert(Ty,T)
+    end
+end
+
 """
     ∫!(I::Individuals,T::Tuple)
 
@@ -416,11 +433,12 @@ Displace simulated individuals continuously through space over time period T sta
 function ∫!(I::Individuals,T::Tuple)
     (; 🚄,📌,P, D, 🔧, 🆔, 🔴, ∫) = I
 
-    prob = ODEProblem(🚄,📌, T ,P)
-#    prob = _SDEProblem(🚄,📌, T ,P)
+    TT=time_in_seconds.(T)
+    prob = ODEProblem(🚄,📌, TT ,P)
+#    prob = _SDEProblem(🚄,📌, TT ,P)
     sol = ∫(prob)
 
-    tmp = 🔧(sol,P,D, id=🆔, T=T)
+    tmp = 🔧(sol,P,D, id=🆔, T=TT)
     isempty(🔴) ? np =0 : np=length(🆔)
     append!(🔴,tmp[np+1:end,:],promote=true)
 
