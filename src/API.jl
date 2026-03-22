@@ -431,7 +431,6 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
 end
 
 function time_in_seconds(T)
-    #collect(datetime2julian.(T))
     t=if isa(T,DateTime)
         86400*datetime2julian.(T)
     else
@@ -464,7 +463,7 @@ function ∫!(I::Individuals,T::Tuple)
 #    prob = _SDEProblem(🚄,📌, TT ,P)
     sol = ∫(prob)
 
-    tmp = 🔧(sol,P,D, id=🆔, T=TT)
+    tmp = 🔧(sol,P,D, id=🆔, T=T)
     isempty(🔴) ? np =0 : np=length(🆔)
     append!(🔴,tmp[np+1:end,:],promote=true)
 
@@ -479,6 +478,7 @@ function ∫!(I::Individuals,T::Tuple)
         nd==3 ? 📌[:,:] = deepcopy(sol[:,:,end]) : 📌[:] = deepcopy(sol[:,end])
     end
 
+    sol
 end
 
 ∫!(I::Individuals,T::Array) = ∫!(I::Individuals,(T[1],T[2]))
