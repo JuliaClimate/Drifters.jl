@@ -416,7 +416,6 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
 end
 
 function time_in_seconds(T)
-    #collect(datetime2julian.(T))
     t=if isa(T,DateTime)
         86400*datetime2julian.(T)
     else
@@ -444,7 +443,7 @@ Displace simulated individuals continuously through space over time period T sta
 function ∫!(I::Individuals,T::Tuple)
     (; 🚄,📌,P, D, 🔧, 🆔, 🔴, ∫) = I
 
-    TT=time_in_seconds.(T)
+    TT=time_in_seconds.(T).-Drifters.time_in_seconds.(T[1])
     prob = ODEProblem(🚄,📌, TT ,P)
 #    prob = _SDEProblem(🚄,📌, TT ,P)
     sol = ∫(prob)

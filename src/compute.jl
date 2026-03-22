@@ -5,7 +5,7 @@ mydt(tim::Flo,T::Array{Float32,1})=(tim-T[1])/(T[2]-T[1])
 mydt(tim::Flo,T::Array{Float64,1})=(tim-T[1])/(T[2]-T[1])
 
 mydt(tim::Flo,P::FlowFields) = mydt(tim,P.T)
-mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim,time_in_seconds.(T))
+mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim+time_in_seconds.(T[1]),time_in_seconds.(T))
 
 #needed to avoid allocations:
 fSize(f::Array{Tuple{Int,Int}},i::Int) = (f[i][1],f[i][2])
