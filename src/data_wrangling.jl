@@ -24,7 +24,7 @@ end
 Copy `sol` to a `DataFrame` & map position to lon,lat coordinates
 using "exchanged" D.XC, D.YC via `add_lonlat!`
 """
-function postprocess_MeshArray(sol,P::FlowFields, D::NamedTuple; id=missing, T=missing)
+function postprocess_MeshArray(sol,P::FlowFields, D::NamedTuple; id=missing, T=missing, verbose=false)
     ismissing(id) ? id=collect(1:size(sol,2)) : nothing
     ismissing(T) ? T=P.T : nothing
     
@@ -38,10 +38,17 @@ function postprocess_MeshArray(sol,P::FlowFields, D::NamedTuple; id=missing, T=m
         id=[id[:,1];id[:,1]]
     else
         nt=length(sol.u)
-        x=sol[1,:]
-        y=sol[2,:]
-        fIndex=sol[end,:]
-        t=T[1] .+ (T[2]-T[1]) * collect(0:nt-1) / (nt-1)
+        x=[u[1] for u in sol.u]
+        y=[u[2] for u in sol.u]
+        fIndex=[u[end] for u in sol.u]
+        verbose ? println(eltype(T)==DateTime) : nothing
+        t=if eltype(T)==DateTime
+            julian2datetime.(sol.t ./ 86400)
+        else
+            sol.t
+        end
+        verbose ? println(extrema(t)) : nothing
+
         id=fill(id[1],nt)
     end
 
@@ -50,7 +57,6 @@ function postprocess_MeshArray(sol,P::FlowFields, D::NamedTuple; id=missing, T=m
     df = DataFrame(ID=id[:], x=x[:], y=y[:], fid=fIndex[:], t=t[:])
 
     return df
-#    return id,x,y,fIndex,t
 end
 
 """
@@ -119,7 +125,7 @@ end
 Copy `sol` to a `DataFrame` & map position to x,y coordinates,
 and define time axis for a simple doubly periodic domain
 """
-function postprocess_xy(sol,P::FlowFields,D::NamedTuple; id=missing, T=missing)
+function postprocess_xy(sol,P::FlowFields,D::NamedTuple; id=missing, T=missing, verbose=false)
     ismissing(id) ? id=collect(1:size(sol,2)) : nothing
     ismissing(T) ? T=P.T : nothing
 
@@ -136,9 +142,16 @@ function postprocess_xy(sol,P::FlowFields,D::NamedTuple; id=missing, T=missing)
         id=[id[:,1];id[:,1]]
     else
         nt=length(sol.u)
-        x=mod.(sol[1,:],Ref(nx))
-        y=mod.(sol[2,:],Ref(ny))
-        t=T[1] .+ (T[2]-T[1]) * collect(0:nt-1) / (nt-1)
+        x=mod.([u[1] for u in sol.u],Ref(nx))
+        y=mod.([u[2] for u in sol.u],Ref(ny))
+        verbose ? println(eltype(T)==DateTime) : nothing
+        t=if eltype(T)==DateTime
+            julian2datetime.(sol.t ./ 86400)
+            #sol.t
+        else
+            sol.t
+        end
+        verbose ? println(extrema(t)) : nothing
         id=fill(id[1],nt)
     end
 

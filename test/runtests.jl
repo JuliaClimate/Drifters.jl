@@ -99,8 +99,12 @@ end
         return uC, vC, ϕ
     end
     
-    nx=16; dx= π/nx; T=(0.,10.)
+    nx=16; dx= π/nx; 
     uC, vC, ϕ = SimpleFlowFields(nx,dx)
+    
+    D0=Drifters.DateTime(2000,1,1)
+    D1=Drifters.DateTime(2000,1,1,0,0,10)
+    T=(D0,D1)
     F=FlowFields(u=uC/dx,v=vC/dx,period=T)
 
     np,nq=size(F.u0)

@@ -1,8 +1,10 @@
 
 #needed to avoid allocations:
 Flo=Union{Float32,Float64}
-mydt(tim::Flo,T::Array{Float32,1})=(tim-T[1])/(T[2]-T[1])
-mydt(tim::Flo,T::Array{Float64,1})=(tim-T[1])/(T[2]-T[1])
+
+mydt(tim::Flo,T::Array) = (tim-T[1])/(T[2]-T[1])
+mydt(tim::Flo,P::FlowFields) = mydt(tim,P.T)
+mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim+time_in_seconds.(T[1]),time_in_seconds.(T))
 
 #needed to avoid allocations:
 fSize(f::Array{Tuple{Int,Int}},i::Int) = (f[i][1],f[i][2])
@@ -39,7 +41,7 @@ true
 ```
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     g=P.u0.grid
     #
     while MeshArrays.location_is_out(u,g)
@@ -122,7 +124,7 @@ true
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvMeshArrays,tim) where T
     #compute positions in index units
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     g=P.u0.grid
     #
     while MeshArrays.location_is_out(u,g)
@@ -192,7 +194,7 @@ true
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwArrays,tim) where T
     #compute positions in index units
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     (nx,ny,nz) = size(P.u0)
     #
     while location_is_out(u,nx,ny)
@@ -271,7 +273,7 @@ true
 ```
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvArrays,tim) where T
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     (nx,ny) = size(P.u0)
     #
     while location_is_out(u,nx,ny)
