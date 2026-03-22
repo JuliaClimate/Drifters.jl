@@ -448,7 +448,7 @@ function ∫!(I::Individuals,T::Tuple)
 #    prob = _SDEProblem(🚄,📌, TT ,P)
     sol = ∫(prob)
 
-    tmp = 🔧(sol,P,D, id=🆔, T=TT)
+    tmp = 🔧(sol,P,D, id=🆔, T=T)
     isempty(🔴) ? np =0 : np=length(🆔)
     append!(🔴,tmp[np+1:end,:],promote=true)
 

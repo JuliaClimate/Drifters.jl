@@ -41,7 +41,12 @@ function postprocess_MeshArray(sol,P::FlowFields, D::NamedTuple; id=missing, T=m
         x=sol[1,:]
         y=sol[2,:]
         fIndex=sol[end,:]
-        t=T[1] .+ (T[2]-T[1]) * collect(0:nt-1) / (nt-1)
+        t=if eltype(T)==DateTime
+            TT=datetime2julian.(T)
+            julian2datetime.(TT[1] .+ (TT[2]-TT[1]) * collect(0:nt-1) / (nt-1))
+        else
+            T[1] .+ (T[2]-T[1]) * collect(0:nt-1) / (nt-1)
+        end
         id=fill(id[1],nt)
     end
 
@@ -119,7 +124,7 @@ end
 Copy `sol` to a `DataFrame` & map position to x,y coordinates,
 and define time axis for a simple doubly periodic domain
 """
-function postprocess_xy(sol,P::FlowFields,D::NamedTuple; id=missing, T=missing)
+function postprocess_xy(sol,P::FlowFields,D::NamedTuple; id=missing, T=missing, verbose=false)
     ismissing(id) ? id=collect(1:size(sol,2)) : nothing
     ismissing(T) ? T=P.T : nothing
 
@@ -138,7 +143,13 @@ function postprocess_xy(sol,P::FlowFields,D::NamedTuple; id=missing, T=missing)
         nt=length(sol.u)
         x=mod.(sol[1,:],Ref(nx))
         y=mod.(sol[2,:],Ref(ny))
-        t=T[1] .+ (T[2]-T[1]) * collect(0:nt-1) / (nt-1)
+        t=if eltype(T)==DateTime
+            TT=datetime2julian.(T)
+            julian2datetime.(TT[1] .+ (TT[2]-TT[1]) * collect(0:nt-1) / (nt-1))
+        else
+            T[1] .+ (T[2]-T[1]) * collect(0:nt-1) / (nt-1)
+        end
+        verbose ? println(extrema(t)) : nothing
         id=fill(id[1],nt)
     end
 
