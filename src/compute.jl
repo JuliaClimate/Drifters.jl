@@ -25,7 +25,8 @@ Interpolate velocity from gridded fields (3D; with halos) to position `u`
 ```jldoctest; output = false
 using Drifters
 u,v,w,pos,func=vortex_flow_field(format=:MeshArray)
-F=FlowFields(u,u,v,v,0*w,1*w,[0,3*pi],func)
+w0=similar(w); w0.MA.=0*w0.MA;
+F=FlowFields(u,u,v,v,w0,w,[0,3*pi],func)
 I=Individuals(F,pos...)
 ∫!(I)
 

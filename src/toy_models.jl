@@ -7,7 +7,7 @@ Set up an idealized flow field which consists of
 plus a convergent term, plus a sinking term.
 
 ```
-u,v,w,func=vortex_flow_field(format=:MeshArray)
+u,v,w,pos,func=vortex_flow_field(format=:MeshArray)
 ```
 """
 function vortex_flow_field(; np=12,nz=4,format=:Array)
@@ -37,18 +37,11 @@ function vortex_flow_field(; np=12,nz=4,format=:Array)
     func=(u -> MeshArrays.update_location_PeriodicDomain!(u,γ))
 
     if format==:Array
-        write(uu),write(vv),write(w),pos0,func
+        write(uu),write(vv),write(w),pos0
     elseif format==:MeshArray
-        for k=1:nz
-            (tmpu,tmpv)=MeshArrays.exchange_main(uu[:,k],vv[:,k],1)
-            uu[:,k]=tmpu.MA
-            vv[:,k]=tmpv.MA
-        end
-        for k=1:nz+1
-            tmpw=MeshArrays.exchange(w[:,k])
-            w[:,k]=tmpw.MA
-        end
-        uu,vv,w,[pos0...,1.0],func
+        (uuu,vvv)=MeshArrays.exchange(uu,vv)
+        www=MeshArrays.exchange(w)
+        uuu,vvv,www,[pos0...,1.0],func
     end
 end
 
