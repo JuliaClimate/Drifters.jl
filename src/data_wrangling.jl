@@ -4,7 +4,7 @@
 Convert a pair of U,V arrays (staggered C-grid velocity field in 2D) to
 a `uvMeshArrays` struct ready for use in `Individuals`.
 
-- This applies `MeshArrays.exchange_main` to U,V.
+- This applies `MeshArrays.exchange` to U,V.
 - Flow fields are assumed time invariant. 
 - The time interval for integration can be set     
   - (default) Time interval is in seconds (0 to t1)
@@ -17,7 +17,7 @@ function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T; time_option=:d
     g=Γ.XC.grid
     u=MeshArray(g,[U])
     v=MeshArray(g,[V])
-    (u,v)=MeshArrays.exchange_main(u,v,1)
+    (u,v)=exchange(u,v)
     func=(u -> MeshArrays.update_location_PeriodicDomain!(u,g))
 
     TT=(if time_option==:default

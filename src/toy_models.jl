@@ -39,8 +39,8 @@ function vortex_flow_field(; np=12,nz=4,format=:Array)
     if format==:Array
         write(uu),write(vv),write(w),pos0
     elseif format==:MeshArray
-        (uuu,vvv)=MeshArrays.exchange(uu,vv)
-        www=MeshArrays.exchange(w)
+        (uuu,vvv)=exchange(uu,vv)
+        www=exchange(w)
         uuu,vvv,www,[pos0...,1.0],func
     end
 end
@@ -121,9 +121,9 @@ function random_flow_field(;component=:rotational,np=20,format=:Array)
 
     if format==:Array
         tmp[1],tmp[2],tmp[3],pos0
-    elseif format==:MeshArray #is this really useful as it does not do exchanges?
+    elseif format==:MeshArray
         tmp=γ.read.(tmp,Ref(MeshArray(γ,Float64)))
-        (u,v)=MeshArrays.exchange_main(tmp[1],tmp[2],1)
+        (u,v)=exchange(tmp[1],tmp[2])
         u,v,tmp[3],[pos0...,1.0],func
     else
         error("unknown format")
