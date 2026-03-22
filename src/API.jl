@@ -443,7 +443,7 @@ Displace simulated individuals continuously through space over time period T sta
 function ∫!(I::Individuals,T::Tuple)
     (; 🚄,📌,P, D, 🔧, 🆔, 🔴, ∫) = I
 
-    TT=time_in_seconds.(T).-Drifters.time_in_seconds.(I.P.T[1])
+    TT=time_in_seconds.(T)
     prob = ODEProblem(🚄,📌, TT ,P)
 #    prob = _SDEProblem(🚄,📌, TT ,P)
     sol = ∫(prob)
@@ -463,6 +463,7 @@ function ∫!(I::Individuals,T::Tuple)
         nd==3 ? 📌[:,:] = deepcopy(sol[:,:,end]) : 📌[:] = deepcopy(sol[:,end])
     end
 
+    sol
 end
 
 ∫!(I::Individuals,T::Array) = ∫!(I::Individuals,(T[1],T[2]))
