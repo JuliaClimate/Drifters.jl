@@ -4,7 +4,8 @@ import MeshArrays, DataDeps, CSV, JLD2
 import Dates: DateTime, Year, Month, Day
 
 import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
-import Drifters: time_in_seconds, time_in_DateTime
+import Drifters: time_in_seconds, time_in_DateTime, monthly_records
+
 import OrdinaryDiffEq: solve, Tsit5, ODEProblem
 import Drifters: update_location!, Individuals, uvMeshArrays, uvwMeshArrays
 import Drifters: FlowFields, ensemble_solver, data_path, read_data_ECCO, order
@@ -63,9 +64,10 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
     iDXC=1. ./Γ.DXC
     iDYC=1. ./Γ.DYC
     γ=Γ.XC.grid
-    mon=86400.0*365.0/12.0
-    
+
+    mon=86400.0*365.0/12.0    
     T=(time_unit==:DateTime ? [DateTime(1999,12,15),DateTime(2000,1,15)] : [-mon/2,mon/2])
+    
     if k==0
         msk=Γ.hFacC
         msk=1.0*(msk .> 0.0)
@@ -111,40 +113,8 @@ with a periodicity of 12 months, (3) vertical P.k is selected_
 """
 function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
                             verbose=false)
-    if eltype(P.T)!==DateTime
-        dt=P.T[2]-P.T[1]
 
-        m0=Int(floor((t+dt/2.0)/dt))
-        m1=m0+1
-        t0=m0*dt-dt/2.0
-        t1=m1*dt-dt/2.0
-
-        m0=mod(m0,12)
-        m0==0 ? m0=12 : nothing
-        m1=mod(m1,12)
-        m1==0 ? m1=12 : nothing
-    else
-        yy=Year(t).value; mm=Month(t).value; dd=Day(t).value
-        verbose ? println("y$(yy)m$(mm)d$(dd)") : nothing
-        if dd<15&&mm==1
-            yy0=yy-1; yy1=yy; mm0=12; mm1=1;
-        elseif dd<15
-            yy0=yy; yy1=yy; mm0=mm-1; mm1=mm;
-        elseif dd>=15&&mm==12
-            yy0=yy; yy1=yy+1; mm0=12; mm1=1;
-        else
-            yy0=yy; yy1=yy; mm0=mm; mm1=mm+1;
-        end
-        verbose ? println("0:$(yy0)/$(mm0) , 1:$(yy1)/$(mm1)") : nothing
-        if P.T[2]>P.T[1]
-            y0=yy0; y1=yy1; m0=mm0; m1=mm1;
-        else
-            y1=yy0; y0=yy1; m1=mm0; m0=mm1;
-        end
-        t0=DateTime(y0,m0,15)
-        t1=DateTime(y1,m1,15)
-        verbose ? println("0:$(t0) , 1:$(t1)") : nothing
-    end
+    t0,t1,m0,m1=monthly_records(P.T,t,verbose=verbose,climatology=true)
 
     velocity_factor=1.0
 #    if D.backward_time
@@ -202,40 +172,8 @@ with a periodicity of 12 months, (3) vertical P.k is selected_
 """
 function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
                                 verbose=false)
-    if eltype(P.T)!==DateTime
-        dt=P.T[2]-P.T[1]
 
-        m0=Int(floor((t+dt/2.0)/dt))
-        m1=m0+1
-        t0=m0*dt-dt/2.0
-        t1=m1*dt-dt/2.0
-
-        m0=mod(m0,12)
-        m0==0 ? m0=12 : nothing
-        m1=mod(m1,12)
-        m1==0 ? m1=12 : nothing
-    else
-        yy=Year(t).value; mm=Month(t).value; dd=Day(t).value
-        verbose ? println("y$(yy)m$(mm)d$(dd)") : nothing
-        if dd<15&&mm==1
-            yy0=yy-1; yy1=yy; mm0=12; mm1=1;
-        elseif dd<15
-            yy0=yy; yy1=yy; mm0=mm-1; mm1=mm;
-        elseif dd>=15&&mm==12
-            yy0=yy; yy1=yy+1; mm0=12; mm1=1;
-        else
-            yy0=yy; yy1=yy; mm0=mm; mm1=mm+1;
-        end
-        verbose ? println("0:$(yy0)/$(mm0) , 1:$(yy1)/$(mm1)") : nothing
-        if P.T[2]>P.T[1]
-            y0=yy0; y1=yy1; m0=mm0; m1=mm1;
-        else
-            y1=yy0; y0=yy1; m1=mm0; m0=mm1;
-        end
-        t0=DateTime(y0,m0,15)
-        t1=DateTime(y1,m1,15)
-        verbose ? println("0:$(t0) , 1:$(t1)") : nothing
-    end
+    t0,t1,m0,m1=monthly_records(P.T,t,verbose=verbose,climatology=true)
 
     velocity_factor=1.0
 #    if D.backward_time
