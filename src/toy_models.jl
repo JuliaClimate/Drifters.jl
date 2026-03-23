@@ -7,7 +7,7 @@ Set up an idealized flow field which consists of
 plus a convergent term, plus a sinking term.
 
 ```
-u,v,w,func=vortex_flow_field(format=:MeshArray)
+u,v,w,pos,func=vortex_flow_field(format=:MeshArray)
 ```
 """
 function vortex_flow_field(; np=12,nz=4,format=:Array)
@@ -37,42 +37,58 @@ function vortex_flow_field(; np=12,nz=4,format=:Array)
     func=(u -> MeshArrays.update_location_PeriodicDomain!(u,γ))
 
     if format==:Array
-        write(uu),write(vv),write(w),pos0,func
+        write(uu),write(vv),write(w),pos0
     elseif format==:MeshArray
-        for k=1:nz
-            (tmpu,tmpv)=MeshArrays.exchange_main(uu[:,k],vv[:,k],1)
-            uu[:,k]=tmpu.MA
-            vv[:,k]=tmpv.MA
-        end
-        for k=1:nz+1
-            tmpw=MeshArrays.exchange(w[:,k])
-            w[:,k]=tmpw.MA
-        end
-        uu,vv,w,[pos0...,1.0],func
+        (uuu,vvv)=exchange(uu,vv)
+        www=exchange(w)
+        uuu,vvv,www,[pos0...,1.0],func
     end
 end
 
 """
-    random_flow_field(;component=:Rotational,np=20,format=:Array)
+    random_flow_field(;component=:rotational,np=20,format=:Array)
 
 Generate random flow fields on a grid of `np x nq` points for use in simple examples.
 
-The `:Rotational` component option is most similar to what is done 
-in the standard example.
+Flow field component :
 
-The `:Divergent` component option generates a purely divergent flow field instead.
+- the `:rotational` component option is most similar to what is done in the standard example.
+- the `:divergent` component option generates a purely divergent flow field instead.
+
+Array formats :
+
+- `:Array` is the default
+- `:MeshArray` then u and v are converted to these
 
 ```
-(U,V,Φ)=random_flow_field(component=:Rotational)
-F=convert_to_FlowFields(U,V,10.0)
-I=Individuals(F,x,y,fill(1,length(x)))
+#Array example
+(u,v,ϕ,pos)=random_flow_field(component=:rotational)
+F=FlowFields(u,u,v,v,[0,1.0])
+I=Individuals(F,pos...)
+solve!(I)
+
+#MeshArray via convert_to_FlowFields
+G=convert_to_FlowFields(u,v,1.0)
+J=Individuals(G,pos[1],pos[2],fill(1,length(pos[1])))
+solve!(J)
+
+#MeshArray example
+(u,v,ϕ,pos,func)=random_flow_field(component=:rotational,format=:MeshArray)
+H=FlowFields(u,u,v,v,[0.0,1.0],func)
+K=Individuals(H,pos...)
+solve!(K)
 ```
 """
-function random_flow_field(;component=:Rotational,np=20,format=:Array)
+function random_flow_field(;component=:rotational,np=20,format=:Array)
 
 	#define gridded domain
     γ=MeshArrays.GridSpec_ones("PeriodicDomain",nF=1,nP=np)
     Γ=MeshArrays.GridLoad_ones(γ;option="full")
+
+    #or equivalently this :
+    #G=MeshArrays.Grids_simple.periodic_domain(np,np)
+    #γ=G.XC.grid
+    #Γ=MeshArrays.GridLoad_ones(γ;option="full")
 
     #initialize 2D field of random numbers
     tmp1=randn(Float64,Tuple(γ.ioSize))
@@ -82,13 +98,13 @@ function random_flow_field(;component=:Rotational,np=20,format=:Array)
     ϕ=MeshArrays.smooth(ϕ,3*Γ.DXC,3*Γ.DYC,Γ);
 
 	#derive flow field
-	if component==:Divergent
+    if (component==:divergent)||(component==:Divergent)
 		#For the convergent / scalar potential case, ϕ is interpreted as being 
 		#on center points -- hence the standard gradient function readily gives 
 		#what we need
 		(u,v)=MeshArrays.gradient(ϕ,Γ) 
 		tmp=(u[1],v[1],ϕ[1])
-	elseif component==:Rotational
+	elseif (component==:rotational)||(component==:Rotational)
 		#For the rotational / streamfunction case, ϕ is interpreted as being 
 		#on S/W corner points -- this is ok here since the grid is homegeneous, 
 		#and conveniently yields an adequate substitution u,v <- -v,u; but note
@@ -106,8 +122,11 @@ function random_flow_field(;component=:Rotational,np=20,format=:Array)
     if format==:Array
         tmp[1],tmp[2],tmp[3],pos0
     elseif format==:MeshArray
-        tmp=γ.read.(tmp,Ref(MeshArray(γ,Float32)))
-        tmp[1],tmp[2],tmp[3],[pos0...,1.0],func
+        tmp=γ.read.(tmp,Ref(MeshArray(γ,Float64)))
+        (u,v)=exchange(tmp[1],tmp[2])
+        u,v,tmp[3],[pos0...,1.0],func
+    else
+        error("unknown format")
     end
 
 end

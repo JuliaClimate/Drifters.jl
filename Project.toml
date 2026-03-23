@@ -1,6 +1,6 @@
 name = "Drifters"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
-version = "0.6.12"
+version = "0.6.13"
 authors = ["gaelforget <gforget@mit.edu>"]
 
 [deps]
@@ -9,6 +9,7 @@ CyclicArrays = "6023044f-b3ef-4c22-8399-3ec90a0c9b75"
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dataverse = "9c0b9be8-e31e-490f-90fe-77697562404d"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
@@ -36,6 +37,7 @@ CyclicArrays = "0.5"
 DataDeps = "0.7"
 DataFrames = "1"
 Dataverse = "0.2"
+Dates = "1"
 Glob = "1"
 JLD2 = "0.5, 0.6"
 MITgcm = "0.5"

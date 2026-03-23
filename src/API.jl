@@ -1,6 +1,8 @@
 
 ## Flow field parameters
 
+using Dates
+
 """
     abstract type FlowFields
 
@@ -9,11 +11,15 @@ used to interpolate velocities to individual locations later on (once embedded i
 an `Individuals` struct). 
 
 Following the C-grid convention also used in `MITgcm` (https://mitgcm.readthedocs.io) 
-flow fields are expected to be staggered as follows: grid cell i,j has its center located at i-1/2,j-1/2 while the
-corresponding `u[i,j]` (resp. `v[i,j]) is located at i-1,j-1/2 (resp. i-1/2,j-1). 
+flow fields are expected to be staggered as follows: grid cell i,j has its center 
+located at i-1/2,j-1/2 while the corresponding `u[i,j]` (resp. `v[i,j]) is 
+located at i-1,j-1/2 (resp. i-1/2,j-1). 
 
-Also by convention, velocity fields are expected to have been normalized to grid units (e.g. 1/s rather than m/s)
-before sending them to one of the supported `FlowFields` constructors (using either `Array` or `MeshArray`):
+By convention :
+- time is in seconds but `T` can also be provided as a vector of `DateTime`
+- position is in grid units. Local coordinates cover `(0 to nx, 0 to ny)` if the grid is of size `(nx, ny)`.
+- velocity fields must be normalized accordingly to grid units (in 1/s rather than m/s)
+  being used in a `FlowFields` constructors (whether `Array` or `MeshArray`)
 
 ```
 uvArrays(u0,u1,v0,v1,T)
@@ -22,10 +28,17 @@ uvMeshArrays(u0,u1,v0,v1,T,update_location!)
 uvwMeshArrays(u0,u1,v0,v1,w0,w1,T,update_location!)
 ```
 
-Using the `FlowFields` constructor which gets selected by the type of `u0` etc. For example :
+Using the `FlowFields` constructor which gets selected by the type of `u0` etc.
+
+For exmaple, with Array type in 3D :
 
 ```
 F=FlowFields(u,u,v,v,0*w,1*w,[0.0,10.0])
+```
+
+Or, with `MeshArray`` type in 2D :
+
+```
 F=FlowFields(u,u,v,v,[0.0,10.0],func)
 ```
 
@@ -39,13 +52,13 @@ struct uvArrays{Ty} <: FlowFields
     u1::Array{Ty,2}
     v0::Array{Ty,2}
     v1::Array{Ty,2}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
 end
 
 function FlowFields(u0::Array{Ty,2},u1::Array{Ty,2},
     v0::Array{Ty,2},v1::Array{Ty,2},T::Union{Array,Tuple}) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
@@ -60,14 +73,14 @@ struct uvwArrays{Ty} <: FlowFields
     v1::Array{Ty,3}
     w0::Array{Ty,3}
     w1::Array{Ty,3}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
 end
 
 """
     FlowFields(;    u::Union{Array,Tuple}=[], v::Union{Array,Tuple}=[], w::Union{Array,Tuple}=[], 
                     period::Union{Array,Tuple}=[])
 
-Construct FlowFields data structure based on keywords.
+Simplified FlowFields constructor : using keywords, with time invariant flow fields.
 
 ```
 uC, vC, _ = SimpleFlowFields(16)
@@ -127,8 +140,8 @@ end
 
 function FlowFields(u0::Array{Ty,3},u1::Array{Ty,3},v0::Array{Ty,3},v1::Array{Ty,3},
     w0::Array{Ty,3},w1::Array{Ty,3},T::Union{Array,Tuple}) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,0,1)) for tmp in (w0,w1)])
@@ -142,15 +155,22 @@ struct uvMeshArrays{Ty} <: FlowFields
     u1::AbstractMeshArray{Ty,1}
     v0::AbstractMeshArray{Ty,1}
     v1::AbstractMeshArray{Ty,1}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
     update_location!::Function
+end
+
+function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
+    v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
+    T::Union{Array,Tuple},update_location!::Function)
+
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,T,update_location!)
 end
 
 function FlowFields(u0::AbstractMeshArray{Ty,1},u1::AbstractMeshArray{Ty,1},
     v0::AbstractMeshArray{Ty,1},v1::AbstractMeshArray{Ty,1},
     T::Union{Array,Tuple},update_location!::Function) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
@@ -165,20 +185,29 @@ struct uvwMeshArrays{Ty} <: FlowFields
     v1::AbstractMeshArray{Ty,2}
     w0::AbstractMeshArray{Ty,2}
     w1::AbstractMeshArray{Ty,2}
-    T::Array{Ty}
+    T::Union{Array{Ty},Array{DateTime}}
     update_location!::Function
+end
+
+function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
+    v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
+    w0::MeshArrays.MeshArray_wh,w1::MeshArrays.MeshArray_wh,
+    T::Union{Array,Tuple},update_location!::Function)
+
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,w0.MA,w1.MA,T,update_location!)
 end
 
 function FlowFields(u0::AbstractMeshArray{Ty,2},u1::AbstractMeshArray{Ty,2},
     v0::AbstractMeshArray{Ty,2},v1::AbstractMeshArray{Ty,2},
     w0::AbstractMeshArray{Ty,2},w1::AbstractMeshArray{Ty,2},
     T::Union{Array,Tuple},update_location!::Function) where Ty
-    #test for type of T and fix if needed
-    isa(T,Tuple) ? T=convert(Array{Ty},[T...]) : T=convert(Array{Ty},T)
+    #ensure T is a vector and enforce type
+    T=time_set_type.(collect(T),Ty)
     #check array size consistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,1))*(u0.fSize==tmp.fSize) for tmp in (w0,w1)])
     !tst ? error("inconsistent array sizes") : nothing
+
     #call constructor
     uvwMeshArrays(u0,u1,v0,v1,w0,w1,T,update_location!)
 end
@@ -375,7 +404,7 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
     end
     T=eltype(📌)
 
-    🔴 = DataFrame(ID=Int[], x=Float64[], y=Float64[], z=Float64[], fid=Int64[], t=Float64[])
+    🔴 = DataFrame(ID=Int[], x=Float64[], y=Float64[], z=Float64[], fid=Int64[], t=Union{Float64,DateTime}[])
     haskey(NT,:🔴) ? 🔴=NT.🔴 : nothing
 
     function 🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
@@ -402,6 +431,30 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
     Individuals{T,ndims(📌)}(P=F,📌=📌,🔴=🔴,🆔=🆔,🚄=dxdt!,∫=∫,🔧=🔧,D=D)
 end
 
+function time_in_seconds(T)
+    t=if isa(T,DateTime)
+        86400*datetime2julian.(T)
+    else
+        T
+    end
+end
+
+function time_in_DateTime(T)
+    t=if isa(T,DateTime)
+        T
+    else
+        julian2datetime.(T./86400)
+    end
+end
+
+function time_set_type(T,Ty)
+    t=if isa(T,DateTime)
+        T
+    else
+        convert(Ty,T)
+    end
+end
+
 """
     ∫!(I::Individuals,T::Tuple)
 
@@ -414,8 +467,9 @@ Displace simulated individuals continuously through space over time period T sta
 function ∫!(I::Individuals,T::Tuple)
     (; 🚄,📌,P, D, 🔧, 🆔, 🔴, ∫) = I
 
-    prob = ODEProblem(🚄,📌, T ,P)
-#    prob = _SDEProblem(🚄,📌, T ,P)
+    TT=time_in_seconds.(T)
+    prob = ODEProblem(🚄,📌, TT ,P)
+#    prob = _SDEProblem(🚄,📌, TT ,P)
     sol = ∫(prob)
 
     tmp = 🔧(sol,P,D, id=🆔, T=T)
@@ -433,6 +487,7 @@ function ∫!(I::Individuals,T::Tuple)
         nd==3 ? 📌[:,:] = deepcopy(sol[:,:,end]) : 📌[:] = deepcopy(sol[:,end])
     end
 
+    sol
 end
 
 ∫!(I::Individuals,T::Array) = ∫!(I::Individuals,(T[1],T[2]))

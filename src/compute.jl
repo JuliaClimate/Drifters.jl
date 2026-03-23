@@ -1,8 +1,10 @@
 
 #needed to avoid allocations:
 Flo=Union{Float32,Float64}
-mydt(tim::Flo,T::Array{Float32,1})=(tim-T[1])/(T[2]-T[1])
-mydt(tim::Flo,T::Array{Float64,1})=(tim-T[1])/(T[2]-T[1])
+
+mydt(tim::Flo,T::Array) = (tim-T[1])/(T[2]-T[1])
+mydt(tim::Flo,P::FlowFields) = mydt(tim,P.T)
+mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim,time_in_seconds.(T))#is this correct in all cases?
 
 #needed to avoid allocations:
 fSize(f::Array{Tuple{Int,Int}},i::Int) = (f[i][1],f[i][2])
@@ -22,7 +24,8 @@ Interpolate velocity from gridded fields (3D; with halos) to position `u`
 ```jldoctest; output = false
 using Drifters
 u,v,w,pos,func=vortex_flow_field(format=:MeshArray)
-F=FlowFields(u,u,v,v,0*w,1*w,[0,3*pi],func)
+w0=similar(w); w0.MA.=0*w0.MA;
+F=FlowFields(u,u,v,v,w0,w,[0,3*pi],func)
 I=Individuals(F,pos...)
 ∫!(I)
 
@@ -39,7 +42,7 @@ true
 ```
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     g=P.u0.grid
     #
     while MeshArrays.location_is_out(u,g)
@@ -99,7 +102,7 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
 end
 
 """
-    dxdt!(du,u,p::uvMeshArrays,tim)
+    dxdt!(du,u,P::uvMeshArrays,tim)
 
 Interpolate velocity from gridded fields (2D; with halos) to position `u`
 (`x,y,fIndex`) to compute the derivative of position v time  `du_dt`.
@@ -109,7 +112,7 @@ Interpolate velocity from gridded fields (2D; with halos) to position `u`
 ```jldoctest; output = false
 using Drifters
 u,v,w,pos,func=random_flow_field(format=:MeshArray)
-F=FlowFields(u,u,v,v,[0,1.0],func)
+F=FlowFields(u.MA,u.MA,v.MA,v.MA,[0,1.0],func)
 I=Individuals(F,pos...)
 ∫!(I)
 
@@ -122,7 +125,7 @@ true
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvMeshArrays,tim) where T
     #compute positions in index units
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     g=P.u0.grid
     #
     while MeshArrays.location_is_out(u,g)
@@ -192,7 +195,7 @@ true
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwArrays,tim) where T
     #compute positions in index units
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     (nx,ny,nz) = size(P.u0)
     #
     while location_is_out(u,nx,ny)
@@ -271,7 +274,7 @@ true
 ```
 """
 function dxdt!(du::Array{T,1},u::Array{T,1},P::uvArrays,tim) where T
-    dt=mydt(tim,P.T)
+    dt=mydt(tim,P)
     (nx,ny) = size(P.u0)
     #
     while location_is_out(u,nx,ny)

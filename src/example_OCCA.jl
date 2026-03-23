@@ -39,7 +39,7 @@ end
 
 import Drifters.DataFrames: DataFrame
 import Drifters.MeshArrays as MeshArrays
-import Drifters.MeshArrays: MeshArray
+import Drifters.MeshArrays: MeshArray, exchange
 import Drifters.OrdinaryDiffEq: solve, Tsit5, remake
 import Drifters.OrdinaryDiffEq: ODEProblem, EnsembleProblem
 
@@ -100,24 +100,17 @@ function setup(;backward_in_time::Bool=false,nmax=Inf)
 
    t0=0.0; t1=86400*366*2.0;
 
-   for k=1:n
-    (tmpu,tmpv)=MeshArrays.exchange_main(u[:,k],v[:,k],1)
-    u[:,k]=tmpu.MA
-    v[:,k]=tmpv.MA
-   end
-   for k=1:n+1
-    tmpw=MeshArrays.exchange(w[:,k])
-    w[:,k]=tmpw.MA
-   end
+   (u,v)=exchange(u,v)
+   w=exchange(w)
 
    P=FlowFields(u,u,v,v,w,w,[t0,t1],func)
 
-   XC=MeshArrays.exchange(Γ.XC)
-   YC=MeshArrays.exchange(Γ.YC)
+   XC=exchange(Γ.XC)
+   YC=exchange(Γ.YC)
 
    iso=MeshArrays.isosurface(θ,15,Γ)
    iso[findall(isnan.(iso))].=0.
-   iso=MeshArrays.exchange(iso)
+   iso=exchange(iso)
 
    D = (iso=iso, XC=XC, YC=YC, RF=Γ.RF, RC=Γ.RC,ioSize=(360,160,n), Γ=Γ)
 
