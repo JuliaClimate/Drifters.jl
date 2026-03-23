@@ -1,9 +1,10 @@
 module ECCO
 
 import MeshArrays, DataDeps, CSV, JLD2
-import Dates: DateTime, Year, Month
+import Dates: DateTime, Year, Month, datetime2julian
 
-import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq, time_in_seconds
+import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
+import Drifters: time_in_seconds, time_in_DateTime
 import OrdinaryDiffEq: solve, Tsit5, ODEProblem
 import Drifters: update_location!, Individuals, uvMeshArrays, uvwMeshArrays
 import Drifters: FlowFields, ensemble_solver, data_path, read_data_ECCO, order
@@ -63,6 +64,8 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String,backw
     γ=Γ.XC.grid
     mon=86400.0*365.0/12.0
     
+    #println([-mon/2,mon/2])
+
     if k==0
         msk=Γ.hFacC
         msk=1.0*(msk .> 0.0)
@@ -82,7 +85,7 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String,backw
             [DateTime(1999,12,15),DateTime(2000,1,15)],func)
 #            [-mon/2,mon/2],func)
     end
-    
+        
     D = (🔄 = update_FlowFields!, pth=pth,
          XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
          k=k, msk=msk, exmsk=exmsk, 
@@ -109,10 +112,24 @@ consecutive records is diff(P.T), (2) monthly climatologies are used
 with a periodicity of 12 months, (3) vertical P.k is selected_
 """
 function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::AbstractFloat)
-    (y0,y1)=[Year(t).value for t in P.T]
-    (m0,m1)=[Month(t).value for t in P.T]
-    t0=time_in_seconds(DateTime(y0,m0,15))
-    t1=time_in_seconds(DateTime(y1,m1,15))
+    if eltype(P.T)!==DateTime
+        dt=P.T[2]-P.T[1]
+
+        m0=Int(floor((t+dt/2.0)/dt))
+        m1=m0+1
+        t0=m0*dt-dt/2.0
+        t1=m1*dt-dt/2.0
+
+        m0=mod(m0,12)
+        m0==0 ? m0=12 : nothing
+        m1=mod(m1,12)
+        m1==0 ? m1=12 : nothing
+    else
+        (y0,y1)=[Year(t).value for t in P.T]
+        (m0,m1)=[Month(t).value for t in P.T]
+        t0=time_in_seconds(DateTime(y0,m0,15))
+        t1=time_in_seconds(DateTime(y1,m1,15))
+    end
 
     velocity_factor=1.0
 #    if D.backward_time
@@ -169,10 +186,24 @@ consecutive records is diff(P.T), (2) monthly climatologies are used
 with a periodicity of 12 months, (3) vertical P.k is selected_
 """
 function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::AbstractFloat)
-    (y0,y1)=[Year(t).value for t in P.T]
-    (m0,m1)=[Month(t).value for t in P.T]
-    t0=DateTime(y0,m0,15)
-    t1=DateTime(y1,m1,15)
+    if eltype(P.T)!==DateTime
+        dt=P.T[2]-P.T[1]
+
+        m0=Int(floor((t+dt/2.0)/dt))
+        m1=m0+1
+        t0=m0*dt-dt/2.0
+        t1=m1*dt-dt/2.0
+
+        m0=mod(m0,12)
+        m0==0 ? m0=12 : nothing
+        m1=mod(m1,12)
+        m1==0 ? m1=12 : nothing
+    else
+        (y0,y1)=[Year(t).value for t in P.T]
+        (m0,m1)=[Month(t).value for t in P.T]
+        t0=DateTime(y0,m0,15)
+        t1=DateTime(y1,m1,15)
+    end
 
     velocity_factor=1.0
 #    if D.backward_time
@@ -323,16 +354,23 @@ end
 custom∫(prob) = ensemble_solver(prob,solver=Tsit5(),reltol=1e-5,abstol=1e-5)
 
 custom🔴 = DataFrame(ID=Int[], fid=Int[], x=Float64[], y=Float64[], 
-lon=Float64[], lat=Float64[], z=Float64[], d=Float64[], 
-θ=Float64[], SSθ=Float64[], S=Float64[], SSS=Float64[], year=Float64[], t=Float64[])
+        lon=Float64[], lat=Float64[], z=Float64[], d=Float64[], 
+        θ=Float64[], SSθ=Float64[], S=Float64[], SSS=Float64[], 
+        year=Float64[], t=Union{Float64,DateTime}[])
 
-function custom🔧(sol,𝐹::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
-
-    df=postprocess_MeshArray(sol,𝐹,D,id=id,T=T)
+function custom🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
+    df=postprocess_MeshArray(sol,F,D,id=id,T=T)
     np=length(sol.u)
     z=[[sol.u[i][:,1][3] for i in 1:np];[sol.u[i][:,end][3] for i in 1:np]]
     df.z=z[:]
-    df.year=df.t ./86400/365
+    if eltype(F.T)==DateTime
+        year0=minimum(Year.(df.t)).value
+        tmp1=(df.t.-DateTime(year0,1,1))
+        tmp2=year0.+[t.value for t in tmp1]./365/86400/1000
+        df.year=tmp2
+    else
+        df.year=df.t ./86400/365
+    end
     add_lonlat!(df,D.XC,D.YC)
     k=Int.(floor.(z)); w=(z-k);
 	df.d=D.Γ.RF[1 .+ k].*(1 .- w)+D.Γ.RF[2 .+ k].*w
@@ -402,7 +440,11 @@ function custom∫!(I::Individuals,T)
     (; 🚄,📌,P,D,🔧,🆔,🔴,∫) = I
 
     vel=0*vec(📌)
-    [🚄(vel[i],📌[i],P,time_in_seconds(T[1])) for i in 1:length(vel)]
+    if eltype(I.P.T)!==DateTime
+        [🚄(vel[i],📌[i],P,T[1]) for i in 1:length(vel)]
+    else
+        [🚄(vel[i],📌[i],P,time_in_seconds(T[1])) for i in 1:length(vel)]
+    end
     nd=ndims(vel[1])-1
     vel=[sqrt(sum(vel[ii][1:nd].^2)) for ii in eachindex(vel)]
     vel=[(ii,vel[ii]) for ii=1:length(vel)]
@@ -412,9 +454,14 @@ function custom∫!(I::Individuals,T)
     ni=Int(ceil(length(ii)/nn))
 
     nt=6
-    TTT=time_in_seconds.(I.P.T)
-    dt=diff(TTT)[1]/nt
-    nj=1 #Int(round(ni*min(T[2]/86400/365,1)))
+    if eltype(T)==DateTime
+        TTT=time_in_seconds.(T)
+        dt=diff(collect(TTT))[1]/nt
+        nj=1
+    else
+        dt=(T[2]-T[1])/nt
+        nj=Int(round(ni*min(T[2]/86400/365,1)))
+    end
     
     tmp=deepcopy(custom🔴)
     for i=1:ni
@@ -422,11 +469,15 @@ function custom∫!(I::Individuals,T)
 #        println("i="*string(i))
         jj=ii[nn*(i-1) .+ collect(1:mm)]
       for tt in 1:nt
-        #needs fixing here too
-        TT=[TTT[1]+(tt-1)*dt, TTT[1]+tt*dt]
+        if eltype(T)==DateTime
+            TT=[TTT[1]+(tt-1)*dt, TTT[1]+tt*dt]
+        else
+            TT=[T[1]+(tt-1)*dt, T[1]+tt*dt]
+        end
         prob = ODEProblem(🚄,permutedims(📌[jj]), TT ,P)
         sol = ∫(prob)
-        append!(tmp, 🔧(sol,P,D,id=🆔[jj], T=TT))
+        append!(tmp, 🔧(sol,P,D,id=🆔[jj], T=TT),promote=true)
+
         📌[jj] = deepcopy([sol[i].u[end] for i in 1:mm])
         if i<=nj
          if isa(P,uvwMeshArrays)||isa(P,uvMeshArrays)
@@ -438,7 +489,7 @@ function custom∫!(I::Individuals,T)
     sort!(tmp, order(:t))
 
     isempty(🔴) ? np =0 : np=length(🆔)
-    append!(🔴,tmp[np+1:end,:])
+    append!(🔴,tmp[np+1:end,:],promote=true)
 #    isempty(🔴) ? append!(🔴,tmp) : 🔴[:,:]=tmp[:,:]
     return true
 end

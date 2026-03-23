@@ -207,6 +207,7 @@ function FlowFields(u0::AbstractMeshArray{Ty,2},u1::AbstractMeshArray{Ty,2},
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,1))*(u0.fSize==tmp.fSize) for tmp in (w0,w1)])
     !tst ? error("inconsistent array sizes") : nothing
+
     #call constructor
     uvwMeshArrays(u0,u1,v0,v1,w0,w1,T,update_location!)
 end
@@ -403,7 +404,7 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
     end
     T=eltype(📌)
 
-    🔴 = DataFrame(ID=Int[], x=Float64[], y=Float64[], z=Float64[], fid=Int64[], t=Float64[])
+    🔴 = DataFrame(ID=Int[], x=Float64[], y=Float64[], z=Float64[], fid=Int64[], t=Union{Float64,DateTime}[])
     haskey(NT,:🔴) ? 🔴=NT.🔴 : nothing
 
     function 🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
@@ -435,6 +436,14 @@ function time_in_seconds(T)
         86400*datetime2julian.(T)
     else
         T
+    end
+end
+
+function time_in_DateTime(T)
+    t=if isa(T,DateTime)
+        T
+    else
+        julian2datetime.(T./86400)
     end
 end
 

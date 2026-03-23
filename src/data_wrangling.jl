@@ -49,7 +49,11 @@ function postprocess_MeshArray(sol,P::FlowFields, D::NamedTuple; id=missing, T=m
         x=[[sol.u[i][:,1][1] for i in 1:np];[sol.u[i][:,end][1] for i in 1:np]]
         y=[[sol.u[i][:,1][2] for i in 1:np];[sol.u[i][:,end][2] for i in 1:np]]
         fIndex=[[sol.u[i][:,1][nd] for i in 1:np];[sol.u[i][:,end][nd] for i in 1:np]]
-        t=[fill(T[1],np);fill(T[2],np)]
+        t=(if eltype(P.T)==DateTime
+            time_in_DateTime.([fill(T[1],np);fill(T[2],np)])
+        else
+            [fill(T[1],np);fill(T[2],np)]
+        end)
         id=[id[:,1];id[:,1]]
     else
         nt=length(sol.u)

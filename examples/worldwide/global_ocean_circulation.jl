@@ -197,11 +197,13 @@ md"""### 3.3 Monthly Simulation Loop
     `add_lonlat!` derives geographic locations (longitude and latitude) from local grid coordinates (x, y, etc).
 """
 
-error("gf2")
-
 # ╔═╡ a3e45927-5d53-42be-b7b7-489d6e7a6fe5
 if !do_replay
-	T=(DateTime(2000,1,1),I.P.T[2])
+    if eltype(I.P.T)==Drifters.DateTime
+    	T=(Drifters.DateTime(2000,1,1),I.P.T[2])
+    else
+        T=(0.0,I.P.T[2])
+    end
 	my∫!(I,T)
 	✔1="Done with Initial Integration"
 else

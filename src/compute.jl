@@ -4,7 +4,7 @@ Flo=Union{Float32,Float64}
 
 mydt(tim::Flo,T::Array) = (tim-T[1])/(T[2]-T[1])
 mydt(tim::Flo,P::FlowFields) = mydt(tim,P.T)
-mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim+time_in_seconds.(T[1]),time_in_seconds.(T))
+mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim,time_in_seconds.(T))#is this correct in all cases?
 
 #needed to avoid allocations:
 fSize(f::Array{Tuple{Int,Int}},i::Int) = (f[i][1],f[i][2])
