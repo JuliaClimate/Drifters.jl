@@ -1,7 +1,7 @@
 module ECCO
 
 import MeshArrays, DataDeps, CSV, JLD2
-import Dates: DateTime, Year, Month, datetime2julian
+import Dates: DateTime, Year, Month, Day
 
 import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
 import Drifters: time_in_seconds, time_in_DateTime
@@ -56,7 +56,8 @@ and file location (`pth`).
 _Note: the initial implementation approximates month durations to 
 365 days / 12 months for simplicity and sets P.T to [-mon/2,mon/2]_
 """
-function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String,backward_time=false)
+function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
+            backward_time=false, time_unit=:DateTime)
     XC=exchange(Γ.XC) #add 1 lon point at each edge
     YC=exchange(Γ.YC) #add 1 lat point at each edge
     iDXC=1. ./Γ.DXC
@@ -64,8 +65,7 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String,backw
     γ=Γ.XC.grid
     mon=86400.0*365.0/12.0
     
-    #println([-mon/2,mon/2])
-
+    T=(time_unit==:DateTime ? [DateTime(1999,12,15),DateTime(2000,1,15)] : [-mon/2,mon/2])
     if k==0
         msk=Γ.hFacC
         msk=1.0*(msk .> 0.0)
@@ -74,16 +74,14 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String,backw
         P=FlowFields(exchange(MeshArray(γ,Float32,nr)),exchange(MeshArray(γ,Float32,nr)),
             exchange(MeshArray(γ,Float32,nr)),exchange(MeshArray(γ,Float32,nr)),
             exchange(MeshArray(γ,Float32,nr+1)),exchange(MeshArray(γ,Float32,nr+1)),
-            [DateTime(1999,12,15),DateTime(2000,1,15)],func)
-#            [-mon/2,mon/2],func)
+            T,func)
     else
         msk=Γ.hFacC[:, k]
         msk=1.0*(msk .> 0.0)
         exmsk=exchange(msk).MA
         P=FlowFields(exchange(MeshArray(γ,Float32)),exchange(MeshArray(γ,Float32)),
             exchange(MeshArray(γ,Float32)),exchange(MeshArray(γ,Float32)),
-            [DateTime(1999,12,15),DateTime(2000,1,15)],func)
-#            [-mon/2,mon/2],func)
+            T,func)
     end
         
     D = (🔄 = update_FlowFields!, pth=pth,
@@ -111,7 +109,8 @@ _Note: for now, it is assumed that (1) the time interval `dt` between
 consecutive records is diff(P.T), (2) monthly climatologies are used 
 with a periodicity of 12 months, (3) vertical P.k is selected_
 """
-function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::AbstractFloat)
+function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
+                            verbose=false)
     if eltype(P.T)!==DateTime
         dt=P.T[2]-P.T[1]
 
@@ -125,10 +124,26 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::AbstractFloat)
         m1=mod(m1,12)
         m1==0 ? m1=12 : nothing
     else
-        (y0,y1)=[Year(t).value for t in P.T]
-        (m0,m1)=[Month(t).value for t in P.T]
-        t0=time_in_seconds(DateTime(y0,m0,15))
-        t1=time_in_seconds(DateTime(y1,m1,15))
+        yy=Year(t).value; mm=Month(t).value; dd=Day(t).value
+        verbose ? println("y$(yy)m$(mm)d$(dd)") : nothing
+        if dd<15&&mm==1
+            yy0=yy-1; yy1=yy; mm0=12; mm1=1;
+        elseif dd<15
+            yy0=yy; yy1=yy; mm0=mm-1; mm1=mm;
+        elseif dd>=15&&mm==12
+            yy0=yy; yy1=yy+1; mm0=12; mm1=1;
+        else
+            yy0=yy; yy1=yy; mm0=mm; mm1=mm+1;
+        end
+        verbose ? println("0:$(yy0)/$(mm0) , 1:$(yy1)/$(mm1)") : nothing
+        if P.T[2]>P.T[1]
+            y0=yy0; y1=yy1; m0=mm0; m1=mm1;
+        else
+            y1=yy0; y0=yy1; m1=mm0; m0=mm1;
+        end
+        t0=DateTime(y0,m0,15)
+        t1=DateTime(y1,m1,15)
+        verbose ? println("0:$(t0) , 1:$(t1)") : nothing
     end
 
     velocity_factor=1.0
@@ -185,7 +200,8 @@ _Note: for now, it is assumed that (1) the time interval `dt` between
 consecutive records is diff(P.T), (2) monthly climatologies are used 
 with a periodicity of 12 months, (3) vertical P.k is selected_
 """
-function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::AbstractFloat)
+function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
+                                verbose=false)
     if eltype(P.T)!==DateTime
         dt=P.T[2]-P.T[1]
 
@@ -199,10 +215,26 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::AbstractFloat)
         m1=mod(m1,12)
         m1==0 ? m1=12 : nothing
     else
-        (y0,y1)=[Year(t).value for t in P.T]
-        (m0,m1)=[Month(t).value for t in P.T]
+        yy=Year(t).value; mm=Month(t).value; dd=Day(t).value
+        verbose ? println("y$(yy)m$(mm)d$(dd)") : nothing
+        if dd<15&&mm==1
+            yy0=yy-1; yy1=yy; mm0=12; mm1=1;
+        elseif dd<15
+            yy0=yy; yy1=yy; mm0=mm-1; mm1=mm;
+        elseif dd>=15&&mm==12
+            yy0=yy; yy1=yy+1; mm0=12; mm1=1;
+        else
+            yy0=yy; yy1=yy; mm0=mm; mm1=mm+1;
+        end
+        verbose ? println("0:$(yy0)/$(mm0) , 1:$(yy1)/$(mm1)") : nothing
+        if P.T[2]>P.T[1]
+            y0=yy0; y1=yy1; m0=mm0; m1=mm1;
+        else
+            y1=yy0; y0=yy1; m1=mm0; m0=mm1;
+        end
         t0=DateTime(y0,m0,15)
         t1=DateTime(y1,m1,15)
+        verbose ? println("0:$(t0) , 1:$(t1)") : nothing
     end
 
     velocity_factor=1.0
@@ -306,7 +338,7 @@ end
 
 Set up Global Ocean particle simulation in 2D with seasonally varying flow field.
 """
-function init_FlowFields(; k=1, backward_time=false)
+function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime)
   
   #read grid and set up connections between subdomains
   γ=MeshArrays.GridSpec(ID=:LLC90)
@@ -318,10 +350,10 @@ function init_FlowFields(; k=1, backward_time=false)
   Γ=merge(Γ,MeshArrays.NeighborTileIndices_cs(Γ))
   func=(u -> MeshArrays.update_location_llc!(u,Γ))
 
-  #initialize u0,u1 etc
-  P,D=setup_FlowFields(k,Γ,func,data_path(:ECCO),backward_time)
-  D.🔄(P,D,0.0)
-
+  #initialize u0,u1 etc arrays
+  P,D=setup_FlowFields(k,Γ,func,data_path(:ECCO),
+        backward_time=backward_time, time_unit=time_unit)
+  
   #add background map for plotting
   λ=get_interp_coefficients(Γ)
   ODL=OceanDepthLog(λ,Γ)

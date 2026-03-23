@@ -118,7 +118,7 @@ begin
 	
 	Climatology.get_ecco_velocity_if_needed()
 	
-	P,D=ECCOmodule.init_FlowFields(k=k,backward_time=backward_time)
+	P,D=ECCOmodule.init_FlowFields(k=k,backward_time=backward_time,time_unit=:DateTime)
 
 	println("Done with Setting Up FlowFields")
 	tmp1="  - flow field depth level = "*(k==0 ? "three-dimensional" : "level $(k)") 
@@ -204,6 +204,7 @@ if !do_replay
     else
         T=(0.0,I.P.T[2])
     end
+    D.🔄(P,D,T[1])
 	my∫!(I,T)
 	✔1="Done with Initial Integration"
 else
@@ -226,7 +227,8 @@ if !do_replay
 	✔2
 	!isdir(output_path) ? mkdir(output_path) : nothing
 	file_output=joinpath(output_path,file_base*".csv")
-	CSV.write(file_output, Float32.(I.🔴))
+#	CSV.write(file_output, Float32.(I.🔴))
+	CSV.write(file_output, I.🔴)
 	✔3="Done with saving trajectories"
 else
 	✔3="Skipping save (replay instead)"
@@ -236,7 +238,8 @@ end
 if !do_replay
 	✔3
 	file_output_csv=joinpath(output_path,file_base*".csv")
-	CSV.write(file_output_csv, Float32.(I.🔴))
+#	CSV.write(file_output_csv, Float32.(I.🔴))
+	CSV.write(file_output_csv, I.🔴)
 else
 	✔3
 	"Skipping File Output (replay instead)"
