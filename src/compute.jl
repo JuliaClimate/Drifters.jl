@@ -4,7 +4,7 @@ Flo=Union{Float32,Float64}
 
 mydt(tim::Flo,T::Array) = (tim-T[1])/(T[2]-T[1])
 mydt(tim::Flo,P::FlowFields) = mydt(tim,P.T)
-mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim+time_in_seconds.(T[1]),time_in_seconds.(T))
+mydt(tim::Flo,T::Array{DateTime,1})=mydt(tim,time_in_seconds.(T))#is this correct in all cases?
 
 #needed to avoid allocations:
 fSize(f::Array{Tuple{Int,Int}},i::Int) = (f[i][1],f[i][2])
@@ -24,7 +24,8 @@ Interpolate velocity from gridded fields (3D; with halos) to position `u`
 ```jldoctest; output = false
 using Drifters
 u,v,w,pos,func=vortex_flow_field(format=:MeshArray)
-F=FlowFields(u,u,v,v,0*w,1*w,[0,3*pi],func)
+w0=similar(w); w0.MA.=0*w0.MA;
+F=FlowFields(u,u,v,v,w0,w,[0,3*pi],func)
 I=Individuals(F,pos...)
 ∫!(I)
 
@@ -101,7 +102,7 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
 end
 
 """
-    dxdt!(du,u,p::uvMeshArrays,tim)
+    dxdt!(du,u,P::uvMeshArrays,tim)
 
 Interpolate velocity from gridded fields (2D; with halos) to position `u`
 (`x,y,fIndex`) to compute the derivative of position v time  `du_dt`.
@@ -111,7 +112,7 @@ Interpolate velocity from gridded fields (2D; with halos) to position `u`
 ```jldoctest; output = false
 using Drifters
 u,v,w,pos,func=random_flow_field(format=:MeshArray)
-F=FlowFields(u,u,v,v,[0,1.0],func)
+F=FlowFields(u.MA,u.MA,v.MA,v.MA,[0,1.0],func)
 I=Individuals(F,pos...)
 ∫!(I)
 

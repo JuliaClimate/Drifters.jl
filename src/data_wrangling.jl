@@ -1,21 +1,36 @@
 """
-    convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
+    convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T; time_option=:default) where T
 
 Convert a pair of U,V arrays (staggered C-grid velocity field in 2D) to
-a `uvMeshArrays` struct ready for integration of individual displacements
-from time `t0=0` to time `t1`.
+a `uvMeshArrays` struct ready for use in `Individuals`.
+
+- This applies `MeshArrays.exchange` to U,V.
+- Flow fields are assumed time invariant. 
+- The time interval for integration can be set     
+  - (default) Time interval is in seconds (0 to t1)
+  - (time_option==:DateTime) Time interval is from d0=2000-1-1 to d0+t1 seconds
 """
-function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T) where T
+function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T; time_option=:default) where T
     np,nq=size(U)
     Γ=MeshArrays.Grids_simple.periodic_domain(np,nq)
 
     g=Γ.XC.grid
     u=MeshArray(g,[U])
     v=MeshArray(g,[V])
-    (u,v)=MeshArrays.exchange_main(u,v,1)
+    (u,v)=exchange(u,v)
     func=(u -> MeshArrays.update_location_PeriodicDomain!(u,g))
 
-    uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,[0,t1],func)
+    TT=(if time_option==:default
+        [0,t1]
+    elseif time_option==:DateTime
+        D0=Drifters.DateTime(2000,1,1)
+        D1=Drifters.DateTime(2000,1,1,0,0,t1)
+        [D0,D1]
+    else
+        error("unknown time_option")
+    end
+    )
+    uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,TT,func)
 end
 
 """
@@ -34,7 +49,11 @@ function postprocess_MeshArray(sol,P::FlowFields, D::NamedTuple; id=missing, T=m
         x=[[sol.u[i][:,1][1] for i in 1:np];[sol.u[i][:,end][1] for i in 1:np]]
         y=[[sol.u[i][:,1][2] for i in 1:np];[sol.u[i][:,end][2] for i in 1:np]]
         fIndex=[[sol.u[i][:,1][nd] for i in 1:np];[sol.u[i][:,end][nd] for i in 1:np]]
-        t=[fill(T[1],np);fill(T[2],np)]
+        t=(if eltype(P.T)==DateTime
+            time_in_DateTime.([fill(T[1],np);fill(T[2],np)])
+        else
+            [fill(T[1],np);fill(T[2],np)]
+        end)
         id=[id[:,1];id[:,1]]
     else
         nt=length(sol.u)
@@ -325,4 +344,56 @@ function stproj_inv(xx,yy,XC0=0.0,YC0=90.0)
     theta>=0 ? YC=90-180/pi*theta : YC=-90-180/pi*theta
 
     return XC,YC
+end
+
+"""
+    monthly_records(T,t; verbose=false)
+
+Return `t0,t1,m0,m1` based on time `t` and reference time interval `T`.
+
+- If `eltype(T)` and `t` are `DateTime` then so are `t0,t1`
+- If `T` is backward in time then we flip `t0,t1,m0,m1`.
+- `m0,m1` correspond to the monthly records
+"""
+function monthly_records(T,t; verbose=false, climatology=false)
+    if eltype(T)!==DateTime
+        mon=86400.0*365.0/12.0
+        m0=Int(floor((t+mon/2.0)/mon))
+        m1=m0+1
+        tt0=m0*mon-mon/2.0
+        tt1=m1*mon-mon/2.0
+        if T[2]>T[1]
+            t0=tt0; t1=tt1; m0=mm0; m1=mm1;
+        else
+            t1=tt0; t0=tt1; m1=mm0; m0=mm1;
+        end
+    else
+        yy=Year(t).value; mm=Month(t).value; dd=Day(t).value
+        verbose ? println("y$(yy)m$(mm)d$(dd)") : nothing
+        if dd<15&&mm==1
+            yy0=yy-1; yy1=yy; mm0=12; mm1=1;
+        elseif dd<15
+            yy0=yy; yy1=yy; mm0=mm-1; mm1=mm;
+        elseif dd>=15&&mm==12
+            yy0=yy; yy1=yy+1; mm0=12; mm1=1;
+        else
+            yy0=yy; yy1=yy; mm0=mm; mm1=mm+1;
+        end
+        verbose ? println("0:$(yy0)/$(mm0) , 1:$(yy1)/$(mm1)") : nothing
+        if T[2]>T[1]
+            y0=yy0; y1=yy1; m0=mm0; m1=mm1;
+        else
+            y1=yy0; y0=yy1; m1=mm0; m0=mm1;
+        end
+        t0=DateTime(y0,m0,15)
+        t1=DateTime(y1,m1,15)
+        verbose ? println("0:$(t0) , 1:$(t1)") : nothing
+    end
+
+    m0=(climatology ? mod1(m0,12) : m0)
+    m1=(climatology ? mod1(m1,12) : m1)
+
+    verbose ? println.(t0,t1,m0,m1) : nothing
+    
+    return t0,t1,m0,m1
 end
