@@ -24,27 +24,31 @@ _at(x::Number, t) = x            # for constants
 """
 function g_erf(u,p,t)
 
-Use 1-erf as diffusivity, and g = \sqrt(2\kappa)
+Use 1-erf as diffusivity, and g = sqrt(2kappa)
+A mirror image above the sea surface is created 
+to handle the surface boundary correctly. 
 """
 function g_erf(u,p,t)
     μp, σp = p
     μ = _at(μp, t)
     σ = _at(σp, t)
     d = Normal(μ, σ)
-    return sqrt.((1.0 .-cdf(d, u)).*2)
+    return sqrt.(abs.(1.0 .-cdf(d, u).-cdf(d,-u)).*2.)
 end
 
 """
 function f_gauss(u,p,t)
 
-Use 1-erf as diffusivity, and f = d\kappa/du
+Use 1-erf as diffusivity, and f = dkappa/du
+A mirror image above the sea surface is created 
+to handle the surface boundary correctly. 
 """
 function f_gauss(u,p,t)
     μp, σp = p
     μ = _at(μp, t)
     σ = _at(σp, t)
     d = Normal(μ, σ)
-    return -pdf(d, u)
+    return (pdf(d, -u).-pdf(d, u))
 end
 
 """
