@@ -37,7 +37,7 @@ function kappa_erf(u,p,t)
     return (1.0 .-cdf(d, u))
 end
 
-g_erf(u,p,t) = sqrt.(kappa_erf.*2.)
+g_erf(u,p,t) = sqrt.(kappa_erf(u,p,t).*2.)
 
 """
 function f_gauss(u,p,t)
@@ -53,6 +53,45 @@ function f_gauss(u,p,t)
     σ = _at(σp, t)
     d = Normal(μ, σ)
     return (pdf(d, -u).-pdf(d, u))
+end
+
+"""
+function kappa_piecewise(u,p,t)
+
+Diffusivity is one above depth - thickness,
+is zero below depth,
+and is a linear transition between the two in 
+the middle. 
+"""
+
+function kappa_piecewise(u,p,t)
+    depth_p,thickness_p = p
+    depth = _at(depth_p,t)
+    thickness = _at(thickness_p,t)
+    kappa = similar(u, Float64)
+    kappa = ifelse.(u.>depth,
+        0,
+        ifelse.(
+            u.<depth-thickness,
+            1,
+            (depth .- u)./thickness
+            ))
+    return kappa
+end
+
+g_piecewise(u,p,t) = sqrt.(kappa_piecewise(u,p,t).*2.)
+"""
+function f_piecewise(u,p,t)
+
+Drift corresponding to  kappa_piecewise,
+just a constant drift backinto the mixed layer
+of 1/thickness. 1 has unit of diffusivity. 
+"""
+function f_piecewise(u,p,t)
+    depth_p,thickness_p = p
+    depth = _at(depth_p,t)
+    thickness = _at(thickness_p,t)
+    drift = -Float64.((u.>depth-thickness).&(u.<depth))./thickness
 end
 
 """
