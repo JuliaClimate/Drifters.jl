@@ -1,9 +1,9 @@
 module ex_SDE
 
 using Statistics
-using Distributions
 if Base.find_package("DifferentialEquations") !== nothing
-    @eval using DifferentialEquations
+    @eval using SciMLBase
+    @eval using Distributions
 end
 
 ## helper functions for the example
@@ -22,24 +22,28 @@ end
 _at(x, t) = x(t)                 # for functions/functors
 _at(x::Number, t) = x            # for constants
 """
-function g_erf(u,p,t)
+function kappa_erf(u,p,t)
 
-Use 1-erf as diffusivity, and g = sqrt(2kappa)
+Use 1-erf as diffusivity, and the factor of dW is
+        g = sqrt(2kappa)
 A mirror image above the sea surface is created 
 to handle the surface boundary correctly. 
 """
-function g_erf(u,p,t)
+function kappa_erf(u,p,t)
     μp, σp = p
     μ = _at(μp, t)
     σ = _at(σp, t)
     d = Normal(μ, σ)
-    return sqrt.(abs.(1.0 .-cdf(d, u).-cdf(d,-u)).*2.)
+    return (1.0 .-cdf(d, u))
 end
+
+g_erf(u,p,t) = sqrt.(kappa_erf.*2.)
 
 """
 function f_gauss(u,p,t)
 
-Use 1-erf as diffusivity, and f = dkappa/du
+Use 1-erf as diffusivity, and the drift velocity
+        f = dkappa/du
 A mirror image above the sea surface is created 
 to handle the surface boundary correctly. 
 """
