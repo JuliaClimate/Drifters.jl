@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.23
+# v0.20.24
 
 using Markdown
 using InteractiveUtils
@@ -3314,6 +3314,7 @@ git-tree-sha1 = "e7b67590c14d487e734dcb925924c5dc43ec85f3"
 uuid = "dfaa095f-4041-5dcd-9319-2fabd8486b76"
 version = "4.1.0+0"
 """
+
 # ╔═╡ Cell order:
 # ╟─6bf88b5c-3abc-4b03-90bb-a7eb8cb68577
 # ╟─41487611-deba-49fc-a5f7-f4f63f7935c6
