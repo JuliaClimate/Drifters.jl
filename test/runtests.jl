@@ -58,9 +58,11 @@ end
     S = ECCOmodule.init_storage(np,100,length(D.Γ.RC),50)
     I = Individuals(P,df.x,df.y,df.z,df.fid,
         (D=merge(D,S),∫=ECCOmodule.custom∫,🔧=ECCOmodule.custom🔧,🔴=deepcopy(ECCOmodule.custom🔴)))
-    my∫! = ECCOmodule.custom∫!
-    T=(0.0,I.P.T[2])
-    my∫!(I,T)
+
+    zer=(eltype(I.P.T)==Drifters.DateTime ? Drifters.DateTime(2000,1,1) : 0.0)
+    T=(zer,I.P.T[2])
+    D.🔄(P,D,T[1])
+    ECCOmodule.custom∫!(I,T)
     @test isa(I,Individuals)
 
     tmp_🔴=I.🔴
@@ -127,11 +129,16 @@ end
 @testset "global" begin
     p0=Drifters.datadeps.getdata("global_ocean_circulation_inputs")
     ECCOmodule=Drifters.ECCO
-    P,D=ECCOmodule.init_FlowFields()
+    P,D=ECCOmodule.init_FlowFields(k=1,time_unit=:second)
+
     file_input=joinpath(p0,"initial_10_1.csv")
     df = Drifters.init.init_positions(10,filename=file_input)
     I=Individuals(P,df.x,df.y,df.f,(D=D,))
-    T=(0.0,I.P.T[2])
+
+    zer=(eltype(I.P.T)==Drifters.DateTime ? Drifters.DateTime(2000,1,1) : 0.0)
+    T=(zer,I.P.T[2])
+    D.🔄(P,D,T[1])
+
     ∫!(I,T)
 
     add_lonlat!(I.🔴,D.XC,D.YC)

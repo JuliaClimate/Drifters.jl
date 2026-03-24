@@ -358,10 +358,10 @@ Return `t0,t1,m0,m1` based on time `t` and reference time interval `T`.
 function monthly_records(T,t; verbose=false, climatology=false)
     if eltype(T)!==DateTime
         mon=86400.0*365.0/12.0
-        m0=Int(floor((t+mon/2.0)/mon))
-        m1=m0+1
-        tt0=m0*mon-mon/2.0
-        tt1=m1*mon-mon/2.0
+        mm0=Int(floor((t+mon/2.0)/mon))
+        mm1=mm0+1
+        tt0=mm0*mon-mon/2.0
+        tt1=mm1*mon-mon/2.0
         if T[2]>T[1]
             t0=tt0; t1=tt1; m0=mm0; m1=mm1;
         else
