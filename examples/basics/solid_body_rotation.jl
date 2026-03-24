@@ -61,12 +61,13 @@ plus a convergent term, plus a sinking term.
 # ╔═╡ 2200503c-605c-4dfd-878f-ffea2431f7ba
 begin
 	(np,nz)=(24,16) #gridded domain size (horizontal and vertical)
-	u,v,w,pos0,func=Drifters.vortex_flow_field(np=np,nz=nz,format=format) #staggered velocity arrays
 
 	#FlowFields data structure
 	if format==:MeshArray
+    	u,v,w,pos0,func=Drifters.vortex_flow_field(np=np,nz=nz,format=format) #staggered velocity arrays
 		F=FlowFields(u,u,v,v,0*w,1*w,[0,19.95*2*pi],func); #FlowFields data structure
 	else
+    	u,v,w,pos0=Drifters.vortex_flow_field(np=np,nz=nz,format=format) #staggered velocity arrays
 		F=FlowFields(u,u,v,v,0*w,1*w,[0,19.95*2*pi]); 
 	end
 	"Done with defining the flow fields."
