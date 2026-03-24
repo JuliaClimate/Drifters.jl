@@ -54,7 +54,7 @@ get a t-x heatmap for the parcel distribution.
 """
 function hovmoller_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
     ts = sol.t
-    us = sol.u                      # each entry: vector of particle positions at time ts[k]
+    us = sol.u 
 
     allmins = minimum(minimum, us)
     allmaxs = maximum(maximum, us)
@@ -79,6 +79,43 @@ function hovmoller_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=
     end
 
     return ρ,x_centers
+end
+
+"""
+function surface_reflect
+
+A function for creating discrete callback function to 
+prevent particles
+leaving the surface
+"""
+
+function surface_reflect()
+    condition(u,t,integrator) = true
+    function affect!(integrator)
+        integrator.u .= abs.(integrator.u)   
+    end
+    cb = DiscreteCallback(condition, affect!)
+    return cb
+end
+
+"""
+function surface_reflect
+
+A function for creating discrete callback
+functions to prevent particles leaving
+the surface and the bottom of the mixed layer,
+similar to fold_tails. 
+h(t) is the mixed layer depth. 
+"""
+function surface_and_bottom_reflect(h::Function)
+    condition(u,t,integrator) = true
+    function affect!(integrator)
+        bottom_depth = h(integrator.t)
+        integrator.u .= abs.(integrator.u)
+        integrator.u .= bottom_depth.-abs.(bottom_depth.-integrator.u)
+    end
+    cb = DiscreteCallback(condition, affect!)
+    return cb
 end
 
 """
