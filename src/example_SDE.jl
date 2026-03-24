@@ -1,6 +1,10 @@
 module ex_SDE
 
 using Statistics
+using Distributions
+if Base.find_package("DifferentialEquations") !== nothing
+    @eval using DifferentialEquations
+end
 
 ## helper functions for the example
 
@@ -13,6 +17,68 @@ function fold_tails(z)
         z[findall(z.<0.0)].=-z[findall(z.<0.0)]
         z[findall(z.>1.0)].=(2.0 .- z[findall(z.>1.0)])
     end
+end
+
+_at(x, t) = x(t)                 # for functions/functors
+_at(x::Number, t) = x            # for constants
+"""
+function g_erf(u,p,t)
+
+Use 1-erf as diffusivity, and g = \sqrt(2\kappa)
+"""
+function g_erf(u,p,t)
+    μp, σp = p
+    μ = _at(μp, t)
+    σ = _at(σp, t)
+    d = Normal(μ, σ)
+    return sqrt.((1.0 .-cdf(d, u)).*2)
+end
+
+"""
+function f_gauss(u,p,t)
+
+Use 1-erf as diffusivity, and f = d\kappa/du
+"""
+function f_gauss(u,p,t)
+    μp, σp = p
+    μ = _at(μp, t)
+    σ = _at(σp, t)
+    d = Normal(μ, σ)
+    return -pdf(d, u)
+end
+
+"""
+function hovmoller_density
+
+get a t-x heatmap for the parcel distribution. 
+"""
+function hovmoller_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
+    ts = sol.t
+    us = sol.u                      # each entry: vector of particle positions at time ts[k]
+
+    allmins = minimum(minimum, us)
+    allmaxs = maximum(maximum, us)
+    xmin = isnothing(xmin) ? allmins : xmin
+    xmax = isnothing(xmax) ? allmaxs : xmax
+
+    x_edges = collect(range(xmin, xmax; length=nbins+1))
+    x_centers = (x_edges[1:end-1] .+ x_edges[2:end]) ./ 2
+    dx = x_edges[2] - x_edges[1]
+
+    nt = length(ts)
+    ρ = zeros(nbins, nt)
+
+    for (k, uk) in enumerate(us)
+        h = fit(Histogram, uk, x_edges)
+        counts = Float64.(h.weights)
+        if normalize
+            ρ[:, k] .= counts ./ (sum(counts) * dx)
+        else
+            ρ[:, k] .= counts
+        end
+    end
+
+    return ρ,x_centers
 end
 
 """
