@@ -1,6 +1,10 @@
 module ex_SDE
 
 using Statistics
+if Base.find_package("DifferentialEquations") !== nothing
+    @eval using SciMLBase
+    @eval using Distributions
+end
 
 ## helper functions for the example
 
@@ -13,6 +17,152 @@ function fold_tails(z)
         z[findall(z.<0.0)].=-z[findall(z.<0.0)]
         z[findall(z.>1.0)].=(2.0 .- z[findall(z.>1.0)])
     end
+end
+
+_at(x, t) = x(t)                 # for functions/functors
+_at(x::Number, t) = x            # for constants
+"""
+function kappa_erf(u,p,t)
+
+Use 1-erf as diffusivity, and the factor of dW is
+        g = sqrt(2kappa)
+A mirror image above the sea surface is created 
+to handle the surface boundary correctly. 
+"""
+function kappa_erf(u,p,t)
+    μp, σp = p
+    μ = _at(μp, t)
+    σ = _at(σp, t)
+    d = Normal(μ, σ)
+    return (1.0 .-cdf(d, u))
+end
+
+g_erf(u,p,t) = sqrt.(kappa_erf(u,p,t).*2.)
+
+"""
+function f_gauss(u,p,t)
+
+Use 1-erf as diffusivity, and the drift velocity
+        f = dkappa/du
+A mirror image above the sea surface is created 
+to handle the surface boundary correctly. 
+"""
+function f_gauss(u,p,t)
+    μp, σp = p
+    μ = _at(μp, t)
+    σ = _at(σp, t)
+    d = Normal(μ, σ)
+    return (pdf(d, -u).-pdf(d, u))
+end
+
+"""
+function kappa_piecewise(u,p,t)
+
+Diffusivity is one above depth - thickness,
+is zero below depth,
+and is a linear transition between the two in 
+the middle. 
+"""
+
+function kappa_piecewise(u,p,t)
+    depth_p,thickness_p = p
+    depth = _at(depth_p,t)
+    thickness = _at(thickness_p,t)
+    kappa = similar(u, Float64)
+    kappa = ifelse.(u.>depth,
+        0,
+        ifelse.(
+            u.<depth-thickness,
+            1,
+            (depth .- u)./thickness
+            ))
+    return kappa
+end
+
+g_piecewise(u,p,t) = sqrt.(kappa_piecewise(u,p,t).*2.)
+"""
+function f_piecewise(u,p,t)
+
+Drift corresponding to  kappa_piecewise,
+just a constant drift backinto the mixed layer
+of 1/thickness. 1 has unit of diffusivity. 
+"""
+function f_piecewise(u,p,t)
+    depth_p,thickness_p = p
+    depth = _at(depth_p,t)
+    thickness = _at(thickness_p,t)
+    drift = -Float64.((u.>depth-thickness).&(u.<depth))./thickness
+end
+
+"""
+function hovmoller_density
+
+get a t-x heatmap for the parcel distribution. 
+"""
+function hovmoller_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
+    ts = sol.t
+    us = sol.u 
+
+    allmins = minimum(minimum, us)
+    allmaxs = maximum(maximum, us)
+    xmin = isnothing(xmin) ? allmins : xmin
+    xmax = isnothing(xmax) ? allmaxs : xmax
+
+    x_edges = collect(range(xmin, xmax; length=nbins+1))
+    x_centers = (x_edges[1:end-1] .+ x_edges[2:end]) ./ 2
+    dx = x_edges[2] - x_edges[1]
+
+    nt = length(ts)
+    ρ = zeros(nbins, nt)
+
+    for (k, uk) in enumerate(us)
+        h = fit(Histogram, uk, x_edges)
+        counts = Float64.(h.weights)
+        if normalize
+            ρ[:, k] .= counts ./ (sum(counts) * dx)
+        else
+            ρ[:, k] .= counts
+        end
+    end
+
+    return ρ,x_centers
+end
+
+"""
+function surface_reflect
+
+A function for creating discrete callback function to 
+prevent particles
+leaving the surface
+"""
+
+function surface_reflect()
+    condition(u,t,integrator) = true
+    function affect!(integrator)
+        integrator.u .= abs.(integrator.u)   
+    end
+    cb = DiscreteCallback(condition, affect!)
+    return cb
+end
+
+"""
+function surface_reflect
+
+A function for creating discrete callback
+functions to prevent particles leaving
+the surface and the bottom of the mixed layer,
+similar to fold_tails. 
+h(t) is the mixed layer depth. 
+"""
+function surface_and_bottom_reflect(h::Function)
+    condition(u,t,integrator) = true
+    function affect!(integrator)
+        bottom_depth = h(integrator.t)
+        integrator.u .= abs.(integrator.u)
+        integrator.u .= bottom_depth.-abs.(bottom_depth.-integrator.u)
+    end
+    cb = DiscreteCallback(condition, affect!)
+    return cb
 end
 
 """
