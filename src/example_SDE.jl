@@ -1,8 +1,8 @@
 module ex_SDE
 
 using Statistics
-
 import Drifters.SciMLBase: DiscreteCallback
+import Distributions: Histogram, fit, Normal, cdf, pdf
 
 ## helper functions for the example
 
@@ -17,12 +17,7 @@ function fold_tails(z)
     end
 end
 
-## DriftersDistributionsExt.jl (begin)
-
-if Base.find_package("Distributions") !== nothing
-#    @eval using Distributions
-    import Distributions: Histogram, fit, Normal, cdf, pdf
-end
+## 
 
 _at(x, t) = x(t)                 # for functions/functors
 _at(x::Number, t) = x            # for constants
@@ -133,8 +128,6 @@ function particle_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=t
 
     return ρ,x_centers
 end
-
-## DriftersDistributionsExt.jl (end)
 
 """
 function surface_reflect
