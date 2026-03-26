@@ -1,10 +1,8 @@
 module ex_SDE
 
 using Statistics
-if Base.find_package("DifferentialEquations") !== nothing
-    @eval using SciMLBase
-    @eval using Distributions
-end
+import Drifters.SciMLBase: DiscreteCallback
+import Distributions: Histogram, fit, Normal, cdf, pdf
 
 ## helper functions for the example
 
@@ -19,8 +17,11 @@ function fold_tails(z)
     end
 end
 
+## 
+
 _at(x, t) = x(t)                 # for functions/functors
 _at(x::Number, t) = x            # for constants
+
 """
 function kappa_erf(u,p,t)
 
@@ -63,7 +64,6 @@ is zero below depth,
 and is a linear transition between the two in 
 the middle. 
 """
-
 function kappa_piecewise(u,p,t)
     depth_p,thickness_p = p
     depth = _at(depth_p,t)
@@ -80,6 +80,7 @@ function kappa_piecewise(u,p,t)
 end
 
 g_piecewise(u,p,t) = sqrt.(kappa_piecewise(u,p,t).*2.)
+
 """
 function f_piecewise(u,p,t)
 
@@ -95,11 +96,11 @@ function f_piecewise(u,p,t)
 end
 
 """
-function hovmoller_density
+function particle_density
 
 get a t-x heatmap for the parcel distribution. 
 """
-function hovmoller_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
+function particle_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
     ts = sol.t
     us = sol.u 
 
