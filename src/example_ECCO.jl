@@ -201,10 +201,10 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
         u1[:,k]=tmpu.MA
         v1[:,k]=tmpv.MA
     end
-    if datas=="ECCO"
+    if datasets=="ECCO"
         w0=velocity_factor*read_data_ECCO(m0,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
         w1=velocity_factor*read_data_ECCO(m1,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
-    elseif datas=="OCCA2"
+    elseif datasets=="OCCA2"
         filelist=basename.(Glob.glob("trsp_3d_set1*.data",D.pth))
         tmp1=read_mdsio(joinpath(D.pth,filelist[m0]),:WVELMASS)
         w0=velocity_factor*read(tmp1,P.u0.grid)
