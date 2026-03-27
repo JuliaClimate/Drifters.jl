@@ -314,7 +314,7 @@ end
 
 Set up Global Ocean particle simulation in 2D with seasonally varying flow field.
 """
-function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime)
+function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime, dpth::String=data_path(:ECCO))
   
   #read grid and set up connections between subdomains
   γ=MeshArrays.GridSpec(ID=:LLC90)
@@ -327,7 +327,7 @@ function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime)
   func=(u -> MeshArrays.update_location_llc!(u,Γ))
 
   #initialize u0,u1 etc arrays
-  P,D=setup_FlowFields(k,Γ,func,data_path(:ECCO),
+  P,D=setup_FlowFields(k,Γ,func,dpth,
         backward_time=backward_time, time_unit=time_unit)
   
   #add background map for plotting
