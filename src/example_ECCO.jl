@@ -136,19 +136,19 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
     P.v0[:]=Float32.(v0.MA[:])
     P.v1[:]=Float32.(v1.MA[:])
 
-    θ0=read_tracers(m0,"THETA",P,D,datasets)
+    θ0=read_tracers(m0,P,D,"THETA",datasets)
     θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
     D.θ0[:]=Float32.(θ0[:,1])
 
-    θ1=read_tracers(m1,"THETA",P,D,datasets)
+    θ1=read_tracers(m1,P,D,"THETA",datasets)
     θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
     D.θ1[:]=Float32.(θ1[:,1])
 
-    S0=read_tracers(m0,"SALT",P,D,datasets)
+    S0=read_tracers(m0,P,D,"SALT",datasets)
     S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
     D.S0[:]=Float32.(S0[:,1])
 
-    S1=read_tracers(m1,"SALT",P,D,datasets)
+    S1=read_tracers(m1,P,D,"SALT",datasets)
     S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
     D.S1[:]=Float32.(S1[:,1])
 
@@ -229,19 +229,19 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     P.w0[:,nr+1]=0*exchange(-w0[:,1]).MA
     P.w1[:,nr+1]=0*exchange(-w1[:,1]).MA
 
-    θ0=read_tracers(m0,"THETA",P,D,datasets)
+    θ0=read_tracers(m0,P,D,"THETA",datasets)
     θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
     D.θ0[:,:]=Float32.(θ0[:,:])
 
-    θ1=read_tracers(m1,"THETA",P,D,datasets)
+    θ1=read_tracers(m1,P,D,"THETA",datasets)
     θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
     D.θ1[:,:]=Float32.(θ1[:,:])
 
-    S0=read_tracers(m0,"SALT",P,D,datasets)
+    S0=read_tracers(m0,P,D,"SALT",datasets)
     S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
     D.S0[:,:]=Float32.(S0[:,:])
 
-    S1=read_tracers(m1,"SALT",P,D,datasets)
+    S1=read_tracers(m1,P,D,"SALT",datasets)
     S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
     D.S1[:,:]=Float32.(S1[:,:])
 
@@ -295,7 +295,7 @@ read_tracers(γ::gcmgrid,t::Int,pth::String)
 
 Read tracers from files in `pth`for time `t`
 """
-function read_tracers(t::Int,varname::String="THETA",P,D::NamedTuple,datasets::String="ECCO")
+function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::String="ECCO")
     if datasets=="ECCO"
         θ=read_data_ECCO(t,varname,joinpath(D.pth,varname),P.u0.grid,:)
     elseif datasets=="OCCA2"
