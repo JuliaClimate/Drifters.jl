@@ -2,17 +2,26 @@
 begin
 	## Plotting
 
-	to_depth(z)=-10*z
+	to_depth(z; scale=1.0)=-scale*z
 	
-	function plot_paths(;za=missing,zb=missing,dz=100,lw=0.5)
+	function plot_paths(;za=missing,zb=missing,dz=100,lw=0.5,scale=1.0,anom=false)
 		np=size(za,1)
 		pp=1:dz:np
 		fig=Figure(size=(300,500)); ax=Axis(fig[1,1])
-#		[lines!(to_depth(za[p,:].-za[p,1]),color=:blue,linewidth=1) for p in pp]
-		[lines!(to_depth(za[p,:]),color=:blue,linewidth=lw) for p in pp]
+		if anom==true
+			[lines!(to_depth(za[p,:].-za[p,1],scale=scale),color=:blue,linewidth=1) for p in pp]
+		else
+			[lines!(to_depth(za[p,:],scale=scale),color=:blue,linewidth=lw) for p in pp]
+			ylims!(-scale,0.0)
+		end
 		if !ismissing(zb)
 			ax=Axis(fig[1,2])
-			[lines!(to_depth(zb[p,:]),color=:red,linewidth=lw) for p in pp]		
+			if anom==true
+				[lines!(to_depth(za[p,:].-za[p,1],scale=scale),color=:blue,linewidth=1) for p in pp]
+			else
+				[lines!(to_depth(zb[p,:],scale=scale),color=:red,linewidth=lw) for p in pp]		
+				ylims!(-scale,0.0)
+			end
 		end
 		fig
 	end

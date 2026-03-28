@@ -27,12 +27,12 @@ p=0.5 # fraction of mass exchanged with neighbors every time step
 nt=5 # number of time steps
 ```
 """
-function main_loop(IC;p=0.5,nt=5)
+function main_loop(IC;p=0.5,nt=5,do_mix_neighbors=true)
     (; u₀a,u₀b,ca,cb,np) = IC
     for tt in 1:nt
         step!(u₀a)
         step!(u₀b)
-        ex_SDE.mix_neighbors(u₀a,ca,u₀b,cb,p)
+        do_mix_neighbors ? ex_SDE.mix_neighbors(u₀a,ca,u₀b,cb,p) : false
     end
     return "done with model run"
 end
@@ -48,29 +48,35 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 ?SDE.step!
 ```
 """
-function step!(u₀)
-    za=solve_paths(u₀)
-    ex_SDE.fold_tails(za)
+function step!(u₀; do_fold_tails=true)
+    za,sol_a=solve_paths(u₀)
+    do_fold_tails ? ex_SDE.fold_tails(za) : nothing
     u₀[:]=za[:,end]
 end
 
-function solve_paths(u₀)
-    dt=1e-3
+function solve_paths(u₀; P=ex_SDE.default_parameters())
     f(u,p,t) = 0.0
     g(u,p,t) = 0.1
-    #dt = 1//2^(4)
-    tspan = (0.0,1.0)
-    prob = SDEProblem(f,g,u₀,(0.0,1.0))
-    sol=solve(prob,EM(),dt=dt)
-    stack(sol(0:0.01:1))
+    params=(P.mldepth,P.thickness,P.mlkappa,P.seafloor,P.depthscale)
+    config=P.configuration
+    if config==:basic
+        prob = SDEProblem(f,g,u₀,P.tspan)
+        sol=solve(prob,EM(),dt=P.dt)
+    elseif config==:piecewise
+        prob = SDEProblem(ex_SDE.f_piecewise,ex_SDE.g_piecewise,u₀,P.tspan,params)
+        sol=solve(prob,EM(),dt=P.dt,callback = ex_SDE.surface_and_bottom_reflect(P.seafloor))
+    else
+        error("unknown config")
+    end
+    stack(sol(0:0.01:1)),sol
 end
 
-function demo_paths(IC::NamedTuple)
+function demo_paths(IC::NamedTuple; do_fold_tails=true)
     (; u₀a,u₀b,ca,cb,np) = IC
-    za=solve_paths(u₀a)
-    ex_SDE.fold_tails(za)
-    zb=solve_paths(u₀b)
-    ex_SDE.fold_tails(zb)
+    za,sol_a=solve_paths(u₀a)
+    do_fold_tails ? ex_SDE.fold_tails(za) : nothing
+    zb,sol_b=solve_paths(u₀b)
+    do_fold_tails ? ex_SDE.fold_tails(zb) : nothing
     (za=za,zb=zb)
 end
 
