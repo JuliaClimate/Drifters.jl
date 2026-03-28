@@ -100,9 +100,26 @@ function f_piecewise(u,p,t)
 end
 
 """
-function particle_density
+    particle_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
 
-get a t-x heatmap for the parcel distribution. 
+Compute time-depth histogram of particle distribution. 
+
+```
+SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
+
+fig=Figure()
+for a in 1:2
+    zi=(a==1 ? IC.u₀a : IC.u₀b)
+    z,sol=SDE.solve_paths(zi)
+    ρ,x_centers=ex_SDE.particle_density(sol)
+    t_centers=1:size(ρ,2)
+
+    ax=Axis(fig[1,a]);
+    heatmap!(t_centers,x_centers,permutedims(ρ))
+    ylims!(0,1); ax.yreversed[]=true
+end
+fig
+```
 """
 function particle_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
     ts = sol.t

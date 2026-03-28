@@ -49,7 +49,7 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 ```
 """
 function step!(u₀; do_fold_tails=true)
-    za=solve_paths(u₀)
+    za,sol_a=solve_paths(u₀)
     do_fold_tails ? ex_SDE.fold_tails(za) : nothing
     u₀[:]=za[:,end]
 end
@@ -68,14 +68,14 @@ function solve_paths(u₀; P=ex_SDE.default_parameters())
     else
         error("unknown config")
     end
-    stack(sol(0:0.01:1))
+    stack(sol(0:0.01:1)),sol
 end
 
 function demo_paths(IC::NamedTuple; do_fold_tails=true)
     (; u₀a,u₀b,ca,cb,np) = IC
-    za=solve_paths(u₀a)
+    za,sol_a=solve_paths(u₀a)
     do_fold_tails ? ex_SDE.fold_tails(za) : nothing
-    zb=solve_paths(u₀b)
+    zb,sol_b=solve_paths(u₀b)
     do_fold_tails ? ex_SDE.fold_tails(zb) : nothing
     (za=za,zb=zb)
 end
