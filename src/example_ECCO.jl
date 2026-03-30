@@ -3,6 +3,7 @@ module ECCO
 import MeshArrays, DataDeps, CSV, JLD2, Glob
 import Dates: DateTime, Year, Month, Day
 
+using MITgcm
 import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
 import Drifters: time_in_seconds, time_in_DateTime, monthly_records
 
