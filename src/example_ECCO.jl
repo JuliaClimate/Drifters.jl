@@ -273,18 +273,18 @@ end
 
 Read velocity components `u,v` from files in `pth`for time `t`
 """
-function read_velocities(γ::gcmgrid,t::Int,pth::String,datas::Symbol=:ECCO4)
-    if datas==:ECCO4
+function read_velocities(γ::gcmgrid,t::Int,pth::String,datasets::Symbol=:ECCO4)
+    if datasets==:ECCO4
     u=read_data_ECCO(t,"UVELMASS",joinpath(pth,"UVELMASS"),γ,:)
     v=read_data_ECCO(t,"VVELMASS",joinpath(pth,"VVELMASS"),γ,:)
-    elseif datas==:OCCA2
+    elseif datasets==:OCCA2
         filelist=basename.(Glob.glob("trsp_3d_set1*.data",pth))
         tmp1=read_mdsio(joinpath(pth,filelist[t]),:UVELMASS)
         u=read(tmp1,γ)
         tmp2=read_mdsio(joinpath(pth,filelist[t]),:VVELMASS)
         v=read(tmp2,γ)
     else
-        error("Invalid data source: $datas.")
+        error("Invalid data source: $datasets.")
     end
     return u,v
 end
