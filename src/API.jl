@@ -470,7 +470,19 @@ function ∫!(I::Individuals,T::Tuple)
     (; 🚄,📌,P, D, 🔧, 🆔, 🔴, ∫) = I
 
     TT=time_in_seconds.(T)
-    prob = ODEProblem(🚄,📌, TT ,P)
+
+    problem_type=(haskey(I.D,:problem_type) ? I.D.problem_type : :default)
+    
+    if problem_type==:default
+        prob = ODEProblem(🚄,📌, TT ,P)
+    elseif problem_type==:SDE
+        P1=ex_SDE.default_parameters()
+        P2=(P1.mldepth,P1.thickness,P1.mlkappa,P1.seafloor,P1.depthscale)
+        prob=_SDEProblem(ex_SDE.f_piecewise_3d,ex_SDE.g_piecewise_3d,📌, TT ,P2)
+    else
+        error("unknown problem_type")
+    end
+
     sol = ∫(prob)
 
     tmp = 🔧(sol,P,D, id=🆔, T=T)
