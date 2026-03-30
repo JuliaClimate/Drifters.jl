@@ -1,6 +1,7 @@
 module ECCO
 
-import MeshArrays, DataDeps, CSV, JLD2
+import MeshArrays, DataDeps, CSV, JLD2, Glob
+using MITgcm
 import Dates: DateTime, Year, Month, Day
 
 import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
@@ -58,7 +59,7 @@ _Note: the initial implementation approximates month durations to
 365 days / 12 months for simplicity and sets P.T to [-mon/2,mon/2]_
 """
 function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
-            backward_time=false, time_unit=:DateTime)
+            backward_time=false, time_unit=:DateTime, datasets::Symbol=:ECCO4)
     XC=exchange(Γ.XC) #add 1 lon point at each edge
     YC=exchange(Γ.YC) #add 1 lat point at each edge
     iDXC=1. ./Γ.DXC
@@ -86,7 +87,7 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
             T,func)
     end
         
-    D = (🔄 = update_FlowFields!, pth=pth,
+    D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
          XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
          k=k, msk=msk, exmsk=exmsk, 
          θ0=similar(msk), θ1=similar(msk),
@@ -112,20 +113,20 @@ consecutive records is diff(P.T), (2) monthly climatologies are used
 with a periodicity of 12 months, (3) vertical P.k is selected_
 """
 function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
-                            verbose=false,datasets::String="ECCO")
+                            verbose=false)
 
     t0,t1,m0,m1=monthly_records(P.T,t,verbose=verbose,climatology=true)
 
     velocity_factor=1.0
 #    if D.backward_time
 
-    (U,V)=read_velocities(P.u0.grid,m0,D.pth,datasets)
+    (U,V)=read_velocities(P.u0.grid,m0,D.pth,D.datasets)
     u0=velocity_factor*U[:,D.k]; v0=velocity_factor*V[:,D.k]
     u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
     u0=u0.*D.iDXC; v0=v0.*D.iDYC; #normalize to grid units
     (u0,v0)=exchange(u0,v0) #add 1 point at each edge for u and v
 
-    (U,V)=read_velocities(P.u0.grid,m1,D.pth,datasets)
+    (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U[:,D.k]; v1=velocity_factor*V[:,D.k]
     u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
     u1=u1.*D.iDXC; v1=v1.*D.iDYC; #normalize to grid units
@@ -136,19 +137,19 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
     P.v0[:]=Float32.(v0.MA[:])
     P.v1[:]=Float32.(v1.MA[:])
 
-    θ0=read_tracers(m0,P,D,"THETA",datasets)
+    θ0=read_tracers(m0,P,D,"THETA",D.datasets)
     θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
     D.θ0[:]=Float32.(θ0[:,1])
 
-    θ1=read_tracers(m1,P,D,"THETA",datasets)
+    θ1=read_tracers(m1,P,D,"THETA",D.datasets)
     θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
     D.θ1[:]=Float32.(θ1[:,1])
 
-    S0=read_tracers(m0,P,D,"SALT",datasets)
+    S0=read_tracers(m0,P,D,"SALT",D.datasets)
     S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
     D.S0[:]=Float32.(S0[:,1])
 
-    S1=read_tracers(m1,P,D,"SALT",datasets)
+    S1=read_tracers(m1,P,D,"SALT",D.datasets)
     S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
     D.S1[:]=Float32.(S1[:,1])
 
@@ -180,7 +181,7 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
 
     (_,nr)=size(D.Γ.hFacC)
 
-    (U,V)=read_velocities(P.u0.grid,m0,D.pth,datasets)
+    (U,V)=read_velocities(P.u0.grid,m0,D.pth,D.datasets)
     u0=velocity_factor*U; v0=velocity_factor*V
     u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
     for k=1:nr
@@ -189,10 +190,8 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
         u0[:,k]=tmpu.MA
         v0[:,k]=tmpv.MA
     end
-    w0=velocity_factor*read_data_ECCO(m0,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
-    w0[findall(isnan.(w0))]=0.0 #mask with 0s rather than NaNs
 
-    (U,V)=read_velocities(P.u0.grid,m1,D.pth,datasets)
+    (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U; v1=velocity_factor*V
     u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
     for k=1:nr
@@ -201,10 +200,10 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
         u1[:,k]=tmpu.MA
         v1[:,k]=tmpv.MA
     end
-    if datasets=="ECCO"
+    if D.datasets==:ECCO4
         w0=velocity_factor*read_data_ECCO(m0,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
         w1=velocity_factor*read_data_ECCO(m1,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
-    elseif datasets=="OCCA2"
+    elseif D.datasets==:OCCA2
         filelist=basename.(Glob.glob("trsp_3d_set1*.data",D.pth))
         tmp1=read_mdsio(joinpath(D.pth,filelist[m0]),:WVELMASS)
         w0=velocity_factor*read(tmp1,P.u0.grid)
@@ -229,19 +228,19 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     P.w0[:,nr+1]=0*exchange(-w0[:,1]).MA
     P.w1[:,nr+1]=0*exchange(-w1[:,1]).MA
 
-    θ0=read_tracers(m0,P,D,"THETA",datasets)
+    θ0=read_tracers(m0,P,D,"THETA",D.datasets)
     θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
     D.θ0[:,:]=Float32.(θ0[:,:])
 
-    θ1=read_tracers(m1,P,D,"THETA",datasets)
+    θ1=read_tracers(m1,P,D,"THETA",D.datasets)
     θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
     D.θ1[:,:]=Float32.(θ1[:,:])
 
-    S0=read_tracers(m0,P,D,"SALT",datasets)
+    S0=read_tracers(m0,P,D,"SALT",D.datasets)
     S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
     D.S0[:,:]=Float32.(S0[:,:])
 
-    S1=read_tracers(m1,P,D,"SALT",datasets)
+    S1=read_tracers(m1,P,D,"SALT",D.datasets)
     S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
     D.S1[:,:]=Float32.(S1[:,:])
 
@@ -275,11 +274,11 @@ end
 
 Read velocity components `u,v` from files in `pth`for time `t`
 """
-function read_velocities(γ::gcmgrid,t::Int,pth::String,datas::String="ECCO")
-    if datas=="ECCO"
+function read_velocities(γ::gcmgrid,t::Int,pth::String,datas::Symbol=:ECCO4)
+    if datas==:ECCO4
     u=read_data_ECCO(t,"UVELMASS",joinpath(pth,"UVELMASS"),γ,:)
     v=read_data_ECCO(t,"VVELMASS",joinpath(pth,"VVELMASS"),γ,:)
-    elseif datas=="OCCA2"
+    elseif datas==:OCCA2
         filelist=basename.(Glob.glob("trsp_3d_set1*.data",pth))
         tmp1=read_mdsio(joinpath(pth,filelist[t]),:UVELMASS)
         u=read(tmp1,γ)
@@ -295,10 +294,10 @@ read_tracers(γ::gcmgrid,t::Int,pth::String)
 
 Read tracers from files in `pth`for time `t`
 """
-function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::String="ECCO")
-    if datasets=="ECCO"
+function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::Symbol=:ECCO4)
+    if datasets==:ECCO4
         θ=read_data_ECCO(t,varname,joinpath(D.pth,varname),P.u0.grid,:)
-    elseif datasets=="OCCA2"
+    elseif datasets==:OCCA2
         filelist=basename.(Glob.glob("state_3d_set1*.data",pth))
         tmp1 = read_mdsio(joinpath(D.pth,filelist[t]),Symbol(varname))
         θ=read(tmp1,P.u0.grid)
@@ -314,7 +313,7 @@ end
 
 Set up Global Ocean particle simulation in 2D with seasonally varying flow field.
 """
-function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime, dpth::String=data_path(:ECCO))
+function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime, dpth::String=data_path(:ECCO), datasets::Symbol=:ECCO4)
   
   #read grid and set up connections between subdomains
   γ=MeshArrays.GridSpec(ID=:LLC90)
@@ -328,7 +327,7 @@ function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime, dpth::
 
   #initialize u0,u1 etc arrays
   P,D=setup_FlowFields(k,Γ,func,dpth,
-        backward_time=backward_time, time_unit=time_unit)
+        backward_time=backward_time, time_unit=time_unit,datasets=datasets)
   
   #add background map for plotting
   λ=get_interp_coefficients(Γ)
