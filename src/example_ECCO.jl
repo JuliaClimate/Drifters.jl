@@ -331,7 +331,7 @@ custom🔴 = DataFrame(ID=Int[], fid=Int[], x=Float64[], y=Float64[],
 function custom🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
     df=postprocess_MeshArray(sol,F,D,id=id,T=T)
     np=length(sol.u)
-    z=[[sol.u[i][:,1][3] for i in 1:np];[sol.u[i][:,end][3] for i in 1:np]]
+    z=[[sol.u[i].u[1][3] for i in 1:np];[sol.u[i].u[end][3] for i in 1:np]]
     df.z=z[:]
     if eltype(F.T)==DateTime
         year0=minimum(Year.(df.t)).value
@@ -448,7 +448,7 @@ function custom∫!(I::Individuals,T)
         sol = ∫(prob)
         append!(tmp, 🔧(sol,P,D,id=🆔[jj], T=TT),promote=true)
 
-        📌[jj] = deepcopy([sol[i].u[end] for i in 1:mm])
+        📌[jj] = deepcopy([sol.u[i].u[end] for i in 1:mm])
         if i<=nj
          if isa(P,uvwMeshArrays)||isa(P,uvMeshArrays)
              [update_location!(i,P) for i in 📌[jj]]

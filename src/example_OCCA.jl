@@ -133,7 +133,7 @@ function custom🔧(sol,P::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
    df.year=df.t ./86400/365
 
    #add depth (i.e. the 3rd, vertical, coordinate)
-   k=[[sol[i][3,1] for i in 1:size(sol,3)];[sol[i][3,end] for i in 1:size(sol,3)]]
+   k=[[sol.u[i].u[1][3] for i in 1:size(sol,3)];[sol.u[i].u[end][3] for i in 1:size(sol,3)]]
    nz=length(D.RC)
    df.k=min.(max.(k[:],Ref(0.0)),Ref(nz)) #level
    k=Int.(floor.(df.k)); w=(df.k-k);

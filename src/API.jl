@@ -216,6 +216,7 @@ end
     defaults for Individuals constructor
 """
 
+
 default_solver(prob::ODEProblem) = solve(prob,Tsit5(),reltol=1e-8,abstol=1e-8)
 
 function ensemble_solver(prob::ODEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8,safetycopy=false)
@@ -223,6 +224,7 @@ function ensemble_solver(prob::ODEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8
 	prob_func(prob,i,repeat) = remake(prob,u0=u0[i])
 	indiv_prob = ODEProblem(prob.f,u0[1],prob.tspan,prob.p)
 #	indiv_prob = _SDEProblem(prob.f,u0[1],prob.tspan,prob.p)
+
 	ensemble_prob = EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=safetycopy)
 	solve(ensemble_prob, solver, reltol=reltol, abstol=abstol, trajectories=length(u0))
 end
@@ -347,9 +349,9 @@ function Individuals(F::uvwArrays,x,y,z, NT::NamedTuple = NamedTuple())
         df=postprocess_xy(sol,F,D,id=id,T=T)
         if isa(sol,EnsembleSolution)
             np=length(sol)
-            z=[[sol[i][1,3] for i in 1:np];[sol[3][1,end] for i in 1:np]]
+            z=[[sol.u[i].u[1][3] for i in 1:np];[sol.u[i].u[end][3] for i in 1:np]]
         else
-            z=sol[3,:]
+            z=[u[3] for u in sol.u]
         end
         df.z=z[:]
         return df
@@ -411,9 +413,9 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
         df=postprocess_MeshArray(sol,F,D,id=id,T=T)
         if isa(sol,EnsembleSolution)
             np=length(sol)
-            z=[[sol.u[i][1][3] for i in 1:np];[sol.u[i][end][3] for i in 1:np]]
+            z=[[sol.u[i].u[1][3] for i in 1:np];[sol.u[i].u[end][3] for i in 1:np]]
         else
-            z=sol[3,:]
+            z=[u[3] for u in sol.u]
         end
         df.z=z[:]
         return df
@@ -469,7 +471,6 @@ function ∫!(I::Individuals,T::Tuple)
 
     TT=time_in_seconds.(T)
     prob = ODEProblem(🚄,📌, TT ,P)
-#    prob = _SDEProblem(🚄,📌, TT ,P)
     sol = ∫(prob)
 
     tmp = 🔧(sol,P,D, id=🆔, T=T)
@@ -478,13 +479,13 @@ function ∫!(I::Individuals,T::Tuple)
 
     if isa(sol,EnsembleSolution)
         np=length(sol)
-        📌[:] = deepcopy([sol[:,i].u[end] for i in 1:np])
+        📌[:] = deepcopy([sol.u[i].u[end] for i in 1:np])
         if isa(P,uvwMeshArrays)||isa(P,uvMeshArrays)
             [update_location!(i,P) for i in I.📌]
         end
     else
         nd=length(size(sol))
-        nd==3 ? 📌[:,:] = deepcopy(sol[:,:,end]) : 📌[:] = deepcopy(sol[:,end])
+        nd==3 ? 📌[:,:] = deepcopy(sol.u[end]) : 📌[:] = deepcopy(sol.u[end])
     end
 
     sol
