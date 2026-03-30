@@ -64,12 +64,13 @@ is zero below depth,
 and is a linear transition between the two in 
 the middle. 
 """
-function kappa_piecewise(u,p,t)
-    depth_p,thickness_p = p
+function kappa_piecewise(u,p,t)    
+    depth_p,thickness_p,kappa0_p = p
     depth = _at(depth_p,t)
     thickness = _at(thickness_p,t)
+    kappa0 = _at(kappa0_p,t)
     kappa = similar(u, Float64)
-    kappa = ifelse.(u.>depth,
+    kappa = kappa0*ifelse.(u.>depth,
         0,
         ifelse.(
             u.<depth-thickness,
@@ -79,6 +80,7 @@ function kappa_piecewise(u,p,t)
     return kappa
 end
 
+#this represent 2K=g*g Equation 
 g_piecewise(u,p,t) = sqrt.(kappa_piecewise(u,p,t).*2.)
 
 """
@@ -89,16 +91,35 @@ just a constant drift backinto the mixed layer
 of 1/thickness. 1 has unit of diffusivity. 
 """
 function f_piecewise(u,p,t)
-    depth_p,thickness_p = p
+    depth_p,thickness_p,kappa0_p = p
     depth = _at(depth_p,t)
     thickness = _at(thickness_p,t)
-    drift = -Float64.((u.>depth-thickness).&(u.<depth))./thickness
+    kappa0 = _at(kappa0_p,t)
+    #this represents f=dK/dz
+    drift = -kappa0*Float64.((u.>depth-thickness).&(u.<depth))./thickness
 end
 
 """
-function particle_density
+    particle_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
 
-get a t-x heatmap for the parcel distribution. 
+Compute time-depth histogram of particle distribution. 
+
+```
+SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
+
+fig=Figure()
+for a in 1:2
+    zi=(a==1 ? IC.u₀a : IC.u₀b)
+    z,sol=SDE.solve_paths(zi)
+    ρ,x_centers=ex_SDE.particle_density(sol)
+    t_centers=1:size(ρ,2)
+
+    ax=Axis(fig[1,a]);
+    heatmap!(t_centers,x_centers,permutedims(ρ))
+    ylims!(0,1); ax.yreversed[]=true
+end
+fig
+```
 """
 function particle_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
     ts = sol.t
@@ -136,7 +157,6 @@ A function for creating discrete callback function to
 prevent particles
 leaving the surface
 """
-
 function surface_reflect()
     condition(u,t,integrator) = true
     function affect!(integrator)
@@ -211,6 +231,22 @@ function initial_conditions(np=10000)
 	u₀b=0.5 .+ 0.5*rand(np)
 	cb=ones(np)
     (u₀a=u₀a,u₀b=u₀b,ca=ca,cb=cb,np=np)
+end
+
+# parameter configuration
+
+function default_parameters()
+    tspan = (0.0,1.0) #time span in s
+    dt=1e-3 #output frequency in s
+    configuration=:piecewise #configration for K profile
+    mldepth(t)=0.5 #MLD depth in normalized units (0 to 1)
+    thickness(t)=0.1 #transition layer thickness in normalized units (0 to 1)
+    seafloor(t)=1.0 #sea floor depth in normalized units (0 to 1)
+    mlkappa(t)=0.001 #diffusivity in m2/s
+    depthscale(t)=2000 #depth scale in m
+    params=(tspan=tspan,dt=dt,mlkappa=mlkappa,depthscale=depthscale,
+        mldepth=mldepth,thickness=thickness,seafloor=seafloor,
+        configuration=configuration)
 end
 
 ## Eulerian Model for comparison

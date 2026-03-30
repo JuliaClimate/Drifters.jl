@@ -34,6 +34,13 @@ MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
 	st=ex_SDE.gridded_stats(IC)
 	fs=MK.plot_stats(st,T=T)	
 
+    # Compute histogram
+    z,sol=SDE.solve_paths(IC.u₀a)
+    ρ,x_centers=ex_SDE.particle_density(sol)
+
+    ex_SDE.g_erf(IC.u₀a,(0.5,0.1,0.001),0.0)
+    ex_SDE.f_gauss(IC.u₀a,(0.5,0.1,0.001),0.0)
+
     @test isa(IC.u₀a,Vector)
 end
 
