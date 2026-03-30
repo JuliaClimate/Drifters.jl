@@ -297,7 +297,7 @@ function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::S
     if datasets==:ECCO4
         θ=read_data_ECCO(t,varname,joinpath(D.pth,varname),P.u0.grid,:)
     elseif datasets==:OCCA2
-        filelist=basename.(Glob.glob("state_3d_set1*.data",pth))
+        filelist=basename.(Glob.glob("state_3d_set1*.data",D.pth))
         tmp1 = read_data_mdsio(joinpath(D.pth,filelist[t]),Symbol(varname))
         θ=read(tmp1,P.u0.grid)
     else
