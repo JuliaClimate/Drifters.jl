@@ -5,7 +5,7 @@ import NetCDF, CSV
 
 function data_path end
 function read_data_ECCO end
-function read_mdsio end
+function read_data_mdsio end
 
 """
     _SDEProblem(a,b,c,d)

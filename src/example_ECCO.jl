@@ -8,7 +8,7 @@ import Drifters: time_in_seconds, time_in_DateTime, monthly_records
 
 import OrdinaryDiffEq: solve, Tsit5, ODEProblem
 import Drifters: update_location!, Individuals, uvMeshArrays, uvwMeshArrays
-import Drifters: FlowFields, ensemble_solver, data_path, read_data_ECCO, read_mdsio, order
+import Drifters: FlowFields, ensemble_solver, data_path, read_data_ECCO, read_data_mdsio, order
 import Drifters.DataFrames: DataFrame
 import Drifters.MeshArrays as MeshArrays
 import Drifters.MeshArrays: gcmgrid, MeshArray, exchange
@@ -204,9 +204,9 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
         w1=velocity_factor*read_data_ECCO(m1,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
     elseif D.datasets==:OCCA2
         filelist=basename.(Glob.glob("trsp_3d_set1*.data",D.pth))
-        tmp1=read_mdsio(joinpath(D.pth,filelist[m0]),:WVELMASS)
+        tmp1=read_data_mdsio(joinpath(D.pth,filelist[m0]),:WVELMASS)
         w0=velocity_factor*read(tmp1,P.u0.grid)
-        tmp2=read_mdsio(joinpath(D.pth,filelist[m1]),:WVELMASS)
+        tmp2=read_data_mdsio(joinpath(D.pth,filelist[m1]),:WVELMASS)
         w1=velocity_factor*read(tmp2,P.u0.grid)
     end
     w0[findall(isnan.(w0))]=0.0 
@@ -279,9 +279,9 @@ function read_velocities(γ::gcmgrid,t::Int,pth::String,datasets::Symbol=:ECCO4)
     v=read_data_ECCO(t,"VVELMASS",joinpath(pth,"VVELMASS"),γ,:)
     elseif datasets==:OCCA2
         filelist=basename.(Glob.glob("trsp_3d_set1*.data",pth))
-        tmp1=read_mdsio(joinpath(pth,filelist[t]),:UVELMASS)
+        tmp1=read_data_mdsio(joinpath(pth,filelist[t]),:UVELMASS)
         u=read(tmp1,γ)
-        tmp2=read_mdsio(joinpath(pth,filelist[t]),:VVELMASS)
+        tmp2=read_data_mdsio(joinpath(pth,filelist[t]),:VVELMASS)
         v=read(tmp2,γ)
     else
         error("Invalid data source: $datasets.")
@@ -298,7 +298,7 @@ function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::S
         θ=read_data_ECCO(t,varname,joinpath(D.pth,varname),P.u0.grid,:)
     elseif datasets==:OCCA2
         filelist=basename.(Glob.glob("state_3d_set1*.data",pth))
-        tmp1 = read_mdsio(joinpath(D.pth,filelist[t]),Symbol(varname))
+        tmp1 = read_data_mdsio(joinpath(D.pth,filelist[t]),Symbol(varname))
         θ=read(tmp1,P.u0.grid)
     else
         error("Invalid data source: $datasets.")
