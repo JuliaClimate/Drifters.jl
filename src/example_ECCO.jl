@@ -3,13 +3,12 @@ module ECCO
 import MeshArrays, DataDeps, CSV, JLD2, Glob
 import Dates: DateTime, Year, Month, Day
 
-using MITgcm
 import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
 import Drifters: time_in_seconds, time_in_DateTime, monthly_records
 
 import OrdinaryDiffEq: solve, Tsit5, ODEProblem
 import Drifters: update_location!, Individuals, uvMeshArrays, uvwMeshArrays
-import Drifters: FlowFields, ensemble_solver, data_path, read_data_ECCO, order
+import Drifters: FlowFields, ensemble_solver, data_path, read_data_ECCO, read_mdsio, order
 import Drifters.DataFrames: DataFrame
 import Drifters.MeshArrays as MeshArrays
 import Drifters.MeshArrays: gcmgrid, MeshArray, exchange
