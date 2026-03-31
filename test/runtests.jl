@@ -123,7 +123,6 @@ end
     solve!(I,T)
 
     fig=CairoMakie.plot( DriftersDataset( data=(I=I,ϕ=ϕ), options=(plot_type=:simple_plot1,) ) )
-
     @test isa(fig,CairoMakie.Figure)
 end
 
@@ -163,7 +162,7 @@ end
 @testset "various" begin
     u,v,w,pos=random_flow_field(format=:Array)
     F=FlowFields(u,u,v,v,[0,1.0])
-    I=Individuals(F,pos...)
+    I=Individuals(F,pos...,(D=(problem_type=:default,),))
     ∫!(I)
     
     @suppress show(I)
@@ -194,3 +193,4 @@ end
 @testset "doctests" begin
     doctest(Drifters; manual = false)
 end
+

@@ -69,7 +69,6 @@ function kappa_piecewise(u,p,t)
     depth = _at(depth_p,t)
     thickness = _at(thickness_p,t)
     kappa0 = _at(kappa0_p,t)
-    kappa = similar(u, Float64)
     kappa = kappa0*ifelse.(u.>depth,
         0,
         ifelse.(
@@ -82,6 +81,8 @@ end
 
 #this represent 2K=g*g Equation 
 g_piecewise(u,p,t) = sqrt.(kappa_piecewise(u,p,t).*2.)
+
+g_piecewise_3d(u,p,t) = [0.0,0.0,g_piecewise(u[3],p,t)]
 
 """
 function f_piecewise(u,p,t)
@@ -98,6 +99,8 @@ function f_piecewise(u,p,t)
     #this represents f=dK/dz
     drift = -kappa0*Float64.((u.>depth-thickness).&(u.<depth))./thickness
 end
+
+f_piecewise_3d(u,p,t) = [0.0,0.0,f_piecewise(u[3],p,t)]
 
 """
     particle_density(sol; nbins=20, xmin=nothing, xmax=nothing, normalize=true)
