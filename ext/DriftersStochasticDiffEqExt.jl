@@ -118,8 +118,31 @@ function plot_one_traj(sol)
     current_figure()
 end
 
-n=10; u=zeros(1,1,n); v=zeros(1,1,n); w=zeros(1,1,n+1);
-F=FlowFields(u,u,v,v,w,w,[0,1.0])
+function plot_all_trajs(sol_all)
+    fig=Figure(); ax=Axis(fig[1,1],xlabel="time",ylabel="depth")
+    for sol in sol_all
+        col=(sol.u[1][3]>0.5 ? :blue : :red)
+        tmp=[u[3] for u in sol.u]; lines!(-1000*tmp,color=col)
+    end
+    current_figure()
+end
+
+function plot_all_trajs(sol_all)
+    fig=Figure(); ax=Axis(fig[1,1],xlabel="time",ylabel="depth")
+    nsol=length(sol_all)
+    for (i,sol) in enumerate(sol_all)
+        tmp=[u[3] for u in sol.u]
+        if sol.u[1][3]>0.5
+            lines!(sol.t,-1000*tmp,color=:black,linewidth=1.0)
+        else
+            lines!(sol.t,-1000*tmp,color=i,colormap=:turbo,colorrange=(0,nsol),linewidth=0.2)
+        end
+    end
+    current_figure()
+end
+
+n=2; u=zeros(1,1,n); v=zeros(1,1,n); w=zeros(1,1,n+1);
+F=FlowFields(u,u,v,v,w,w,[0,100.0])
 
 p=100; x=zeros(100); y=zeros(100); z=rand(p); 
 I=Individuals(F,x,y,z,(D=(problem_type=:SDE,),))
