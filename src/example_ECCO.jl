@@ -5,6 +5,7 @@ import Dates: DateTime, Year, Month, Day
 
 import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
 import Drifters: time_in_seconds, time_in_DateTime, monthly_records
+import Drifters: TimeAxis, TimePeriod
 
 import OrdinaryDiffEq: solve, Tsit5, ODEProblem
 import Drifters: update_location!, Individuals, uvMeshArrays, uvwMeshArrays
@@ -67,7 +68,15 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
 
     mon=86400.0*365.0/12.0    
     T=(time_unit==:DateTime ? [DateTime(1999,12,15),DateTime(2000,1,15)] : [-mon/2,mon/2])
-    
+    if time_unit==:DateTime
+        D0=DateTime(1992,1,1)
+        D1=DateTime(2011,1,1) #this corresponds to ECCO4 release 1
+        TA=TimeAxis(D0,D1,D0,D1,true) #true corresponds to monthly climatology input
+    else
+        t_final=100*365*86400.0
+        TA=TimeAxis(0.0,t_final,0.0,t_final,true)
+    end
+
     if k==0
         msk=Γ.hFacC
         msk=1.0*(msk .> 0.0)
@@ -76,14 +85,14 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
         P=FlowFields(exchange(MeshArray(γ,Float32,nr)),exchange(MeshArray(γ,Float32,nr)),
             exchange(MeshArray(γ,Float32,nr)),exchange(MeshArray(γ,Float32,nr)),
             exchange(MeshArray(γ,Float32,nr+1)),exchange(MeshArray(γ,Float32,nr+1)),
-            T,func)
+            T,func,time_axis=TA)
     else
         msk=Γ.hFacC[:, k]
         msk=1.0*(msk .> 0.0)
         exmsk=exchange(msk).MA
         P=FlowFields(exchange(MeshArray(γ,Float32)),exchange(MeshArray(γ,Float32)),
             exchange(MeshArray(γ,Float32)),exchange(MeshArray(γ,Float32)),
-            T,func)
+            T,func,time_axis=TA)
     end
         
     D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
@@ -326,7 +335,7 @@ function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime, dpth::
 
   #initialize u0,u1 etc arrays
   P,D=setup_FlowFields(k,Γ,func,dpth,
-        backward_time=backward_time, time_unit=time_unit,datasets=datasets)
+        backward_time=backward_time,time_unit=time_unit,datasets=datasets)
   
   #add background map for plotting
   λ=get_interp_coefficients(Γ)
