@@ -129,14 +129,16 @@ struct uvArrays{Ty} <: FlowFields
 end
 
 function FlowFields(u0::Array{Ty,2},u1::Array{Ty,2},
-    v0::Array{Ty,2},v1::Array{Ty,2},T::Union{Array,Tuple}) where Ty
+    v0::Array{Ty,2},v1::Array{Ty,2},T::Union{Array,Tuple}; 
+    time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
     #call constructor
-    uvArrays(u0,u1,v0,v1,T,TimeAxis(T...))
+    uvArrays(u0,u1,v0,v1,T,TA)
 end
 
 struct uvwArrays{Ty} <: FlowFields
@@ -164,7 +166,7 @@ F=FlowFields(u=uC,v=vC,period=(0,10.))
 ```
 """
 function FlowFields(; u::Union{Array,Tuple}=[], v::Union{Array,Tuple}=[], w::Union{Array,Tuple}=[], 
-    period::Union{Array,Tuple}=[])
+    period::Union{Array,Tuple}=[], time_axis=missing)
     (isa(u,Tuple)||length(u[:])==2) ? (u0=u[1]; u1=u[2]) : (u0=u; u1=u)
     (isa(v,Tuple)||length(v[:])==2) ? (v0=v[1]; v1=v[2]) : (v0=v; v1=v)
     (isa(w,Tuple)||length(w[:])==2) ? (w0=w[1]; w1=w[2]) : (w0=w; w1=w)
@@ -173,9 +175,9 @@ function FlowFields(; u::Union{Array,Tuple}=[], v::Union{Array,Tuple}=[], w::Uni
     end
     if !isempty(u0) && !isempty(v0)
         if !isempty(w0)
-            FlowFields(u0,u1,v0,v1,w0,w1,period)
+            FlowFields(u0,u1,v0,v1,w0,w1,period,time_axis=time_axis)
         else
-            FlowFields(u0,u1,v0,v1,period)
+            FlowFields(u0,u1,v0,v1,period,time_axis=time_axis)
         end
     else
         []
@@ -213,15 +215,16 @@ to_C_grid!(x;dims=0) = begin
 end
 
 function FlowFields(u0::Array{Ty,3},u1::Array{Ty,3},v0::Array{Ty,3},v1::Array{Ty,3},
-    w0::Array{Ty,3},w1::Array{Ty,3},T::Union{Array,Tuple}) where Ty
+    w0::Array{Ty,3},w1::Array{Ty,3},T::Union{Array,Tuple}; time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,0,1)) for tmp in (w0,w1)])
     !tst ? error("inconsistent array sizes") : nothing
     #call constructor
-    uvwArrays(u0,u1,v0,v1,w0,w1,T,TimeAxis(T...))
+    uvwArrays(u0,u1,v0,v1,w0,w1,T,TA)
 end
 
 struct uvMeshArrays{Ty} <: FlowFields
@@ -236,21 +239,22 @@ end
 
 function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
     v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
-    T::Union{Array,Tuple},update_location!::Function)
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing)
 
-    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,T,update_location!)
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,T,update_location!,time_axis=time_axis)
 end
 
 function FlowFields(u0::AbstractMeshArray{Ty,1},u1::AbstractMeshArray{Ty,1},
     v0::AbstractMeshArray{Ty,1},v1::AbstractMeshArray{Ty,1},
-    T::Union{Array,Tuple},update_location!::Function) where Ty
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
     #call constructor
-    uvMeshArrays(u0,u1,v0,v1,T,TimeAxis(T...),update_location!)
+    uvMeshArrays(u0,u1,v0,v1,T,TA,update_location!)
 end
 
 struct uvwMeshArrays{Ty} <: FlowFields
@@ -268,24 +272,25 @@ end
 function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
     v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
     w0::MeshArrays.MeshArray_wh,w1::MeshArrays.MeshArray_wh,
-    T::Union{Array,Tuple},update_location!::Function)
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing)
 
-    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,w0.MA,w1.MA,T,update_location!)
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,w0.MA,w1.MA,T,update_location!,time_axis=time_axis)
 end
 
 function FlowFields(u0::AbstractMeshArray{Ty,2},u1::AbstractMeshArray{Ty,2},
     v0::AbstractMeshArray{Ty,2},v1::AbstractMeshArray{Ty,2},
     w0::AbstractMeshArray{Ty,2},w1::AbstractMeshArray{Ty,2},
-    T::Union{Array,Tuple},update_location!::Function) where Ty
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size consistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,1))*(u0.fSize==tmp.fSize) for tmp in (w0,w1)])
     !tst ? error("inconsistent array sizes") : nothing
 
     #call constructor
-    uvwMeshArrays(u0,u1,v0,v1,w0,w1,T,TimeAxis(T...),update_location!)
+    uvwMeshArrays(u0,u1,v0,v1,w0,w1,T,TA,update_location!)
 end
 
 """
