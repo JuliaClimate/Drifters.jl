@@ -30,7 +30,7 @@ function convert_to_FlowFields(U::Array{T,2},V::Array{T,2},t1::T; time_option=:d
         error("unknown time_option")
     end
     )
-    uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,TT,func)
+    uvMeshArrays{eltype(u.MA)}(u.MA,u.MA,v.MA,v.MA,TT,TimeAxis(TT...),func)
 end
 
 """
