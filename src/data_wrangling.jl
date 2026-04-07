@@ -346,20 +346,19 @@ function stproj_inv(xx,yy,XC0=0.0,YC0=90.0)
 end
 
 """
-    monthly_records(P; verbose=false)
+    monthly_records(P, t; verbose=false)
 
-Return `t0,t1,m0,m1` based on `P.T` (current time bracket) and `P.TimeAxis`.
+Return `t0,t1,m0,m1` based on current time `t`, `P.T` (time direction), and `P.TimeAxis`.
 
-- The current time `t` is derived from `P.T[2]`.
+- `t` is the current simulation time (passed from `update_FlowFields!`).
 - `t0,t1` are the two monthly boundaries bracketing `t`, clamped within
   `[TimeAxis.initial, TimeAxis.final]`.
 - `m0,m1` are file indices relative to `TimeAxis.origin` (month 1 of origin = index 1).
 - `P.TimeAxis.Climatology` controls whether `m0,m1` wrap to 1–12 via `mod1`.
 - If `P.T` is backward in time (`T[2]<T[1]`) then `t0,t1,m0,m1` are flipped.
 """
-function monthly_records(P; verbose=false)
+function monthly_records(P, t; verbose=false)
     T=P.T
-    t=T[2]
     TA=P.TimeAxis
     climatology=TA.Climatology
     forward = TA.final > TA.initial

@@ -125,7 +125,7 @@ with a periodicity of 12 months, (3) vertical P.k is selected_
 function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
                             verbose=false)
 
-    t0,t1,m0,m1=monthly_records(P,verbose=verbose)
+    t0,t1,m0,m1=monthly_records(P,t,verbose=verbose)
 
     velocity_factor=1.0
 #    if D.backward_time
@@ -184,7 +184,7 @@ with a periodicity of 12 months, (3) vertical P.k is selected_
 function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
                                 verbose=false)
 
-    t0,t1,m0,m1=monthly_records(P,verbose=verbose)
+    t0,t1,m0,m1=monthly_records(P,t,verbose=verbose)
 
     velocity_factor=1.0
 #    if D.backward_time
