@@ -65,6 +65,9 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
     (j_s,j_n)=(j_c,j_c+1)
     (k_l,k_r)=(k_c,k_c+1)
     #
+    i_c=clamp(i_c,1,nx+2); i_w=max(i_w,1); i_e=min(i_e,nx+2)
+    j_c=clamp(j_c,1,ny+2); j_s=max(j_s,1); j_n=min(j_n,ny+2)
+    #
     k_c=min(k_c,nz)
     k_l=min(k_l,nz)
     k_r=min(k_r,nz)
@@ -143,6 +146,10 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvMeshArrays,tim) where T
     #
     (i_w,i_e)=(i_c,i_c+1)
     (j_s,j_n)=(j_c,j_c+1)
+    #
+    i_c=clamp(i_c,1,nx+2); i_w=max(i_w,1); i_e=min(i_e,nx+2)
+    j_c=clamp(j_c,1,ny+2); j_s=max(j_s,1); j_n=min(j_n,ny+2)
+    #
     #interpolate u to position and time
     u0=fview(P.u0.f,fIndex)
     u1=fview(P.u1.f,fIndex)
