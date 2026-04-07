@@ -346,15 +346,21 @@ function stproj_inv(xx,yy,XC0=0.0,YC0=90.0)
 end
 
 """
-    monthly_records(T,t; verbose=false)
+    monthly_records(P; verbose=false)
 
-Return `t0,t1,m0,m1` based on time `t` and reference time interval `T`.
+Return `t0,t1,m0,m1` based on `P.T` (current time bracket) and `P.TimeAxis`.
 
-- If `eltype(T)` and `t` are `DateTime` then so are `t0,t1`
-- If `T` is backward in time then we flip `t0,t1,m0,m1`.
-- `m0,m1` correspond to the monthly records
+- The current time `t` is derived from `P.T[2]`.
+- If `eltype(P.T)` is `DateTime` then so are `t0,t1`.
+- If `P.T` is backward in time (`T[2]<T[1]`) then we flip `t0,t1,m0,m1`.
+- `m0,m1` correspond to the monthly records.
+- `P.TimeAxis.Climatology` controls whether `m0,m1` wrap to 1–12.
 """
-function monthly_records(T,t; verbose=false, climatology=false)
+function monthly_records(P; verbose=false)
+    T=P.T
+    t=T[2]
+    climatology=P.TimeAxis.Climatology
+
     if eltype(T)!==DateTime
         mon=86400.0*365.0/12.0
         mm0=Int(floor((t+mon/2.0)/mon))

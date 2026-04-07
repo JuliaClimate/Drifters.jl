@@ -59,23 +59,25 @@ _Note: the initial implementation approximates month durations to
 365 days / 12 months for simplicity and sets P.T to [-mon/2,mon/2]_
 """
 function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
-            backward_time=false, time_unit=:DateTime, datasets::Symbol=:ECCO4)
+            time_axis::Union{DateTime,TimeAxis}=DateTime(1), datasets::Symbol=:ECCO4)
     XC=exchange(Γ.XC) #add 1 lon point at each edge
     YC=exchange(Γ.YC) #add 1 lat point at each edge
     iDXC=1. ./Γ.DXC
     iDYC=1. ./Γ.DYC
     γ=Γ.XC.grid
 
-    mon=86400.0*365.0/12.0    
-    T=(time_unit==:DateTime ? [DateTime(1999,12,15),DateTime(2000,1,15)] : [-mon/2,mon/2])
-    if time_unit==:DateTime
-        D0=DateTime(1992,1,1)
-        D1=DateTime(2011,1,1) #this corresponds to ECCO4 release 1
-        TA=TimeAxis(D0,D1,D0,D1,true) #true corresponds to monthly climatology input
+    mon=86400.0*365.0/12.0
+    if isa(time_axis, TimeAxis)
+        TA=time_axis
+        backward_time=(time_axis.initial > time_axis.final)
+        T=backward_time ? [DateTime(time_axis.final),DateTime(time_axis.initial)] : [DateTime(time_axis.initial),DateTime(time_axis.final)]
     else
+        backward_time=false #default values for notebook example
         t_final=100*365*86400.0
         TA=TimeAxis(0.0,t_final,0.0,t_final,true)
+        T=[-mon/2,mon/2]
     end
+
 
     if k==0
         msk=Γ.hFacC
@@ -123,7 +125,7 @@ with a periodicity of 12 months, (3) vertical P.k is selected_
 function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
                             verbose=false)
 
-    t0,t1,m0,m1=monthly_records(P.T,t,verbose=verbose,climatology=true)
+    t0,t1,m0,m1=monthly_records(P,verbose=verbose)
 
     velocity_factor=1.0
 #    if D.backward_time
@@ -182,7 +184,7 @@ with a periodicity of 12 months, (3) vertical P.k is selected_
 function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloat,DateTime};
                                 verbose=false)
 
-    t0,t1,m0,m1=monthly_records(P.T,t,verbose=verbose,climatology=true)
+    t0,t1,m0,m1=monthly_records(P,verbose=verbose)
 
     velocity_factor=1.0
 #    if D.backward_time
@@ -273,7 +275,11 @@ consecutive records is diff(P.T), (2) monthly climatologies are used
 with a periodicity of 12 months, (3) vertical P.k is selected_
 """
 function update_FlowFields!(I::Individuals)
-    t_ϵ=I.P.T[2]+eps(I.P.T[2])
+    if I.D.backward_time
+        t_ϵ=I.P.T[2]-eps(I.P.T[2])
+    else
+        t_ϵ=I.P.T[2]+eps(I.P.T[2])
+    end
     I.D.🔄(I.P,I.D,t_ϵ)
 end
 
@@ -309,6 +315,7 @@ function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::S
         filelist=basename.(Glob.glob("state_3d_set1*.data",D.pth))
         tmp1 = read_data_mdsio(joinpath(D.pth,filelist[t]),Symbol(varname))
         θ=read(tmp1,P.u0.grid)
+        println("read ",joinpath(D.pth,filelist[t])," ",varname)
     else
         error("Invalid data source: $datasets.")
     end
@@ -321,7 +328,7 @@ end
 
 Set up Global Ocean particle simulation in 2D with seasonally varying flow field.
 """
-function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime, dpth::String=data_path(:ECCO), datasets::Symbol=:ECCO4)
+function init_FlowFields(; k=1, time_axis::Union{DateTime,TimeAxis}=DateTime(1), dpth::String=data_path(:ECCO), datasets::Symbol=:ECCO4)
   
   #read grid and set up connections between subdomains
   γ=MeshArrays.GridSpec(ID=:LLC90)
@@ -335,7 +342,7 @@ function init_FlowFields(; k=1, backward_time=false, time_unit=:DateTime, dpth::
 
   #initialize u0,u1 etc arrays
   P,D=setup_FlowFields(k,Γ,func,dpth,
-        backward_time=backward_time,time_unit=time_unit,datasets=datasets)
+        time_axis=time_axis,datasets=datasets)
   
   #add background map for plotting
   λ=get_interp_coefficients(Γ)
