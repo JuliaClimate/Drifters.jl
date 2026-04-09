@@ -387,13 +387,13 @@ function monthly_records(P, t; verbose=false)
         verbose ? println("y$(yy)m$(mm)d$(dd)") : nothing
 
         if dd<15&&mm==1
-            yy0=yy-1; yy1=yy; mm0=12; mm1=1
+            yy0=yy-1; yy1=yy; mm0=12; mm1=1;
         elseif dd<15
-            yy0=yy; yy1=yy; mm0=mm-1; mm1=mm
+            yy0=yy; yy1=yy; mm0=mm-1; mm1=mm;
         elseif dd>=15&&mm==12
-            yy0=yy; yy1=yy+1; mm0=12; mm1=1
+            yy0=yy; yy1=yy+1; mm0=12; mm1=1;
         else
-            yy0=yy; yy1=yy; mm0=mm; mm1=mm+1
+            yy0=yy; yy1=yy; mm0=mm; mm1=mm+1;
         end
         verbose ? println("0:$(yy0)/$(mm0) , 1:$(yy1)/$(mm1)") : nothing
 
