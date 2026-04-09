@@ -70,7 +70,7 @@ np=1000 #number of particles
 ny=1 #number of years
 nm=12 #number of months
 
-P,D=ECCOmodule.init_FlowFields(k=k,backward_time=backward_time)
+P,D=ECCOmodule.init_FlowFields(k=k)
 
 df = Drifters.init.init_positions(np,filename=file_input)
 #"z" in names(df) ? nothing : df.z=10.0 .+ 0.0*df.x

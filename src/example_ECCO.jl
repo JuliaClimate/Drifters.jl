@@ -55,11 +55,13 @@ Define `FlowFields` data structure along with specified grid (`Γ` NamedTuple),
 function `func` (e.g., `(u -> MeshArrays.update_location_llc!(u,Γ)))`, 
 and file location (`pth`).
     
-_Note: the initial implementation approximates month durations to 
-365 days / 12 months for simplicity and sets P.T to [-mon/2,mon/2]_
+If `time_axis` is `missing` (default), uses float time in seconds: one-month
+`T = [-mon/2,mon/2]` and climatology `TimeAxis(0, t_{100y}, 0, t_{100y}, true)`.
+Pass a `TimeAxis` (e.g. with `DateTime` bounds for ECCO monthly climatology) for
+calendar-based `FlowFields` and to control `backward_time`.
 """
 function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
-            time_axis::Union{DateTime,TimeAxis}=DateTime(1), datasets::Symbol=:ECCO4)
+            time_axis::Union{Missing,TimeAxis}=missing, datasets::Symbol=:ECCO4)
     XC=exchange(Γ.XC) #add 1 lon point at each edge
     YC=exchange(Γ.YC) #add 1 lat point at each edge
     iDXC=1. ./Γ.DXC
@@ -67,15 +69,15 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
     γ=Γ.XC.grid
 
     mon=86400.0*365.0/12.0
-    if isa(time_axis, TimeAxis)
+    if ismissing(time_axis)
+        T=[-mon/2,mon/2]
+        t_final=100*365*86400.0
+        TA=TimeAxis(0.0,t_final,0.0,t_final,true)
+        backward_time=false
+    else
         TA=time_axis
         backward_time=(time_axis.initial > time_axis.final)
         T=backward_time ? [DateTime(time_axis.final),DateTime(time_axis.initial)] : [DateTime(time_axis.initial),DateTime(time_axis.final)]
-    else
-        backward_time=false #default values for notebook example
-        t_final=100*365*86400.0
-        TA=TimeAxis(0.0,t_final,0.0,t_final,true)
-        T=[-mon/2,mon/2]
     end
 
 
@@ -328,7 +330,7 @@ end
 
 Set up Global Ocean particle simulation in 2D with seasonally varying flow field.
 """
-function init_FlowFields(; k=1, time_axis::Union{DateTime,TimeAxis}=DateTime(1), dpth::String=data_path(:ECCO), datasets::Symbol=:ECCO4)
+function init_FlowFields(; k=1, time_axis::Union{Missing,TimeAxis}=missing, dpth::String=data_path(:ECCO), datasets::Symbol=:ECCO4)
   
   #read grid and set up connections between subdomains
   γ=MeshArrays.GridSpec(ID=:LLC90)
