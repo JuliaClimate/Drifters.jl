@@ -346,29 +346,46 @@ function stproj_inv(xx,yy,XC0=0.0,YC0=90.0)
 end
 
 """
-    monthly_records(T,t; verbose=false)
+    monthly_records(P, t; verbose=false)
 
-Return `t0,t1,m0,m1` based on time `t` and reference time interval `T`.
+Return `t0,t1,m0,m1` based on current time `t`, `P.T` (time direction), and `P.TimeAxis`.
 
-- If `eltype(T)` and `t` are `DateTime` then so are `t0,t1`
-- If `T` is backward in time then we flip `t0,t1,m0,m1`.
-- `m0,m1` correspond to the monthly records
+- `t` is the current simulation time (passed from `update_FlowFields!`).
+- `t0,t1` are the two monthly boundaries bracketing `t`, clamped within
+  `[TimeAxis.initial, TimeAxis.final]`.
+- `m0,m1` are file indices relative to `TimeAxis.origin` (month 1 of origin = index 1).
+- `P.TimeAxis.Climatology` controls whether `m0,m1` wrap to 1–12 via `mod1`.
+- If `P.T` is backward in time (`T[2]<T[1]`) then `t0,t1,m0,m1` are flipped.
 """
-function monthly_records(T,t; verbose=false, climatology=false)
+function monthly_records(P, t; verbose=false)
+    T=P.T
+    TA=P.TimeAxis
+    climatology=TA.Climatology
+    forward = TA.final > TA.initial
+
     if eltype(T)!==DateTime
         mon=86400.0*365.0/12.0
         mm0=Int(floor((t+mon/2.0)/mon))
         mm1=mm0+1
         tt0=mm0*mon-mon/2.0
         tt1=mm1*mon-mon/2.0
-        if T[2]>T[1]
-            t0=tt0; t1=tt1; m0=mm0; m1=mm1;
+
+        origin_m=Int(floor((TA.origin+mon/2.0)/mon))
+        if forward
+            t0=tt0; t1=tt1
+            m0=mm0-origin_m+1; m1=mm1-origin_m+1
         else
-            t1=tt0; t0=tt1; m1=mm0; m0=mm1;
+            t0=tt1; t1=tt0
+            m0=mm1-origin_m+1; m1=mm0-origin_m+1
         end
+
+        lo=min(TA.initial,TA.final); hi=max(TA.initial,TA.final)
+        t0=clamp(t0,lo,hi); t1=clamp(t1,lo,hi)
     else
+        oy=Year(TA.origin).value; om=Month(TA.origin).value
         yy=Year(t).value; mm=Month(t).value; dd=Day(t).value
         verbose ? println("y$(yy)m$(mm)d$(dd)") : nothing
+
         if dd<15&&mm==1
             yy0=yy-1; yy1=yy; mm0=12; mm1=1;
         elseif dd<15
@@ -379,20 +396,24 @@ function monthly_records(T,t; verbose=false, climatology=false)
             yy0=yy; yy1=yy; mm0=mm; mm1=mm+1;
         end
         verbose ? println("0:$(yy0)/$(mm0) , 1:$(yy1)/$(mm1)") : nothing
-        if T[2]>T[1]
-            y0=yy0; y1=yy1; m0=mm0; m1=mm1;
+
+        if forward
+            t0=DateTime(yy0,mm0,15); t1=DateTime(yy1,mm1,15)
+            m0=(yy0-oy)*12+(mm0-om)+1; m1=(yy1-oy)*12+(mm1-om)+1
         else
-            y1=yy0; y0=yy1; m1=mm0; m0=mm1;
+            t0=DateTime(yy1,mm1,15); t1=DateTime(yy0,mm0,15)
+            m0=(yy1-oy)*12+(mm1-om)+1; m1=(yy0-oy)*12+(mm0-om)+1
         end
-        t0=DateTime(y0,m0,15)
-        t1=DateTime(y1,m1,15)
+
+        lo=min(TA.initial,TA.final); hi=max(TA.initial,TA.final)
+        t0=clamp(t0,lo,hi); t1=clamp(t1,lo,hi)
         verbose ? println("0:$(t0) , 1:$(t1)") : nothing
     end
 
     m0=(climatology ? mod1(m0,12) : m0)
     m1=(climatology ? mod1(m1,12) : m1)
 
-    verbose ? println.(t0,t1,m0,m1) : nothing
-    
+    verbose ? println("m0=$(m0), m1=$(m1)") : nothing
+
     return t0,t1,m0,m1
 end
