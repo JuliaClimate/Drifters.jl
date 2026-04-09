@@ -36,26 +36,41 @@ function init_global_randn(np ::Int , D::NamedTuple)
 end
 
 """
-    init_gulf_stream(np ::Int , D::NamedTuple)
+    init_regional_3d(np, D; lons=(-81.0,-79.0), lats=(26.0,28.0), zs=0:27)
 
-Randomly distribute `np` points in the Florida Strait region, within 
-`D.msk` region, and return position in grid index space (`i,j,subdomain`).
+Randomly distribute `np` ocean particles within a lon/lat/depth box on the
+LLC90 grid. Uses `InterpolationFactors` to assign face indices and grid
+coordinates, then filters to ocean-only points via `D.msk`. Returns a
+DataFrame with columns `x, y, z, fid`.
+
+Default `lons`, `lats`, and `zs` match the former `init_gulf_stream` Florida
+Strait setup. For a wider domain (e.g. tropical band), pass
+`lons=(-180.0,180.0), lats=(-30.0,30.0), zs=1:25`.
+
+Oversamples by a factor of 3 so enough valid ocean points survive the mask.
+Raises an error if fewer than `np` ocean points are found.
 """
-function init_gulf_stream(np ::Int , D::NamedTuple; zs=0:27)
-	lons=[-81,-79]
-	lats=[26,28]
-	lon=rand(2*np)*diff(lons)[1].+lons[1]
-	lat=rand(2*np)*diff(lats)[1].+lats[1]
-	
-	(_,_,_,_,f,x,y)=Drifters.InterpolationFactors(D.Γ,lon,lat)
-    m=findall( (f.!==0).*((!isnan).(x)) )
-    n=findall(Drifters.nearest_to_xy(D.msk,x[m],y[m],f[m]).==1.0)[1:np]
-    xyf=permutedims([x[m[n]] y[m[n]] f[m[n]]])
+function init_regional_3d(np::Int, D::NamedTuple;
+        lons=(-81.0, -79.0), lats=(26.0, 28.0), zs=0:27)
+    n_try = 3 * np
+    lon = lons[1] .+ (lons[2] - lons[1]) .* rand(n_try)
+    lat = lats[1] .+ (lats[2] - lats[1]) .* rand(n_try)
 
-	z=zs[1] .+rand(np)*(zs[end]-zs[1])
-    return DataFrame(x=xyf[1,:],y=xyf[2,:],z=z,fid=xyf[3,:])
+    (_,_,_,_,f,x,y) = Drifters.InterpolationFactors(D.Γ, lon, lat)
+
+    m = findall((f .!== 0) .* ((.!isnan).(x)))
+    ocean = findall(Drifters.nearest_to_xy(D.msk, x[m], y[m], f[m]) .== 1.0)
+
+    length(ocean) < np && error(
+        "Only $(length(ocean)) ocean points found (need $np). " *
+        "Widen the lon/lat range or reduce np.")
+
+    sel = ocean[1:np]
+    xyf = permutedims([x[m[sel]] y[m[sel]] f[m[sel]]])
+    z = zs[1] .+ rand(np) .* (zs[end] - zs[1])
+
+    return DataFrame(x=xyf[1,:], y=xyf[2,:], z=z, fid=xyf[3,:])
 end
-
 
 """
     initial_positions(Γ; nf=10000, lon_rng=(-160.0,-159.0), lat_rng=(30.0,31.0))
@@ -65,6 +80,10 @@ expressed in, normalized, grid point units (x,y in the 0,nx and 0,ny range).
 To convert from longitude,latitude here we take advantage of the regularity 
 of the 1 degree grid being used -- for a more general alternative, see the 
 global ocean example.
+
+**Warning**: this function assigns all particles to face 1 and uses a simple
+linear lon/lat-to-grid mapping. It only works for small regions on face 1.
+For regional or global initialization on the LLC90 grid, use `init_regional_3d`.
 """
 function initial_positions(Γ::NamedTuple, nf=10000, lon_rng=(-160.0,-159.0), lat_rng=(30.0,31.0), level=1)
    lon=lon_rng[1] .+(lon_rng[2]-lon_rng[1]).*rand(nf)

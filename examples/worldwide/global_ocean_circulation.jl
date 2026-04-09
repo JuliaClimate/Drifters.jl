@@ -135,7 +135,7 @@ md"""## 3. Trajectory Computation
 
 ### 3.1 Initialization
 
-- initialize individual positions (`init_gulf_stream`)
+- initialize individual positions (`init_regional_3d`, Gulf Stream defaults)
 - initial integration from time 0 to 0.5 month
 """
 
@@ -152,7 +152,7 @@ begin
 		nm=12 #number of months
 	end
 	
-	df = Drifters.init.init_gulf_stream(np , D, zs=zs)
+	df = Drifters.init.init_regional_3d(np , D, zs=zs)
 
 	if !(k==0)
 		𝑆 = ECCOmodule.init_storage(np,100,1,50)
