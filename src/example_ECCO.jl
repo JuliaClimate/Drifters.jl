@@ -306,11 +306,17 @@ function read_velocities(γ::gcmgrid,t::Int,pth::String,datasets::Symbol=:ECCO4)
     return u,v
 end
 """
-read_tracers(γ::gcmgrid,t::Int,pth::String)
+    read_tracers(t, P, D; varname="THETA", datasets=:ECCO4, verbose=false)
 
-Read tracers from files in `pth`for time `t`
+Read tracers from files for monthly file index `t`. If `verbose`, print file
+index, `month_index=mod1(t,12)`, `year_index=(t-1)÷12+1`, and `varname`.
 """
-function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::Symbol=:ECCO4)
+function read_tracers(t::Int,P,D::NamedTuple,varname::String="THETA",datasets::Symbol=:ECCO4; verbose::Bool=false)
+    if verbose
+        mi = mod1(t, 12)
+        yi = (t - 1) ÷ 12 + 1
+        println("read_tracers: file_index=$t month_index=$mi year_index=$yi varname=$varname")
+    end
     if datasets==:ECCO4
         θ=read_data_ECCO(t,varname,joinpath(D.pth,varname),P.u0.grid,:)
     elseif datasets==:OCCA2
