@@ -27,11 +27,11 @@ p=0.5 # fraction of mass exchanged with neighbors every time step
 nt=5 # number of time steps
 ```
 """
-function main_loop(IC;p=0.5,nt=5,do_mix_neighbors=true)
+function main_loop(IC;p=0.5,nt=5,do_mix_neighbors=true,kwargs...)
     (; u₀a,u₀b,ca,cb,np) = IC
     for tt in 1:nt
-        step!(u₀a)
-        step!(u₀b)
+        step!(u₀a,kwargs...)
+        step!(u₀b,kwargs...)
         do_mix_neighbors ? ex_SDE.mix_neighbors(u₀a,ca,u₀b,cb,p) : false
     end
     return "done with model run"
@@ -48,8 +48,8 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 ?SDE.step!
 ```
 """
-function step!(u₀; do_fold_tails=true)
-    za,sol_a=solve_paths(u₀)
+function step!(u₀; do_fold_tails=true,kwargs...)
+    za,sol_a=solve_paths(u₀,kwargs...)
     do_fold_tails ? ex_SDE.fold_tails(za) : nothing
     u₀[:]=za[:,end]
 end
@@ -79,18 +79,50 @@ function solve_paths(u₀; P=ex_SDE.default_parameters())
         sol=solve(prob,EM(),dt=P.dt)
     elseif config==:piecewise
         prob = SDEProblem(ex_SDE.f_piecewise,ex_SDE.g_piecewise,u₀,P.tspan,params)
-        sol=solve(prob,EM(),dt=P.dt,callback = ex_SDE.surface_and_bottom_reflect(P.seafloor))
+        sol=solve(prob,EM(),dt=P.dt,callback = ex_SDE.surface_reflect(P.seafloor))
+	elseif config==:ggl90
+		rf = [0.0, -10.0, -20.0, -30.0, -40.0, -50.0, -60.0, -70.0, -80.01, -90.04, -100.15, 
+			-110.47, -121.27, -133.03, -146.45, -162.48999999999998, -182.30999999999997, 
+			-207.15999999999997, -238.25999999999996, -276.67999999999995, -323.17999999999995, 
+			-378.17999999999995, -441.67999999999995, -513.26, -592.16, -677.31, -767.49, 
+			-861.45, -958.0300000000001, -1056.2800000000002, -1155.5300000000002, -1255.5400000000002, 
+			-1356.8700000000001, -1461.43, -1572.76, -1695.59, -1834.6799999999998, -1993.62, -2174.45, 
+			-2378.0, -2604.5, -2854.0, -3126.5, -3422.0, -3740.5, -4082.0, -4446.5, 
+			-4834.0, -5244.5, -5678.0, -6134.5]
+		kappa = ex_SDE.DEFAULT_KAPPA
+		kappa_itp = ex_SDE.build_interpolator(Γ.RF,kappa)
+		f_ggl,g_ggl = ex_SDE.build_kappa_profile(kappa_itp)
+		prob = SDEProblem(f_ggl,g_ggl,u₀,P.tspan,params)
+        sol=solve(prob,EM(),dt=P.dt,callback = ex_SDE.ocean_reflect(P.seafloor))
+	elseif config==:dimensional_idealized
+		rf = [0.0, -10.0, -20.0, -30.0, -40.0, -50.0, -60.0, -70.0, -80.01, -90.04, -100.15, 
+			-110.47, -121.27, -133.03, -146.45, -162.48999999999998, -182.30999999999997, 
+			-207.15999999999997, -238.25999999999996, -276.67999999999995, -323.17999999999995, 
+			-378.17999999999995, -441.67999999999995, -513.26, -592.16, -677.31, -767.49, 
+			-861.45, -958.0300000000001, -1056.2800000000002, -1155.5300000000002, -1255.5400000000002, 
+			-1356.8700000000001, -1461.43, -1572.76, -1695.59, -1834.6799999999998, -1993.62, -2174.45, 
+			-2378.0, -2604.5, -2854.0, -3126.5, -3422.0, -3740.5, -4082.0, -4446.5, 
+			-4834.0, -5244.5, -5678.0, -6134.5]
+		kappa = zeros(50)
+		iz_bottom = 10
+		kappa[1:iz_bottom] .= 0.02
+		println("Mixed layer depth:", -Γ.RF[iz_bottom+1], "m")
+		println("Transition thickness:", Γ.DRF[iz_bottom], "m")
+		kappa_itp = ex_SDE.build_interpolator(Γ.RF,kappa)
+		f_di,g_di = ex_SDE.build_kappa_profile(kappa_itp)
+		prob = SDEProblem(f_di,g_di,u₀,P.tspan,params)
+        sol=solve(prob,EM(),dt=P.dt,callback = ex_SDE.ocean_reflect(P.seafloor))
     else
         error("unknown config")
     end
     stack(sol(0:0.01:1)),sol
 end
 
-function demo_paths(IC::NamedTuple; do_fold_tails=true)
+function demo_paths(IC::NamedTuple; do_fold_tails=true,kwargs...)
     (; u₀a,u₀b,ca,cb,np) = IC
-    za,sol_a=solve_paths(u₀a)
+    za,sol_a=solve_paths(u₀a,kwargs...)
     do_fold_tails ? ex_SDE.fold_tails(za) : nothing
-    zb,sol_b=solve_paths(u₀b)
+    zb,sol_b=solve_paths(u₀b,kwargs...)
     do_fold_tails ? ex_SDE.fold_tails(zb) : nothing
     (za=za,zb=zb)
 end
