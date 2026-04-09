@@ -14,10 +14,14 @@ fview(f::Array{Array{Float32,2},2},i::Int,j::Int) = view(f[i,j],:,:)
 fview(f::Array{Array{Float64,2},2},i::Int,j::Int) = view(f[i,j],:,:)
 
 """
-    dxdt!(du,u,p::uvwMeshArrays,tim)
+    dxdt!(du, u, p::uvwMeshArrays, tim, clampset=false)
 
 Interpolate velocity from gridded fields (3D; with halos) to position `u`
 (`x,y,z,fIndex`) to compute the derivative of position v time  `du_dt`.
+
+Optional `clampset` (default `false`): if `true`, horizontal stencil indices are
+clamped to valid halo extents (avoids rare `BoundsError` at face edges).
+`∫!` and ODE paths call the 4-argument form, so they keep `clampset=false`.
 
 # Extended help
 
@@ -41,7 +45,7 @@ prod(isapprox.(I.📌,ref,atol=1.0)) # hide
 true
 ```
 """
-function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
+function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim,clampset::Bool=false) where T
     dt=mydt(tim,P)
     g=P.u0.grid
     #
@@ -61,10 +65,15 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
     j_c = Int32(floor(y)) + 2
     k_c = Int32(floor(z)) + 1
     #
-    i_c=clamp(i_c,1,nx+2)
-    j_c=clamp(j_c,1,ny+2)
-    (i_w,i_e)=(i_c, min(i_c+1, nx+2))
-    (j_s,j_n)=(j_c, min(j_c+1, ny+2))
+    if clampset
+        i_c=clamp(i_c,1,nx+2)
+        j_c=clamp(j_c,1,ny+2)
+        (i_w,i_e)=(i_c, min(i_c+1, nx+2))
+        (j_s,j_n)=(j_c, min(j_c+1, ny+2))
+    else
+        (i_w,i_e)=(i_c,i_c+1)
+        (j_s,j_n)=(j_c,j_c+1)
+    end
     (k_l,k_r)=(k_c,k_c+1)
     #
     k_c=min(k_c,nz)
@@ -104,10 +113,12 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvwMeshArrays,tim) where T
 end
 
 """
-    dxdt!(du,u,P::uvMeshArrays,tim)
+    dxdt!(du, u, P::uvMeshArrays, tim, clampset=false)
 
 Interpolate velocity from gridded fields (2D; with halos) to position `u`
 (`x,y,fIndex`) to compute the derivative of position v time  `du_dt`.
+
+See `dxdt!(..., ::uvwMeshArrays, ...)` for `clampset`.
 
 # Extended help
 
@@ -125,7 +136,7 @@ isa(I.📌,Vector)
 true
 ```
 """
-function dxdt!(du::Array{T,1},u::Array{T,1},P::uvMeshArrays,tim) where T
+function dxdt!(du::Array{T,1},u::Array{T,1},P::uvMeshArrays,tim,clampset::Bool=false) where T
     #compute positions in index units
     dt=mydt(tim,P)
     g=P.u0.grid
@@ -143,10 +154,15 @@ function dxdt!(du::Array{T,1},u::Array{T,1},P::uvMeshArrays,tim) where T
     i_c = Int32(floor(x)) + 2
     j_c = Int32(floor(y)) + 2
     #
-    i_c=clamp(i_c,1,nx+2)
-    j_c=clamp(j_c,1,ny+2)
-    (i_w,i_e)=(i_c, min(i_c+1, nx+2))
-    (j_s,j_n)=(j_c, min(j_c+1, ny+2))
+    if clampset
+        i_c=clamp(i_c,1,nx+2)
+        j_c=clamp(j_c,1,ny+2)
+        (i_w,i_e)=(i_c, min(i_c+1, nx+2))
+        (j_s,j_n)=(j_c, min(j_c+1, ny+2))
+    else
+        (i_w,i_e)=(i_c,i_c+1)
+        (j_s,j_n)=(j_c,j_c+1)
+    end
     #
     #interpolate u to position and time
     u0=fview(P.u0.f,fIndex)
