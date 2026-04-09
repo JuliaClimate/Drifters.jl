@@ -27,11 +27,11 @@ p=0.5 # fraction of mass exchanged with neighbors every time step
 nt=5 # number of time steps
 ```
 """
-function main_loop(IC;p=0.5,nt=5,do_mix_neighbors=true)
+function main_loop(IC;p=0.5,nt=5,do_mix_neighbors=true,kwargs...)
     (; u₀a,u₀b,ca,cb,np) = IC
     for tt in 1:nt
-        step!(u₀a)
-        step!(u₀b)
+        step!(u₀a,kwargs...)
+        step!(u₀b,kwargs...)
         do_mix_neighbors ? ex_SDE.mix_neighbors(u₀a,ca,u₀b,cb,p) : false
     end
     return "done with model run"
@@ -48,8 +48,8 @@ SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
 ?SDE.step!
 ```
 """
-function step!(u₀; do_fold_tails=true)
-    za,sol_a=solve_paths(u₀)
+function step!(u₀; do_fold_tails=true,kwargs...)
+    za,sol_a=solve_paths(u₀,kwargs...)
     do_fold_tails ? ex_SDE.fold_tails(za) : nothing
     u₀[:]=za[:,end]
 end
@@ -118,11 +118,11 @@ function solve_paths(u₀; P=ex_SDE.default_parameters())
     stack(sol(0:0.01:1)),sol
 end
 
-function demo_paths(IC::NamedTuple; do_fold_tails=true)
+function demo_paths(IC::NamedTuple; do_fold_tails=true,kwargs...)
     (; u₀a,u₀b,ca,cb,np) = IC
-    za,sol_a=solve_paths(u₀a)
+    za,sol_a=solve_paths(u₀a,kwargs...)
     do_fold_tails ? ex_SDE.fold_tails(za) : nothing
-    zb,sol_b=solve_paths(u₀b)
+    zb,sol_b=solve_paths(u₀b,kwargs...)
     do_fold_tails ? ex_SDE.fold_tails(zb) : nothing
     (za=za,zb=zb)
 end
