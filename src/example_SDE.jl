@@ -6,6 +6,13 @@ import Distributions: Histogram, fit, Normal, cdf, pdf
 
 ## helper functions for the example
 
+DEFAULT_KAPPA = [0.0, 0.019719386, 0.030045405, 0.03708679, 0.04244723, 0.036685575, 0.018587558, 0.0039903168, 
+	0.001206897, 0.0006229491, 0.00027001562, 0.000102254, 3.624377f-5, 1.6010854f-5, 1.0576804f-5, 
+	1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 
+	1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 
+	1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5, 1.0f-5]
+# GGL90Kappa in early winter, from a grid cell. 
+
 """
     fold_tails(z)
 
@@ -234,6 +241,42 @@ function initial_conditions(np=10000)
 	u₀b=0.5 .+ 0.5*rand(np)
 	cb=ones(np)
     (u₀a=u₀a,u₀b=u₀b,ca=ca,cb=cb,np=np)
+end
+
+function ocean_reflect()
+    condition(u,t,integrator) = true
+    function affect!(integrator)
+        integrator.u .= -abs.(integrator.u)   # reflect all components (vector/array-safe)
+    end
+    cb = DiscreteCallback(condition, affect!)
+    return cb
+end
+
+function build_interpolator(rf,kappa)
+	kap = [kappa[2];kappa[2:end]; 0.0]
+	rff = [1000;rf[2:end]]# it is all the same diffusivity above surface
+	itp = linear_interpolation(reverse(rff), reverse(kap))
+	return itp
+end
+
+function build_kappa_profile(itp)
+	kappa_func(u,p,t) = itp.(u)
+	f_func(u,p,t) = Float64[Interpolations.gradient(itp, z)[1] for z in u]
+	g_func(u,p,t) = sqrt.(max.(itp.(u), 0.0) .* 2.0)
+	return kappa_func,f_func,g_func
+end
+
+function create_sde_updator(kappa,rf)
+	itp = build_interpolator(rf,kappa)
+	κ,𝒻,ℊ = build_kappa_profile(itp)
+	function updator(u_0,tf;dt=10)
+		tspan = (0.0,tf)
+		p = nothing
+		prob = SDEProblem(𝒻,ℊ,u_0,tspan,p)
+		sol=solve(prob,EulerHeun(),dt=dt,callback = ocean_reflect());
+		return sol.u[end]
+	end
+	return updator
 end
 
 # parameter configuration
