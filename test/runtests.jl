@@ -135,7 +135,7 @@ end
 @testset "global" begin
     p0=Drifters.datadeps.getdata("global_ocean_circulation_inputs")
     ECCOmodule=Drifters.ECCO
-    P,D=ECCOmodule.init_FlowFields(k=1,time_unit=:second)
+    P,D=ECCOmodule.init_FlowFields(k=1)
 
     file_input=joinpath(p0,"initial_10_1.csv")
     df = Drifters.init.init_positions(10,filename=file_input)

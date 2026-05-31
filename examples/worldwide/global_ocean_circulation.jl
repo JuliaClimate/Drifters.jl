@@ -118,7 +118,10 @@ begin
 	
 	Climatology.get_ecco_velocity_if_needed()
 	
-	P,D=ECCOmodule.init_FlowFields(k=k,backward_time=backward_time,time_unit=:DateTime)
+	D0=Drifters.DateTime(1992,1,1)
+	D1=Drifters.DateTime(2011,1,1)
+	TA = backward_time ? Drifters.TimeAxis(D1,D0,D0,D1,true) : Drifters.TimeAxis(D0,D1,D0,D1,true)
+	P,D=ECCOmodule.init_FlowFields(k=k, time_axis=TA)
 
 	println("Done with Setting Up FlowFields")
 	tmp1="  - flow field depth level = "*(k==0 ? "three-dimensional" : "level $(k)") 
