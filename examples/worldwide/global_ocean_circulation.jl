@@ -118,7 +118,10 @@ begin
 	
 	Climatology.get_ecco_velocity_if_needed()
 	
-	P,D=ECCOmodule.init_FlowFields(k=k,backward_time=backward_time,time_unit=:DateTime)
+	D0=Drifters.DateTime(1992,1,1)
+	D1=Drifters.DateTime(2011,1,1)
+	TA = backward_time ? Drifters.TimeAxis(D1,D0,D0,D1,true) : Drifters.TimeAxis(D0,D1,D0,D1,true)
+	P,D=ECCOmodule.init_FlowFields(k=k, time_axis=TA)
 
 	println("Done with Setting Up FlowFields")
 	tmp1="  - flow field depth level = "*(k==0 ? "three-dimensional" : "level $(k)") 
@@ -135,7 +138,7 @@ md"""## 3. Trajectory Computation
 
 ### 3.1 Initialization
 
-- initialize individual positions (`init_gulf_stream`)
+- initialize individual positions (`init_regional_3d`, Gulf Stream defaults)
 - initial integration from time 0 to 0.5 month
 """
 
@@ -152,7 +155,7 @@ begin
 		nm=12 #number of months
 	end
 	
-	df = Drifters.init.init_gulf_stream(np , D, zs=zs)
+	df = Drifters.init.init_regional_3d(np , D, zs=zs)
 
 	if !(k==0)
 		𝑆 = ECCOmodule.init_storage(np,100,1,50)
