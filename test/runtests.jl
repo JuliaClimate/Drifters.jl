@@ -61,7 +61,7 @@ end
     k=0
     P,D=ECCOmodule.init_FlowFields(k=k); np=100
     df0 = Drifters.init.init_global_randn(np , D)
-    df = Drifters.init.init_gulf_stream(np , D)
+    df = Drifters.init.init_regional_3d(np , D)
     S = ECCOmodule.init_storage(np,100,length(D.Γ.RC),50)
     I = Individuals(P,df.x,df.y,df.z,df.fid,
         (D=merge(D,S),∫=ECCOmodule.custom∫,🔧=ECCOmodule.custom🔧,🔴=deepcopy(ECCOmodule.custom🔴)))
