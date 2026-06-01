@@ -20,10 +20,10 @@ MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
     MK = Base.get_extension(Drifters, :DriftersMakieExt)
 
     IC=ex_SDE.initial_conditions(100)
-    SDE.main_loop(IC,p=0.1,nt=2)
+    SDE.main_loop(IC; ex_SDE.default_parameters()...)
 
     # Another run of the dispersion model, just for plotting trajectories
-    tmp=SDE.demo_paths(IC)
+    tmp=SDE.demo_paths(IC; ex_SDE.default_parameters()...)
 	fb=MK.plot_paths(za=tmp.za,zb=tmp.zb)
 	
     # Eulerian model for comparison

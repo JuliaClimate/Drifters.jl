@@ -82,7 +82,7 @@ function solve_paths(u₀; P=ex_SDE.default_parameters())
         sol=solve(prob,EM(),dt=P[:dt])
     elseif config==:piecewise
         prob = SDEProblem(ex_SDE.f_piecewise,ex_SDE.g_piecewise,u₀,P[:tspan],params)
-        sol=solve(prob,EM(),dt=P.dt,callback = ex_SDE.surface_reflect(P[:seafloor]))
+        sol=solve(prob,EM(),dt=P[:dt],callback = ex_SDE.surface_reflect())
 	elseif config==:ggl90
 		rf = [0.0, -10.0, -20.0, -30.0, -40.0, -50.0, -60.0, -70.0, -80.01, -90.04, -100.15, 
 			-110.47, -121.27, -133.03, -146.45, -162.48999999999998, -182.30999999999997, 
@@ -96,7 +96,7 @@ function solve_paths(u₀; P=ex_SDE.default_parameters())
 		kappa_itp = ex_SDE.build_interpolator(Γ.RF,kappa)
 		f_ggl,g_ggl = ex_SDE.build_kappa_profile(kappa_itp)
 		prob = SDEProblem(f_ggl,g_ggl,u₀,P[:tspan],params)
-        sol=solve(prob,EM(),dt=P[:dt],callback = ex_SDE.ocean_reflect(P[:seafloor]))
+        sol=solve(prob,EM(),dt=P[:dt],callback = ex_SDE.ocean_reflect())
 	elseif config==:dimensional_idealized
 		rf = [0.0, -10.0, -20.0, -30.0, -40.0, -50.0, -60.0, -70.0, -80.01, -90.04, -100.15, 
 			-110.47, -121.27, -133.03, -146.45, -162.48999999999998, -182.30999999999997, 
@@ -114,7 +114,7 @@ function solve_paths(u₀; P=ex_SDE.default_parameters())
 		kappa_itp = ex_SDE.build_interpolator(Γ.RF,kappa)
 		f_di,g_di = ex_SDE.build_kappa_profile(kappa_itp)
 		prob = SDEProblem(f_di,g_di,u₀,P[:tspan],params)
-        sol=solve(prob,EM(),dt=P[:dt],callback = ex_SDE.ocean_reflect(P[:seafloor]))
+        sol=solve(prob,EM(),dt=P[:dt],callback = ex_SDE.ocean_reflect())
     else
         error("unknown config")
     end
