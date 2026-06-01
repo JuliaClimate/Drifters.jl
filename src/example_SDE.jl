@@ -290,9 +290,16 @@ function default_parameters()
     seafloor(t)=1.0 #sea floor depth in normalized units (0 to 1)
     mlkappa(t)=0.001 #diffusivity in m2/s
     depthscale(t)=2000 #depth scale in m
+
+    do_fold_tails=true #apply fold_tails
+    mix_neighbors_frac=0.1; nt=10; do_mix_neighbors=true;
+
     params=(tspan=tspan,dt=dt,mlkappa=mlkappa,depthscale=depthscale,
         mldepth=mldepth,thickness=thickness,seafloor=seafloor,
-        configuration=configuration)
+        configuration=configuration,
+        do_fold_tails=do_fold_tails,
+        mix_neighbors_frac=mix_neighbors_frac,
+        nt=nt, do_mix_neighbors=do_mix_neighbors)
 end
 
 ## Eulerian Model for comparison
