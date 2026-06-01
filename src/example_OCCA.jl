@@ -2,6 +2,7 @@ module OCCA
 
 import Drifters: data_path, uvwMeshArrays, FlowFields
 import Drifters: postprocess_MeshArray, add_lonlat!, interp_to_xy
+import Drifters: TimeAxis, TimePeriod
 
 ##
 
@@ -57,14 +58,12 @@ function setup(;backward_in_time::Bool=false,nmax=Inf)
    ii=findall([!in(i,jj) for i in keys(Γ)])
    Γ=(; zip(Symbol.(keys(Γ)[ii]), values(Γ)[ii])...)
 
-   backward_in_time ? s=-1.0 : s=1.0
-   s=Float32(s)
    pth=data_path(:OCCA)
   
-   u=s*read(read_data("u",pth,n),MeshArray(γ,Float32,n))
-   v=s*read(read_data("v",pth,n),MeshArray(γ,Float32,n))
+   u=read(read_data("u",pth,n),MeshArray(γ,Float32,n))
+   v=read(read_data("v",pth,n),MeshArray(γ,Float32,n))
 
-   w=s*read_data("w",pth,n)
+   w=read_data("w",pth,n)
    w=-cat(w,zeros(360, 160),dims=3)
    w[:,:,1] .=0.0
    w=read(w,MeshArray(γ,Float32,n+1))
@@ -98,12 +97,16 @@ function setup(;backward_in_time::Bool=false,nmax=Inf)
    Γ.XG[1]=tmpx
    Γ.Depth[1]=circshift(Γ.Depth[1],[-180 0])
 
-   t0=0.0; t1=86400*366*2.0;
-
    (u,v)=exchange(u,v)
    w=exchange(w)
 
-   P=FlowFields(u,u,v,v,w,w,[t0,t1],func)
+   backward_in_time ? s=-1.0 : s=1.0
+   t0=0.0; t1=s*86400*366*2.0;
+
+   t_final=100*365*86400.0
+   TA=TimeAxis(-t_final,t_final,0.0,s*t_final,true)
+
+   P=FlowFields(u,u,v,v,w,w,[t0,t1],func,time_axis=TA)
 
    XC=exchange(Γ.XC)
    YC=exchange(Γ.YC)

@@ -3,6 +3,78 @@
 
 using Dates
 
+
+abstract type AbstractTimeAxis end
+abstract type AbstractTimePeriod end
+
+"""
+    struct TimeAxis{Ty} <: AbstractTimeAxis
+
+Time axis specification for `FlowFields` data structure. This un-mutable specification
+describes the overall range of simulations that can be performed using the `FlowFields`.
+
+- initial : beginning of simulation period
+- final : end of simulation period
+- origin : beginning of the valid time period, when flow fields are available
+- horizon : end of the valid time period, when flow fields are available
+- climatology : false by default ; but can be set to true for time-periodic flow fields.
+
+Rules : 
+
+- In most simple cases `origin,horizon` is just the same as `initial,final`.
+- By default `initial,final` and `origin,horizon` are set to the `FlowField`'s `TimePeriod`.
+- However, any specification where `initial,final` is within `origin,horizon` is correct.
+- This more general approach makes it easy to split simulations into smaller intervals.
+
+```
+using Drifters, Dates
+
+D0=DateTime(2000,1,1)
+D1=DateTime(2000,3,1)
+TA=Drifters.TimeAxis(D0,D1)
+TA=Drifters.TimeAxis(D0,D1,D0,D1,false)
+```
+"""
+struct TimeAxis{Ty} <: AbstractTimeAxis
+    initial::Ty
+    final::Ty
+    origin::Ty
+    horizon::Ty
+    Climatology::Bool
+end
+
+TimeAxis(t0=0.0,t1=1.0) = TimeAxis(t0,t1,t0,t1,false)
+
+"""
+    struct TimePeriod{Ty} <: AbstractTimePeriod
+
+Time period for next simulation of `Individuals` displacement specified 
+as a vector `[initial,final]`. The `value` field is a mutable vector that
+can be changed, e.g. within a time loop when carrying out longer simulations.
+
+Rules : 
+
+- if `final` precedes `initial` then the simulation goes backward in time
+- in most simple cases, `initial,final` are the same in `TimePeriod` and `TimeAxis`.
+- but any `initial,final` within the periods defined in 'TimeAxis` works for `TimePeriod`.
+
+```
+using Drifters, Dates
+
+D0=DateTime(2000,1,1)
+D1=DateTime(2000,3,1)
+TP=Drifters.TimePeriod([D0,D1])
+TA=Drifters.TimeAxis(TP)
+```
+"""
+struct TimePeriod{Ty} <: AbstractTimePeriod
+    value::Array{Ty,1}
+end
+
+TimePeriod(T0,T1) = TimePeriod([T0,T1])
+
+TimeAxis(TP::TimePeriod) = TimeAxis(TP.value...)
+
 """
     abstract type FlowFields
 
@@ -53,17 +125,20 @@ struct uvArrays{Ty} <: FlowFields
     v0::Array{Ty,2}
     v1::Array{Ty,2}
     T::Union{Array{Ty},Array{DateTime}}
+    TimeAxis::AbstractTimeAxis
 end
 
 function FlowFields(u0::Array{Ty,2},u1::Array{Ty,2},
-    v0::Array{Ty,2},v1::Array{Ty,2},T::Union{Array,Tuple}) where Ty
+    v0::Array{Ty,2},v1::Array{Ty,2},T::Union{Array,Tuple}; 
+    time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
     #call constructor
-    uvArrays(u0,u1,v0,v1,T)
+    uvArrays(u0,u1,v0,v1,T,TA)
 end
 
 struct uvwArrays{Ty} <: FlowFields
@@ -74,6 +149,7 @@ struct uvwArrays{Ty} <: FlowFields
     w0::Array{Ty,3}
     w1::Array{Ty,3}
     T::Union{Array{Ty},Array{DateTime}}
+    TimeAxis::AbstractTimeAxis
 end
 
 """
@@ -90,7 +166,7 @@ F=FlowFields(u=uC,v=vC,period=(0,10.))
 ```
 """
 function FlowFields(; u::Union{Array,Tuple}=[], v::Union{Array,Tuple}=[], w::Union{Array,Tuple}=[], 
-    period::Union{Array,Tuple}=[])
+    period::Union{Array,Tuple}=[], time_axis=missing)
     (isa(u,Tuple)||length(u[:])==2) ? (u0=u[1]; u1=u[2]) : (u0=u; u1=u)
     (isa(v,Tuple)||length(v[:])==2) ? (v0=v[1]; v1=v[2]) : (v0=v; v1=v)
     (isa(w,Tuple)||length(w[:])==2) ? (w0=w[1]; w1=w[2]) : (w0=w; w1=w)
@@ -99,9 +175,9 @@ function FlowFields(; u::Union{Array,Tuple}=[], v::Union{Array,Tuple}=[], w::Uni
     end
     if !isempty(u0) && !isempty(v0)
         if !isempty(w0)
-            FlowFields(u0,u1,v0,v1,w0,w1,period)
+            FlowFields(u0,u1,v0,v1,w0,w1,period,time_axis=time_axis)
         else
-            FlowFields(u0,u1,v0,v1,period)
+            FlowFields(u0,u1,v0,v1,period,time_axis=time_axis)
         end
     else
         []
@@ -139,15 +215,16 @@ to_C_grid!(x;dims=0) = begin
 end
 
 function FlowFields(u0::Array{Ty,3},u1::Array{Ty,3},v0::Array{Ty,3},v1::Array{Ty,3},
-    w0::Array{Ty,3},w1::Array{Ty,3},T::Union{Array,Tuple}) where Ty
+    w0::Array{Ty,3},w1::Array{Ty,3},T::Union{Array,Tuple}; time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp)) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,0,1)) for tmp in (w0,w1)])
     !tst ? error("inconsistent array sizes") : nothing
     #call constructor
-    uvwArrays(u0,u1,v0,v1,w0,w1,T)
+    uvwArrays(u0,u1,v0,v1,w0,w1,T,TA)
 end
 
 struct uvMeshArrays{Ty} <: FlowFields
@@ -156,26 +233,28 @@ struct uvMeshArrays{Ty} <: FlowFields
     v0::AbstractMeshArray{Ty,1}
     v1::AbstractMeshArray{Ty,1}
     T::Union{Array{Ty},Array{DateTime}}
+    TimeAxis::AbstractTimeAxis
     update_location!::Function
 end
 
 function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
     v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
-    T::Union{Array,Tuple},update_location!::Function)
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing)
 
-    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,T,update_location!)
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,T,update_location!,time_axis=time_axis)
 end
 
 function FlowFields(u0::AbstractMeshArray{Ty,1},u1::AbstractMeshArray{Ty,1},
     v0::AbstractMeshArray{Ty,1},v1::AbstractMeshArray{Ty,1},
-    T::Union{Array,Tuple},update_location!::Function) where Ty
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size concistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     !tst ? error("inconsistent array sizes") : nothing
     #call constructor
-    uvMeshArrays(u0,u1,v0,v1,T,update_location!)
+    uvMeshArrays(u0,u1,v0,v1,T,TA,update_location!)
 end
 
 struct uvwMeshArrays{Ty} <: FlowFields
@@ -186,30 +265,32 @@ struct uvwMeshArrays{Ty} <: FlowFields
     w0::AbstractMeshArray{Ty,2}
     w1::AbstractMeshArray{Ty,2}
     T::Union{Array{Ty},Array{DateTime}}
+    TimeAxis::AbstractTimeAxis
     update_location!::Function
 end
 
 function FlowFields(u0::MeshArrays.MeshArray_wh,u1::MeshArrays.MeshArray_wh,
     v0::MeshArrays.MeshArray_wh,v1::MeshArrays.MeshArray_wh,
     w0::MeshArrays.MeshArray_wh,w1::MeshArrays.MeshArray_wh,
-    T::Union{Array,Tuple},update_location!::Function)
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing)
 
-    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,w0.MA,w1.MA,T,update_location!)
+    FlowFields(u0.MA,u1.MA,v0.MA,v1.MA,w0.MA,w1.MA,T,update_location!,time_axis=time_axis)
 end
 
 function FlowFields(u0::AbstractMeshArray{Ty,2},u1::AbstractMeshArray{Ty,2},
     v0::AbstractMeshArray{Ty,2},v1::AbstractMeshArray{Ty,2},
     w0::AbstractMeshArray{Ty,2},w1::AbstractMeshArray{Ty,2},
-    T::Union{Array,Tuple},update_location!::Function) where Ty
+    T::Union{Array,Tuple},update_location!::Function; time_axis=missing) where Ty
     #ensure T is a vector and enforce type
     T=time_set_type.(collect(T),Ty)
+    TA=(ismissing(time_axis) ? TimeAxis(T...) : time_axis)
     #check array size consistency
     tst=prod([(size(u0)==size(tmp))*(u0.fSize==tmp.fSize) for tmp in (u1,v0,v1)])
     tst=tst*prod([(size(u0)==size(tmp).-(0,1))*(u0.fSize==tmp.fSize) for tmp in (w0,w1)])
     !tst ? error("inconsistent array sizes") : nothing
 
     #call constructor
-    uvwMeshArrays(u0,u1,v0,v1,w0,w1,T,update_location!)
+    uvwMeshArrays(u0,u1,v0,v1,w0,w1,T,TA,update_location!)
 end
 
 """
@@ -230,7 +311,7 @@ function ensemble_solver(prob::ODEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8
 end
 
 a=fill(0.0,1,1)
-default_flowfields = uvArrays{Float64}(a,a,a,a,[0. 1.])
+default_flowfields = uvArrays{Float64}(a,a,a,a,[0. 1.],TimeAxis(0.,1.))
 default_recorder = DataFrame(ID=Int[], x=Float64[], y=Float64[], t=Float64[])
 default_postproc = (x->x)
 

@@ -20,10 +20,10 @@ MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
     MK = Base.get_extension(Drifters, :DriftersMakieExt)
 
     IC=ex_SDE.initial_conditions(100)
-    SDE.main_loop(IC,p=0.1,nt=2)
+    SDE.main_loop(IC; ex_SDE.default_parameters()...)
 
     # Another run of the dispersion model, just for plotting trajectories
-    tmp=SDE.demo_paths(IC)
+    tmp=SDE.demo_paths(IC; ex_SDE.default_parameters()...)
 	fb=MK.plot_paths(za=tmp.za,zb=tmp.zb)
 	
     # Eulerian model for comparison
@@ -61,7 +61,7 @@ end
     k=0
     P,D=ECCOmodule.init_FlowFields(k=k); np=100
     df0 = Drifters.init.init_global_randn(np , D)
-    df = Drifters.init.init_gulf_stream(np , D)
+    df = Drifters.init.init_regional_3d(np , D)
     S = ECCOmodule.init_storage(np,100,length(D.Γ.RC),50)
     I = Individuals(P,df.x,df.y,df.z,df.fid,
         (D=merge(D,S),∫=ECCOmodule.custom∫,🔧=ECCOmodule.custom🔧,🔴=deepcopy(ECCOmodule.custom🔴)))
@@ -135,7 +135,7 @@ end
 @testset "global" begin
     p0=Drifters.datadeps.getdata("global_ocean_circulation_inputs")
     ECCOmodule=Drifters.ECCO
-    P,D=ECCOmodule.init_FlowFields(k=1,time_unit=:second)
+    P,D=ECCOmodule.init_FlowFields(k=1)
 
     file_input=joinpath(p0,"initial_10_1.csv")
     df = Drifters.init.init_positions(10,filename=file_input)
