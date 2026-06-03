@@ -1,7 +1,7 @@
 module ex_SDE
 
 using Statistics
-import Drifters.SciMLBase: DiscreteCallback
+import OrdinaryDiffEq
 import Distributions: Histogram, fit, Normal, cdf, pdf
 
 ## helper functions for the example
@@ -172,7 +172,7 @@ function surface_reflect()
     function affect!(integrator)
         integrator.u .= abs.(integrator.u)   
     end
-    cb = DiscreteCallback(condition, affect!)
+    cb = OrdinaryDiffEq.DiscreteCallback(condition, affect!)
     return cb
 end
 
@@ -192,7 +192,7 @@ function surface_and_bottom_reflect(h::Function)
         integrator.u .= abs.(integrator.u)
         integrator.u .= bottom_depth.-abs.(bottom_depth.-integrator.u)
     end
-    cb = DiscreteCallback(condition, affect!)
+    cb = OrdinaryDiffEq.DiscreteCallback(condition, affect!)
     return cb
 end
 
@@ -248,7 +248,7 @@ function ocean_reflect()
     function affect!(integrator)
         integrator.u .= -abs.(integrator.u)   # reflect all components (vector/array-safe)
     end
-    cb = DiscreteCallback(condition, affect!)
+    cb = OrdinaryDiffEq.DiscreteCallback(condition, affect!)
     return cb
 end
 
