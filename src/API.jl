@@ -306,7 +306,7 @@ function ensemble_solver(prob::ODEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8
 	indiv_prob = ODEProblem(prob.f,u0[1],prob.tspan,prob.p)
 #	indiv_prob = _SDEProblem(prob.f,u0[1],prob.tspan,prob.p)
 
-	ensemble_prob = EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=safetycopy)
+	ensemble_prob = OrdinaryDiffEq.EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=safetycopy)
 	solve(ensemble_prob, solver, reltol=reltol, abstol=abstol, trajectories=length(u0))
 end
 
