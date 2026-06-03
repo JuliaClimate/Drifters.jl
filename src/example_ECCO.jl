@@ -8,6 +8,8 @@ import Drifters: time_in_seconds, time_in_DateTime, monthly_records
 import Drifters: TimeAxis, TimePeriod
 
 import OrdinaryDiffEq: solve, Tsit5, ODEProblem
+import OrdinaryDiffEq.SciMLBase: EnsembleProblem
+
 import Drifters: update_location!, Individuals, uvMeshArrays, uvwMeshArrays
 import Drifters: FlowFields, ensemble_solver, data_path, read_data_ECCO, read_data_mdsio, order
 import Drifters.DataFrames: DataFrame

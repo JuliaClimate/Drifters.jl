@@ -42,7 +42,8 @@ import Drifters.DataFrames: DataFrame
 import Drifters.MeshArrays as MeshArrays
 import Drifters.MeshArrays: MeshArray, exchange
 import Drifters.OrdinaryDiffEq: solve, Tsit5, remake
-import Drifters.OrdinaryDiffEq: ODEProblem, EnsembleProblem
+import Drifters.OrdinaryDiffEq: ODEProblem, SciMLBase
+import Drifters.OrdinaryDiffEq.SciMLBase: EnsembleProblem
 
 function setup(;backward_in_time::Bool=false,nmax=Inf)
 

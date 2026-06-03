@@ -1,8 +1,11 @@
 module DriftersStochasticDiffEqExt
 
 import StochasticDiffEq, Drifters
-import StochasticDiffEq: EnsembleProblem, SDEProblem, EM, solve, stack, remake
+import StochasticDiffEq: SDEProblem, EM, solve, stack, remake
 import Drifters: _SDEProblem, default_solver, ensemble_solver, ex_SDE
+import StochasticDiffEq.SciMLBase: EnsembleProblem
+#EnsembleProblem=StochasticDiffEq.SciMLBase.EnsembleProblem
+
 
 notes()=println("""
 - For now : `step!(u₀)` is the sequence of `solve_paths` and `fold_tails`.
