@@ -74,12 +74,16 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
         t_final=100*365*86400.0
         TA=TimeAxis(0.0,t_final,0.0,t_final,true)
         backward_time=false
-    else
+    elseif isa(time_axis.origin,DateTime)
         TA=time_axis
         backward_time=(time_axis.initial > time_axis.final)
         T=backward_time ? [DateTime(time_axis.final),DateTime(time_axis.initial)] : [DateTime(time_axis.initial),DateTime(time_axis.final)]
+    else
+        TA=time_axis
+        backward_time=(time_axis.initial > time_axis.final)
+#        T=backward_time ? [Float64(time_axis.final),Float64(time_axis.initial)] : [Float64(time_axis.initial),Float64(time_axis.final)]
+        T=[-mon/2,mon/2]
     end
-
 
     if k==0
         msk=Γ.hFacC

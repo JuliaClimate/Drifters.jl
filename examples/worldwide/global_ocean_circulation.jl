@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.24
+# v1.0.1
 
 using Markdown
 using InteractiveUtils
@@ -117,11 +117,20 @@ begin
 	k!==0 ? zs=(k-0.5:k-0.5) : zs=zrng
 	
 	Climatology.get_ecco_velocity_if_needed()
-	
-	D0=Drifters.DateTime(1992,1,1)
-	D1=Drifters.DateTime(2011,1,1)
-	TA = backward_time ? Drifters.TimeAxis(D1,D0,D0,D1,true) : Drifters.TimeAxis(D0,D1,D0,D1,true)
+
+    test1=:DateTime
+    if test1==:DateTime
+        D0=Drifters.DateTime(1992,1,1)
+        D1=Drifters.DateTime(2011,1,1)
+        TA = backward_time ? Drifters.TimeAxis(D1,D0,D0,D1,true) : Drifters.TimeAxis(D0,D1,D0,D1,true)
+    elseif test1==:seconds
+        mon=86400.0*365.0/12.0; t_final=100*365*86400.0
+        TA=Drifters.TimeAxis(0.0,t_final,0.0,t_final,true)
+    else
+        error("unknown option")
+    end
 	P,D=ECCOmodule.init_FlowFields(k=k, time_axis=TA)
+#	P,D=ECCOmodule.init_FlowFields(k=k)
 
 	println("Done with Setting Up FlowFields")
 	tmp1="  - flow field depth level = "*(k==0 ? "three-dimensional" : "level $(k)") 
@@ -203,7 +212,7 @@ md"""### 3.3 Monthly Simulation Loop
 # ╔═╡ a3e45927-5d53-42be-b7b7-489d6e7a6fe5
 if !do_replay
     if eltype(I.P.T)==Drifters.DateTime
-    	T=(Drifters.DateTime(2000,1,1),I.P.T[2])
+    	T=(Drifters.DateTime(2000,1,1),Drifters.DateTime(2000,1,16))
     else
         T=(0.0,I.P.T[2])
     end
@@ -365,7 +374,6 @@ end
 
 
 
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -376,6 +384,12 @@ MITgcm = "dce5fa8e-68ce-4431-a242-9469c69627a0"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+CairoMakie = "~0.15.11"
+Climatology = "~0.5.18"
+MITgcm = "~0.5.15"
+PlutoUI = "~0.7.83"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -384,7 +398,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.5"
 manifest_format = "2.0"
-project_hash = "988895b44b5bed8313d81a94f99dd67985e2eea0"
+project_hash = "280e938e2319597f902e6750b1bdac2730834c96"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -1287,10 +1301,10 @@ version = "2.31.0"
     StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [[deps.FixedPointNumbers]]
-deps = ["Statistics"]
-git-tree-sha1 = "05882d6995ae5c12bb5f36dd2ed3f61c98cbb172"
+deps = ["Random", "Statistics"]
+git-tree-sha1 = "59af96b98217c6ef4ae0dfe065ac7c20831d1a84"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
-version = "0.8.5"
+version = "0.8.6"
 
 [[deps.Fontconfig_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Expat_jll", "FreeType2_jll", "JLLWrappers", "Libdl", "Libuuid_jll", "Zlib_jll"]
@@ -3046,9 +3060,9 @@ version = "1.2.0"
 
 [[deps.SimpleNonlinearSolve]]
 deps = ["ADTypes", "ArrayInterface", "BracketingNonlinearSolve", "CommonSolve", "ConcreteStructs", "DifferentiationInterface", "FastClosures", "FiniteDiff", "ForwardDiff", "LineSearch", "LinearAlgebra", "MaybeInplace", "NonlinearSolveBase", "PrecompileTools", "Reexport", "SciMLBase", "Setfield", "StaticArraysCore"]
-git-tree-sha1 = "d688de789b7e643326caf9a1051376dadbcd8873"
+git-tree-sha1 = "08d8bafd57b7ea16dc1f69a8bd57db23a2ceb686"
 uuid = "727e6d20-b764-4bd8-a329-72de5adea6c7"
-version = "2.11.1"
+version = "2.12.0"
 
     [deps.SimpleNonlinearSolve.extensions]
     SimpleNonlinearSolveChainRulesCoreExt = "ChainRulesCore"
@@ -3676,7 +3690,7 @@ version = "4.1.0+0"
 # ╟─171fa252-7a35-4d4a-a940-60de77327cf4
 # ╟─7fec71b4-849f-4369-bec2-26bfe2e00a97
 # ╟─94ca10ae-6a8a-4038-ace0-07d7d9026712
-# ╟─218b9beb-68f2-4498-a96d-08e0719b4cff
+# ╠═218b9beb-68f2-4498-a96d-08e0719b4cff
 # ╟─2fb4d76d-56d5-4c3e-bc7c-ba0cac57e0e3
 # ╟─f1215951-2eb2-490b-875a-91c1205b8f63
 # ╟─f727992f-b72a-45bc-93f1-cc8daf89af0f
