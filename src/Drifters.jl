@@ -7,6 +7,9 @@ function data_path end
 function read_data_ECCO end
 function read_data_mdsio end
 
+#EnsembleProblem=OrdinaryDiffEq.SciMLBase.EnsembleProblem
+#import OrdinaryDiffEq.SciMLBase: EnsembleProblem
+
 """
     _SDEProblem(a,b,c,d)
     

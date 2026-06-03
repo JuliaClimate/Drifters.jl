@@ -1,7 +1,7 @@
 module ex_SDE
 
 using Statistics
-import Drifters.SciMLBase: DiscreteCallback
+import OrdinaryDiffEq.SciMLBase: DiscreteCallback
 import Distributions: Histogram, fit, Normal, cdf, pdf
 
 ## helper functions for the example

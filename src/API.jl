@@ -3,6 +3,7 @@
 
 using Dates
 
+import OrdinaryDiffEq.SciMLBase: EnsembleProblem
 
 abstract type AbstractTimeAxis end
 abstract type AbstractTimePeriod end
