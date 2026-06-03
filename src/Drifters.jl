@@ -2,6 +2,7 @@ module Drifters
 
 using MeshArrays, CyclicArrays, OrdinaryDiffEq, DataFrames, Random
 import NetCDF, CSV
+import OrdinaryDiffEq: ODEProblem, EnsembleProblem
 
 function data_path end
 function read_data_ECCO end
