@@ -197,7 +197,7 @@ default_solver(prob::SDEProblem) = solve(prob,EM(),dt=P.dt,callback = cb)
 
 function ensemble_solver(prob::SDEProblem;safetycopy=false)
 	u0 = prob.u0
-	prob_func(prob,i,repeat) = remake(prob,u0=u0[i])
+    prob_func(prob, context) = remake(prob, u0=u0[context.sim_id])
 	indiv_prob = SDEProblem(prob.f,prob.g,u0[1],prob.tspan,prob.p)
 
 	ensemble_prob = EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=safetycopy)

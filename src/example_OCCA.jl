@@ -158,7 +158,7 @@ end
 
 function custom∫(prob)
 	u0 = prob.u0
-	prob_func(prob,i,repeat) = remake(prob,u0=u0[i])
+   prob_func(prob, context) = remake(prob, u0=u0[context.sim_id])
 	indiv_prob = ODEProblem(prob.f,u0[1],prob.tspan,prob.p)
 	ensemble_prob = EnsembleProblem(indiv_prob,prob_func=prob_func,safetycopy=false)
 	solve(ensemble_prob, Tsit5(), reltol=1e-8, abstol=1e-8, 

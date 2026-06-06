@@ -3,7 +3,7 @@
 
 using Dates
 
-import OrdinaryDiffEq.SciMLBase: EnsembleProblem
+import OrdinaryDiffEq.SciMLBase: EnsembleProblem, EnsembleSolution
 
 abstract type AbstractTimeAxis end
 abstract type AbstractTimePeriod end
@@ -303,7 +303,8 @@ default_solver(prob::ODEProblem) = solve(prob,Tsit5(),reltol=1e-8,abstol=1e-8)
 
 function ensemble_solver(prob::ODEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8,safetycopy=false)
 	u0 = prob.u0
-	prob_func(prob,i,repeat) = remake(prob,u0=u0[i])
+    prob_func(prob, context) = remake(prob, u0=u0[context.sim_id])
+
 	indiv_prob = ODEProblem(prob.f,u0[1],prob.tspan,prob.p)
 #	indiv_prob = _SDEProblem(prob.f,u0[1],prob.tspan,prob.p)
 
