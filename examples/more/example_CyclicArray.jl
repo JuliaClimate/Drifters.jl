@@ -15,7 +15,7 @@ function cyclicarray_example()
 
     prob = OrdinaryDiffEq.ODEProblem(dxy_dt_CyclicArray,uInit,tspan,𝑃)
     #sol = OrdinaryDiffEq.solve(prob,Tsit5(),reltol=1e-5,abstol=1e-5)
-    sol = OrdinaryDiffEq.solve(prob,OrdinaryDiffEq.Euler(),dt=𝑃.dt)
+    sol = OrdinaryDiffEq.solve(prob,Drifters.Euler(),dt=𝑃.dt)
 
     x=[sol[1,i,end] for i in 1:length(x0)]
     y=[sol[2,i,end] for i in 1:length(x0)]
