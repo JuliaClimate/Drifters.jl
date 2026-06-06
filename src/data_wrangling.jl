@@ -151,7 +151,7 @@ function postprocess_xy(sol,P::FlowFields,D::NamedTuple; id=missing, T=missing, 
     isa(P.u0,MeshArray) ? (nx,ny)=P.u0.grid.ioSize[1:2] : (nx,ny)=size(P.u0)[1:2]
 
     if isa(sol,EnsembleSolution)
-        np=length(sol)
+        np=length(sol.u)
         x=[mod.([sol.u[i].u[1][1] for i in 1:np],Ref(nx));
             mod.([sol.u[i].u[end][1] for i in 1:np],Ref(nx))];
         y=[mod.([sol.u[i].u[1][2] for i in 1:np],Ref(ny));

@@ -431,7 +431,7 @@ function Individuals(F::uvwArrays,x,y,z, NT::NamedTuple = NamedTuple())
     function 🔧(sol,F::uvwArrays,D::NamedTuple;id=missing,T=missing)
         df=postprocess_xy(sol,F,D,id=id,T=T)
         if isa(sol,EnsembleSolution)
-            np=length(sol)
+            np=length(sol.u)
             z=[[sol.u[i].u[1][3] for i in 1:np];[sol.u[i].u[end][3] for i in 1:np]]
         else
             z=[u[3] for u in sol.u]
@@ -495,7 +495,7 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
     function 🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
         df=postprocess_MeshArray(sol,F,D,id=id,T=T)
         if isa(sol,EnsembleSolution)
-            np=length(sol)
+            np=length(sol.u)
             z=[[sol.u[i].u[1][3] for i in 1:np];[sol.u[i].u[end][3] for i in 1:np]]
         else
             z=[u[3] for u in sol.u]
@@ -573,7 +573,7 @@ function ∫!(I::Individuals,T::Tuple)
     append!(🔴,tmp[np+1:end,:],promote=true)
 
     if isa(sol,EnsembleSolution)
-        np=length(sol)
+        np=length(sol.u)
         📌[:] = deepcopy([sol.u[i].u[end] for i in 1:np])
         if isa(P,uvwMeshArrays)||isa(P,uvMeshArrays)
             [update_location!(i,P) for i in I.📌]
