@@ -1,6 +1,6 @@
 module Drifters
 
-using MeshArrays, CyclicArrays, OrdinaryDiffEq, DataFrames, Random
+using MeshArrays, CyclicArrays, OrdinaryDiffEq, DataFrames, Random, OrdinaryDiffEqLowOrderRK
 import NetCDF, CSV
 
 function data_path end

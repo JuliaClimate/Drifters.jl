@@ -3,7 +3,7 @@
 
 using Dates
 
-import OrdinaryDiffEq.SciMLBase: EnsembleProblem
+import OrdinaryDiffEq.SciMLBase: EnsembleProblem, EnsembleSolution
 
 abstract type AbstractTimeAxis end
 abstract type AbstractTimePeriod end
@@ -303,7 +303,8 @@ default_solver(prob::ODEProblem) = solve(prob,Tsit5(),reltol=1e-8,abstol=1e-8)
 
 function ensemble_solver(prob::ODEProblem;solver=Tsit5(),reltol=1e-8,abstol=1e-8,safetycopy=false)
 	u0 = prob.u0
-	prob_func(prob,i,repeat) = remake(prob,u0=u0[i])
+    prob_func(prob, context) = remake(prob, u0=u0[context.sim_id])
+
 	indiv_prob = ODEProblem(prob.f,u0[1],prob.tspan,prob.p)
 #	indiv_prob = _SDEProblem(prob.f,u0[1],prob.tspan,prob.p)
 
@@ -430,7 +431,7 @@ function Individuals(F::uvwArrays,x,y,z, NT::NamedTuple = NamedTuple())
     function 🔧(sol,F::uvwArrays,D::NamedTuple;id=missing,T=missing)
         df=postprocess_xy(sol,F,D,id=id,T=T)
         if isa(sol,EnsembleSolution)
-            np=length(sol)
+            np=length(sol.u)
             z=[[sol.u[i].u[1][3] for i in 1:np];[sol.u[i].u[end][3] for i in 1:np]]
         else
             z=[u[3] for u in sol.u]
@@ -494,7 +495,7 @@ function Individuals(F::uvwMeshArrays,x,y,z,fid, NT::NamedTuple = NamedTuple())
     function 🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
         df=postprocess_MeshArray(sol,F,D,id=id,T=T)
         if isa(sol,EnsembleSolution)
-            np=length(sol)
+            np=length(sol.u)
             z=[[sol.u[i].u[1][3] for i in 1:np];[sol.u[i].u[end][3] for i in 1:np]]
         else
             z=[u[3] for u in sol.u]
@@ -572,7 +573,7 @@ function ∫!(I::Individuals,T::Tuple)
     append!(🔴,tmp[np+1:end,:],promote=true)
 
     if isa(sol,EnsembleSolution)
-        np=length(sol)
+        np=length(sol.u)
         📌[:] = deepcopy([sol.u[i].u[end] for i in 1:np])
         if isa(P,uvwMeshArrays)||isa(P,uvMeshArrays)
             [update_location!(i,P) for i in I.📌]
