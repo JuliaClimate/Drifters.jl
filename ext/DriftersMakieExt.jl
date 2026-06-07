@@ -1,8 +1,12 @@
 module DriftersMakieExt
 
 	using Makie, Drifters
-	import Drifters: DriftersDataset, DataFrame, demo, gcdist, MeshArrays
+	import Drifters: Individuals, DriftersDataset, DataFrame, demo, gcdist, MeshArrays
 	import Makie: plot
+
+	function plot(I::Individuals)
+		plot(DriftersDataset(data=(I=I,), options=(plot_type=:plot_start_end,)))
+	end
 
 	function plot(x::DriftersDataset)
 		if !isempty(x.options)
