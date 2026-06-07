@@ -459,3 +459,44 @@ function start_times(nt=12;
     (time_unit==:DateTime ? D : d)
 end
 
+##
+
+"""
+    histogram2d(df::DataFrame;lon=-179:2:179,lat=-89:2:89)
+
+```
+lon,lat,n=Drifters.histogram2d(I.🔴,lon=-179:2:179,lat=-89:2:89)
+heatmap(lon,lat,n)
+```
+"""
+function histogram2d(df::DataFrame;lon=-179:2:179,lat=-89:2:89)
+    n=NaN*zeros(length(lon),length(lat))
+    dlo=step(lon); dla=step(lat)
+    ilo=ceil.( (df.lon.-(minimum(lon).-dlo/2))./dlo )
+    ila=ceil.( (df.lat.-(minimum(lat).-dla/2))./dla )
+    tmp=DataFrame(ila=Int.(ila),ilo=Int.(ilo))
+    gdf=groupby(tmp,[:ilo,:ila])
+    tmp=Drifters.combine(gdf, Drifters.nrow => :count)
+    [n[r.ilo,r.ila]=r.count for r in eachrow(tmp)]
+    return lon,lat,n
+end
+
+"""
+    histogram1d(x,xc::StepRange)
+
+```
+z,n=Drifters.histogram1d(I.🔴.z,1:2:19)
+fi,ax,_=barplot(z,n,direction=:x)
+ax.yreversed=true
+fi
+```
+"""
+function histogram1d(x,xc::StepRange)
+    n=NaN*zeros(length(xc)); dx=step(xc)
+    ilo=ceil.( (x.-(minimum(xc).-dx/2))./dx )
+    tmp=DataFrame(ilo=Int.(ilo))
+    gdf=groupby(tmp,:ilo)    
+    tmp=Drifters.combine(gdf, Drifters.nrow => :count)
+    [n[r.ilo]=r.count for r in eachrow(tmp)]
+    return xc,n
+end
