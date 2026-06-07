@@ -417,3 +417,37 @@ function monthly_records(P, t; verbose=false)
 
     return t0,t1,m0,m1
 end
+
+"""
+    monthly_start_times(number_months=12;
+        time_direction=:forward,time_unit=:DateTime,
+        initial_year=2000, number_months=12)
+
+- if `time_unit==:seconds` then we use 30 days months, and `initial_date` is set to 0.
+- if `time_unit==:DateTime` then we use the normal calendar.
+
+```
+using Drifters
+initial_date = Drifters.DateTime(1999, 1, 1)
+dates=Drifters.monthly_start_times(24,initial_date=initial_date)
+times=Drifters.monthly_start_times(24,time_unit=:seconds)
+```
+"""
+function monthly_start_times(number_months=12;
+    time_direction=:forward,time_unit=:DateTime,
+    initial_date=DateTime(2000,1,1))
+
+    mon=30*86400.00
+    (time_unit==:seconds ? (@warn "using 30 day months") : nothing)
+
+    if time_direction==:forward
+        D = [initial_date + Month(m-1) for m in 1:number_months]
+        d=[i*(mon-1) for i in 1:number_months]
+    else
+        D = [initial_date + Month(m-1) for m in number_months:-1:1]
+        d=[-i*(mon-1) for i in 1:number_months]
+    end
+
+    (time_unit==:DateTime ? D : d)
+end
+

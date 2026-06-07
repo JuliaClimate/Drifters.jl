@@ -14,6 +14,20 @@ Climatology.get_ecco_variable_if_needed("SALT")
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LLC90))
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
 
+@testset "time axes" begin
+    for time_unit in (:DateTime,:seconds)
+        @suppress start_times=Drifters.monthly_start_times(3, time_unit=time_unit, time_direction=:forward)
+        @suppress backward_times=Drifters.monthly_start_times(3, time_unit=time_unit, time_direction=:backward)
+    end
+    @test true
+
+    mon=30*86400.00
+    TA=Drifters.TimeAxis(0.0,mon,0.0,mon,true)
+    D0=Drifters.Dates.DateTime(2000,1,1); D1=D0+Drifters.Year(1)
+    TA=Drifters.TimeAxis(D0,D1,D0,D1,true)
+    @test isa(TA,Drifters.TimeAxis)
+end
+
 @testset "SDE" begin
     import Drifters: ex_SDE
     SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
