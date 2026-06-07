@@ -93,7 +93,7 @@ function msk_filter(xy::DataFrame,np::Int,msk::MeshArray)
 end
 
 """
-    initial_positions(Γ; nf=10000, lon_rng=(-160.0,-159.0), lat_rng=(30.0,31.0))
+    deprecated_initial_positions(Γ; nf=10000, lon_rng=(-160.0,-159.0), lat_rng=(30.0,31.0))
 
 Randomly assign initial positions in longitude,latitude ranges. Positions are 
 expressed in, normalized, grid point units (x,y in the 0,nx and 0,ny range). 
@@ -105,7 +105,7 @@ global ocean example.
 linear lon/lat-to-grid mapping. It only works for small regions on face 1.
 For regional or global initialization on the LLC90 grid, use `init_regional_3d`.
 """
-function initial_positions(Γ::NamedTuple, nf=10000, lon_rng=(-160.0,-159.0), lat_rng=(30.0,31.0), level=1)
+function deprecated_initial_positions(Γ::NamedTuple, nf=10000, lon_rng=(-160.0,-159.0), lat_rng=(30.0,31.0), level=1)
    lon=lon_rng[1] .+(lon_rng[2]-lon_rng[1]).*rand(nf)
    lat=lat_rng[1] .+(lat_rng[2]-lat_rng[1]).*rand(nf)
    x=lon .+ (21. - Γ.XC[1][21,1])
