@@ -8,7 +8,7 @@ using InteractiveUtils
 begin
 	using Drifters, CairoMakie, Climatology
 	OCCAmodule=Drifters.OCCA
-	initial_positions=Drifters.init.initial_positions
+	initial_positions=Drifters.init.deprecated_initial_positions
 	"Done with loading packages"
 end
 
