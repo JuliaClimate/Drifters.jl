@@ -1,3 +1,18 @@
+## Time Axes and Dates
+
+In the example below, we create two time axes. One forward in time, the other backward in time.
+
+```julia
+using Drifters
+
+time_unit=[:second,:DateTime][2]
+time_period=[:month,:day][2]
+ST=Drifters.start_times(3, time_unit=time_unit, direction=:forward, period=time_period)
+
+TA_fd=Drifters.TimeAxis(ST[1],ST[2])
+TA_bd=Drifters.TimeAxis(ST[2],ST[1])
+```
+
 ## Velocity Interpolation
 
 The `dxdt!` etc functions compute the tracked individual velocity. 

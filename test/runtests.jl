@@ -16,8 +16,9 @@ MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
 
 @testset "time axes" begin
     for time_unit in (:DateTime,:seconds)
-        @suppress start_times=Drifters.monthly_start_times(3, time_unit=time_unit, time_direction=:forward)
-        @suppress backward_times=Drifters.monthly_start_times(3, time_unit=time_unit, time_direction=:backward)
+        Drifters.start_times(3,time_unit=time_unit,period=:day)
+        @suppress start_times=Drifters.start_times(3, time_unit=time_unit, direction=:forward)
+        @suppress backward_times=Drifters.start_times(3, time_unit=time_unit, direction=:backward)
     end
     @test true
 

@@ -419,9 +419,9 @@ function monthly_records(P, t; verbose=false)
 end
 
 """
-    monthly_start_times(number_months=12;
-        time_direction=:forward,time_unit=:DateTime,
-        initial_year=2000, number_months=12)
+    start_times(nt=12;
+        direction=:forward,time_unit=:DateTime,
+        initial_year=2000, nt=12)
 
 - if `time_unit==:seconds` then we use 30 days months, and `initial_date` is set to 0.
 - if `time_unit==:DateTime` then we use the normal calendar.
@@ -429,23 +429,31 @@ end
 ```
 using Drifters
 initial_date = Drifters.DateTime(1999, 1, 1)
-dates=Drifters.monthly_start_times(24,initial_date=initial_date)
-times=Drifters.monthly_start_times(24,time_unit=:seconds)
+dates=Drifters.start_times(24,initial_date=initial_date,direction=:backward)
+times=Drifters.start_times(24,time_unit=:seconds,period=:day)
 ```
 """
-function monthly_start_times(number_months=12;
-    time_direction=:forward,time_unit=:DateTime,
-    initial_date=DateTime(2000,1,1))
+function start_times(nt=12;
+    direction=:forward,period=:month,
+    time_unit=:DateTime,initial_date=DateTime(2000,1,1))
 
-    mon=30*86400.00
-    (time_unit==:seconds ? (@warn "using 30 day months") : nothing)
-
-    if time_direction==:forward
-        D = [initial_date + Month(m-1) for m in 1:number_months]
-        d=[i*(mon-1) for i in 1:number_months]
+    if period==:month
+        dt=30*86400.00
+        (time_unit==:seconds ? (@warn "using 30 day months") : nothing)
+        dd=Month(1)
+    elseif period==:day
+        dt=86400.00
+        dd=Day(1)
     else
-        D = [initial_date + Month(m-1) for m in number_months:-1:1]
-        d=[-i*(mon-1) for i in 1:number_months]
+        error("unknown period")
+    end
+
+    if direction==:forward
+        D = [initial_date + (i-1)*dd for i in 1:nt]
+        d = [(i-1)*dt for i in 1:nt]
+    else
+        D = [initial_date + (1-i)*dd for i in 1:nt]
+        d = [(1-i)*dt for i in 1:nt]
     end
 
     (time_unit==:DateTime ? D : d)
