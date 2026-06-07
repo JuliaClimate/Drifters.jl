@@ -33,8 +33,7 @@ function init_global_randn(np ::Int , D::NamedTuple)
     (_,_,_,_,f,x,y)=InterpolationFactors(D.Γ,lon,lat)
     m=findall( (f.!==0).*((!isnan).(x)) )
     n=findall(nearest_to_xy(D.msk,x[m],y[m],f[m]).==1.0)[1:np]
-    xyf=permutedims([x[m[n]] y[m[n]] f[m[n]]])
-    return DataFrame(x=xyf[1,:],y=xyf[2,:],fid=xyf[3,:])
+    return DataFrame(x=x[m[n]],y=y[m[n]],fid=f[m[n]],lon=lon[m[n]],lat=lat[m[n]])
 end
 
 """
@@ -43,9 +42,8 @@ end
 
 - Randomly distribute `np` ocean particles within a lon/lat/depth box. 
 - Use `InterpolationFactors` to assign face indices (fid) and grid coordinates (x,y)
-- Call `msk_and_z` to :
-    - Filter out points such that `D.msk.==0`. 
-    - Distribute vertical position based on `zs`.
+- Call `msk_filter` to filter out points such that `D.msk.==0`. 
+- Distribute vertical position based on `zs`.
 - Return a DataFrame with columns `x, y, z, fid, lon, lat`.
 
 _note : Default `lons`, `lats`, and `zs` match the former `init gulf stream` / Florida Strait setup. For a wider domain (e.g. tropical band), specify something like `lons=(-180.0,180.0), lats=(-30.0,30.0), zs=1:25`._
@@ -58,29 +56,30 @@ function init_regional_3d(np::Int, D::NamedTuple;
     lon = lons[1] .+ (lons[2] - lons[1]) .* rand(n_tot)
     lat = lats[1] .+ (lats[2] - lats[1]) .* rand(n_tot)
     (_,_,_,_,f,x,y) = Drifters.InterpolationFactors(D.Γ, lon, lat)
-    xy=(lon=lon,lat=lat,x=x,y=y,f=f)
-    msk_and_z(xy,np; msk=D.msk, zs=zs)
+    xy=DataFrame(lon=lon,lat=lat,x=x[:],y=y[:],fid=f[:])
+    xy=msk_filter(xy,np,D.msk)
+    xy.z = zs[1] .+ rand(np) .* (zs[end] - zs[1])
+    xy
 end
 
 function msk_at_xy(xy,msk)
-    (;lon,lat,x,y,f) = xy
+    (;lon,lat,x,y,fid) = xy
     np=length(lon)
     M = zeros(np)
-    m = findall((f .!== 0) .* ((.!isnan).(x)))
-    M[m] = Drifters.nearest_to_xy(msk, x[m], y[m], f[m])
+    m = findall((fid .!== 0) .* ((.!isnan).(x)))
+    M[m] = Drifters.nearest_to_xy(msk, x[m], y[m], fid[m])
     M
 end
 
 """
-    msk_and_z(xy::NamedTuple, np::Int; msk::MeshArray, zs=0:27)
+    msk_filter(xy::NamedTuple, np::Int, msk::MeshArray)
 
 - Filter out `np` points such that `msk.==0` out of `xy`. 
-- Distribute vertical position based on `zs`.
 
 _note : initially oversampling by a factor of `n try>1` is needed to find `np` valid points when the mask has zero valued points. Raises an error if fewer than `np` valid are found._
 """
-function msk_and_z(xy::NamedTuple,np::Int; msk::MeshArray, zs=0:27)
-    (;lon,lat,x,y,f) = xy
+function msk_filter(xy::DataFrame,np::Int,msk::MeshArray)
+    (;lon,lat,x,y,fid) = xy
 
     M = msk_at_xy(xy,msk)
     ocean = findall(M .== 1.0)
@@ -90,10 +89,7 @@ function msk_and_z(xy::NamedTuple,np::Int; msk::MeshArray, zs=0:27)
         "Widen the lon/lat range or reduce np.")
 
     sel = ocean[1:np]
-    xyf = permutedims([x[sel] y[sel] f[sel]])
-    z = zs[1] .+ rand(np) .* (zs[end] - zs[1])
-
-    return DataFrame(x=xyf[1,:], y=xyf[2,:], z=z, fid=xyf[3,:], lon=lon[sel], lat=lat[sel])
+    return DataFrame(x=x[sel], y=y[sel], fid=fid[sel], lon=lon[sel], lat=lat[sel])
 end
 
 """
