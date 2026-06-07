@@ -14,7 +14,7 @@ module DriftersMakieExt
 			elseif string(o.plot_type)=="global_plot1"
 				global_plot1(x.data[:I],x.data[:df])
 			elseif string(o.plot_type)=="plot_start_end"
-				plot_start_end(x.data[:I])
+				plot_start_end(x)
 			elseif string(o.plot_type)=="jcon_drifters"
 				plot_drifters_jcon(x.data.gdf;x.options...)
 			elseif string(o.plot_type)=="Oscar_plot"
