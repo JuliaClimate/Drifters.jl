@@ -4,13 +4,15 @@ module init
 using Drifters, MeshArrays, DataFrames, CSV
 import Drifters: randn_lonlat
 
-"""
-    init_positions(np ::Int)
+#deprecated function name:
+init_positions(np ::Int; filename="global_ocean_circulation.csv") =
+    read_initial_positions(np; filename=filename)
 
-Randomly distribute `np` points over the Earth, within `P.msk` 
-region, and return position in grid index space (`i,j,subdomain`).
 """
-function init_positions(np ::Int; filename="global_ocean_circulation.csv")
+    read_initial_positions(np ::Int; filename="global_ocean_circulation.csv")
+
+"""
+function read_initial_positions(np ::Int; filename="global_ocean_circulation.csv")
     if filename=="global_ocean_circulation.csv"
         p=dirname(pathof(Drifters))
         fil=joinpath(p,"../examples/worldwide/global_ocean_circulation.csv")
@@ -36,40 +38,62 @@ function init_global_randn(np ::Int , D::NamedTuple)
 end
 
 """
-    init_regional_3d(np, D; lons=(-81.0,-79.0), lats=(26.0,28.0), zs=0:27)
+    init_regional_3d(np::Int, D::NamedTuple;
+        lons=(-81.0, -79.0), lats=(26.0, 28.0), zs=0:27, n_try=3)
 
-Randomly distribute `np` ocean particles within a lon/lat/depth box on the
-LLC90 grid. Uses `InterpolationFactors` to assign face indices and grid
-coordinates, then filters to ocean-only points via `D.msk`. Returns a
-DataFrame with columns `x, y, z, fid`.
+- Randomly distribute `np` ocean particles within a lon/lat/depth box. 
+- Use `InterpolationFactors` to assign face indices (fid) and grid coordinates (x,y)
+- Call `msk_and_z` to :
+    - Filter out points such that `D.msk.==0`. 
+    - Distribute vertical position based on `zs`.
+- Return a DataFrame with columns `x, y, z, fid, lon, lat`.
 
-Default `lons`, `lats`, and `zs` match the former `init_gulf_stream` Florida
-Strait setup. For a wider domain (e.g. tropical band), pass
-`lons=(-180.0,180.0), lats=(-30.0,30.0), zs=1:25`.
+_note : Default `lons`, `lats`, and `zs` match the former `init gulf stream` / Florida Strait setup. For a wider domain (e.g. tropical band), specify something like `lons=(-180.0,180.0), lats=(-30.0,30.0), zs=1:25`._
 
-Oversamples by a factor of 3 so enough valid ocean points survive the mask.
-Raises an error if fewer than `np` ocean points are found.
+_note : initially oversampling by a factor of `n try>1` is needed to find `np` valid points when the mask has zero valued points. Raises an error if fewer than `np` valid are found._
 """
 function init_regional_3d(np::Int, D::NamedTuple;
-        lons=(-81.0, -79.0), lats=(26.0, 28.0), zs=0:27)
-    n_try = 3 * np
-    lon = lons[1] .+ (lons[2] - lons[1]) .* rand(n_try)
-    lat = lats[1] .+ (lats[2] - lats[1]) .* rand(n_try)
-
+        lons=(-81.0, -79.0), lats=(26.0, 28.0), zs=0:27, n_try=3)
+    n_tot = n_try * np
+    lon = lons[1] .+ (lons[2] - lons[1]) .* rand(n_tot)
+    lat = lats[1] .+ (lats[2] - lats[1]) .* rand(n_tot)
     (_,_,_,_,f,x,y) = Drifters.InterpolationFactors(D.Γ, lon, lat)
+    xy=(lon=lon,lat=lat,x=x,y=y,f=f)
+    msk_and_z(xy,np; msk=D.msk, zs=zs)
+end
 
+function msk_at_xy(xy,msk)
+    (;lon,lat,x,y,f) = xy
+    np=length(lon)
+    M = zeros(np)
     m = findall((f .!== 0) .* ((.!isnan).(x)))
-    ocean = findall(Drifters.nearest_to_xy(D.msk, x[m], y[m], f[m]) .== 1.0)
+    M[m] = Drifters.nearest_to_xy(msk, x[m], y[m], f[m])
+    M
+end
+
+"""
+    msk_and_z(xy::NamedTuple, np::Int; msk::MeshArray, zs=0:27)
+
+- Filter out `np` points such that `msk.==0` out of `xy`. 
+- Distribute vertical position based on `zs`.
+
+_note : initially oversampling by a factor of `n try>1` is needed to find `np` valid points when the mask has zero valued points. Raises an error if fewer than `np` valid are found._
+"""
+function msk_and_z(xy::NamedTuple,np::Int; msk::MeshArray, zs=0:27)
+    (;lon,lat,x,y,f) = xy
+
+    M = msk_at_xy(xy,msk)
+    ocean = findall(M .== 1.0)
 
     length(ocean) < np && error(
         "Only $(length(ocean)) ocean points found (need $np). " *
         "Widen the lon/lat range or reduce np.")
 
     sel = ocean[1:np]
-    xyf = permutedims([x[m[sel]] y[m[sel]] f[m[sel]]])
+    xyf = permutedims([x[sel] y[sel] f[sel]])
     z = zs[1] .+ rand(np) .* (zs[end] - zs[1])
 
-    return DataFrame(x=xyf[1,:], y=xyf[2,:], z=z, fid=xyf[3,:])
+    return DataFrame(x=xyf[1,:], y=xyf[2,:], z=z, fid=xyf[3,:], lon=lon[sel], lat=lat[sel])
 end
 
 """
