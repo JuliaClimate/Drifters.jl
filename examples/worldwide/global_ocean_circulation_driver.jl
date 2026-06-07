@@ -72,7 +72,7 @@ nm=12 #number of months
 
 P,D=ECCOmodule.init_FlowFields(k=k)
 
-df = Drifters.init.init_positions(np,filename=file_input)
+df = Drifters.init.read_initial_positions(np,filename=file_input)
 #"z" in names(df) ? nothing : df.z=10.0 .+ 0.0*df.x
 
 S = ECCOmodule.init_storage(np,100,length(D.Γ.RC),50)
