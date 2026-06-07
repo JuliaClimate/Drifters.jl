@@ -14,6 +14,21 @@ Climatology.get_ecco_variable_if_needed("SALT")
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:LLC90))
 MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
 
+@testset "time axes" begin
+    for time_unit in (:DateTime,:seconds)
+        Drifters.start_times(3,time_unit=time_unit,period=:day)
+        @suppress start_times=Drifters.start_times(3, time_unit=time_unit, direction=:forward)
+        @suppress backward_times=Drifters.start_times(3, time_unit=time_unit, direction=:backward)
+    end
+    @test true
+
+    mon=30*86400.00
+    TA=Drifters.TimeAxis(0.0,mon,0.0,mon,true)
+    D0=Drifters.Dates.DateTime(2000,1,1); D1=D0+Drifters.Year(1)
+    TA=Drifters.TimeAxis(D0,D1,D0,D1,true)
+    @test isa(TA,Drifters.TimeAxis)
+end
+
 @testset "SDE" begin
     import Drifters: ex_SDE
     SDE = Base.get_extension(Drifters, :DriftersStochasticDiffEqExt)
@@ -84,10 +99,9 @@ end
 
 @testset "OCCA" begin
     OCCAmodule=Drifters.OCCA
-	initial_positions=Drifters.init.initial_positions
 	P,D=OCCAmodule.setup(nmax=5)
 	nf=100; lo=(-160.0,-150.0); la=(30.0,40.0); level=2.5;
-	df=initial_positions(D.Γ, nf, lo, la, level)
+	df=Drifters.init.deprecated_initial_positions(D.Γ, nf, lo, la, level)
 	I=Individuals(P,df.x,df.y,df.z,df.fid,(🔴=OCCAmodule.custom🔴,🔧=OCCAmodule.custom🔧, D=D))
 	T=(0.0,10*86400.0)
 	∫!(I,T)
@@ -138,7 +152,7 @@ end
     P,D=ECCOmodule.init_FlowFields(k=1)
 
     file_input=joinpath(p0,"initial_10_1.csv")
-    df = Drifters.init.init_positions(10,filename=file_input)
+    df = Drifters.init.read_initial_positions(10,filename=file_input)
     I=Individuals(P,df.x,df.y,df.f,(D=D,))
 
     zer=(eltype(I.P.T)==Drifters.DateTime ? Drifters.DateTime(2000,1,1) : 0.0)

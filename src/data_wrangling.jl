@@ -417,3 +417,86 @@ function monthly_records(P, t; verbose=false)
 
     return t0,t1,m0,m1
 end
+
+"""
+    start_times(nt=12;
+        direction=:forward,time_unit=:DateTime,
+        initial_year=2000, nt=12)
+
+- if `time_unit==:seconds` then we use 30 days months, and `initial_date` is set to 0.
+- if `time_unit==:DateTime` then we use the normal calendar.
+
+```
+using Drifters
+initial_date = Drifters.DateTime(1999, 1, 1)
+dates=Drifters.start_times(24,initial_date=initial_date,direction=:backward)
+times=Drifters.start_times(24,time_unit=:seconds,period=:day)
+```
+"""
+function start_times(nt=12;
+    direction=:forward,period=:month,
+    time_unit=:DateTime,initial_date=DateTime(2000,1,1))
+
+    if period==:month
+        dt=30*86400.00
+        (time_unit==:seconds ? (@warn "using 30 day months") : nothing)
+        dd=Month(1)
+    elseif period==:day
+        dt=86400.00
+        dd=Day(1)
+    else
+        error("unknown period")
+    end
+
+    if direction==:forward
+        D = [initial_date + (i-1)*dd for i in 1:nt]
+        d = [(i-1)*dt for i in 1:nt]
+    else
+        D = [initial_date + (1-i)*dd for i in 1:nt]
+        d = [(1-i)*dt for i in 1:nt]
+    end
+
+    (time_unit==:DateTime ? D : d)
+end
+
+##
+
+"""
+    histogram2d(df::DataFrame;lon=-179:2:179,lat=-89:2:89)
+
+```
+lon,lat,n=Drifters.histogram2d(I.🔴,lon=-179:2:179,lat=-89:2:89)
+heatmap(lon,lat,n)
+```
+"""
+function histogram2d(df::DataFrame;lon=-179:2:179,lat=-89:2:89)
+    n=NaN*zeros(length(lon),length(lat))
+    dlo=step(lon); dla=step(lat)
+    ilo=ceil.( (df.lon.-(minimum(lon).-dlo/2))./dlo )
+    ila=ceil.( (df.lat.-(minimum(lat).-dla/2))./dla )
+    tmp=DataFrame(ila=Int.(ila),ilo=Int.(ilo))
+    gdf=groupby(tmp,[:ilo,:ila])
+    tmp=Drifters.combine(gdf, Drifters.nrow => :count)
+    [n[r.ilo,r.ila]=r.count for r in eachrow(tmp)]
+    return lon,lat,n
+end
+
+"""
+    histogram1d(x,xc::StepRange)
+
+```
+z,n=Drifters.histogram1d(I.🔴.z,1:2:19)
+fi,ax,_=barplot(z,n,direction=:x)
+ax.yreversed=true
+fi
+```
+"""
+function histogram1d(x,xc::StepRange)
+    n=NaN*zeros(length(xc)); dx=step(xc)
+    ilo=ceil.( (x.-(minimum(xc).-dx/2))./dx )
+    tmp=DataFrame(ilo=Int.(ilo))
+    gdf=groupby(tmp,:ilo)    
+    tmp=Drifters.combine(gdf, Drifters.nrow => :count)
+    [n[r.ilo]=r.count for r in eachrow(tmp)]
+    return xc,n
+end

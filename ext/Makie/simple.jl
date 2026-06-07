@@ -4,19 +4,24 @@
 
 Plot the initial and final positions as scatter plot in `lon,lat` or `x,y` plane.
 """
-function plot_start_end(I::Individuals)
+function plot_start_end(DD::DriftersDataset)
+	plot_start_end(DD.data[:I],options=DD.options)
+end
+
+function plot_start_end(I::Individuals; options=options)
+ms=(haskey(options,:markersize) ? options.markersize : 4)
+cl=(haskey(options,:colors) ? options.colors : (:blue,:red))
 🔴_by_t = Drifters.DataFrames.groupby(I.🔴, :t)
-set_theme!(theme_light())
-fig=Figure(size = (900, 600))
-ms=4
+fi()=Figure(size = (900, 600),fontsize=16)
+fig=with_theme(fi, theme_latexfonts())
 if hasproperty(🔴_by_t[1],:lon)
 	a = Axis(fig[1, 1],xlabel="longitude",ylabel="latitude")		
-	scatter!(a,🔴_by_t[1].lon,🔴_by_t[1].lat,color=:green2,markersize=ms)
-	scatter!(a,🔴_by_t[end].lon,🔴_by_t[end].lat,color=:red,markersize=ms)
+	scatter!(a,🔴_by_t[1].lon,🔴_by_t[1].lat,color=cl[1],markersize=ms)
+	scatter!(a,🔴_by_t[end].lon,🔴_by_t[end].lat,color=cl[2],markersize=ms)
 else
-	a = Axis(fig[1, 1],xlabel="longitude",ylabel="latitude")		
-	scatter!(a,🔴_by_t[1].x,🔴_by_t[1].y,color=:green2,markersize=ms)
-	scatter!(a,🔴_by_t[end].x,🔴_by_t[end].y,color=:red,markersize=ms)
+	a = Axis(fig[1, 1],xlabel="x",ylabel="y")		
+	scatter!(a,🔴_by_t[1].x,🔴_by_t[1].y,color=cl[1],markersize=ms)
+	scatter!(a,🔴_by_t[end].x,🔴_by_t[end].y,color=cl[2],markersize=ms)
 end
 return fig
 end

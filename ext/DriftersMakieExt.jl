@@ -1,8 +1,12 @@
 module DriftersMakieExt
 
 	using Makie, Drifters
-	import Drifters: DriftersDataset, DataFrame, demo, gcdist, MeshArrays
+	import Drifters: Individuals, DriftersDataset, DataFrame, demo, gcdist, MeshArrays
 	import Makie: plot
+
+	function plot(I::Individuals)
+		plot(DriftersDataset(data=(I=I,), options=(plot_type=:plot_start_end,)))
+	end
 
 	function plot(x::DriftersDataset)
 		if !isempty(x.options)
@@ -14,7 +18,7 @@ module DriftersMakieExt
 			elseif string(o.plot_type)=="global_plot1"
 				global_plot1(x.data[:I],x.data[:df])
 			elseif string(o.plot_type)=="plot_start_end"
-				plot_start_end(x.data[:I])
+				plot_start_end(x)
 			elseif string(o.plot_type)=="jcon_drifters"
 				plot_drifters_jcon(x.data.gdf;x.options...)
 			elseif string(o.plot_type)=="Oscar_plot"
