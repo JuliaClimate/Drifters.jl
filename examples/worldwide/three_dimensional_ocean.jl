@@ -47,7 +47,7 @@ md"""## Compute Displacements"""
 
 # ╔═╡ 938fdaa8-357d-477e-8fa2-e6da53806242
 begin
-	T=(0.0,10*86400.0)
+	T=(0.0,1000*86400.0)
 	∫!(I,T)
 end
 
