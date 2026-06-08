@@ -466,6 +466,7 @@ end
 
 ```
 lon,lat,n=Drifters.histogram2d(I.🔴,lon=-179:2:179,lat=-89:2:89)
+#lon,lat,n=Drifters.histogram2d(I.🔴,lon=1:2:359,lat=-89:2:89)
 heatmap(lon,lat,n)
 ```
 """

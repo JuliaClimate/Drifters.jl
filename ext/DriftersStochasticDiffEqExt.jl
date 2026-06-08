@@ -156,7 +156,7 @@ function plot_one_traj(sol)
     current_figure()
 end
 
-function plot_all_trajs(sol_all)
+function plot_all_trajs_v1(sol_all)
     fig=Figure(); ax=Axis(fig[1,1],xlabel="time",ylabel="depth")
     for sol in sol_all
         col=(sol.u[1][3]>0.5 ? :blue : :red)
@@ -186,7 +186,8 @@ p=100; x=zeros(100); y=zeros(100); z=rand(p);
 I=Individuals(F,x,y,z,(D=(problem_type=:SDE,),))
 sol=∫!(I)
 
-plot_one_traj(sol[1])
+plot_one_traj(sol.u[1])
+plot_all_trajs(sol.u)
 ```
 """
 
