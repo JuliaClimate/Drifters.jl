@@ -96,7 +96,7 @@ end
 Add lon & lat to dataframe using "exchanged" XC, YC
 """
 function add_lonlat!(df::DataFrame,XC::MeshArray_wh,YC::MeshArray_wh)
-    x = cosd.(YC.MA) * cosd.(XC.MA)
+    x = cosd.(YC.MA) * cosd.(XC.MA) #here we should carry x, y, z as MeshArray_wh instead
     y = cosd.(YC.MA) * sind.(XC.MA)
     z = sind.(YC.MA)
 
@@ -248,7 +248,7 @@ function interp_to_lonlat(X::MeshArray,IntFac::NamedTuple)
 end
 
 """
-    interp_to_xy(df::DataFrame,Zin::MeshArray)
+    interp_to_xy(df::DataFrame,Zin::MeshArray_wh)
 
 Interpolate "exchanged" / "hallo-included" Zin to df[!,:x], df[!,:y] on df[!,:fid]
 """
@@ -267,7 +267,7 @@ function interp_to_xy(df::DataFrame,Zin::MeshArray_wh)
            (1.0 .-dx).*dy.*Z[:,3]+dx.*dy.*Z[:,4]
 end
 
-function interp_to_xy(x,y,f,Zin::MeshArray)
+function interp_to_xy(x,y,f,Zin::MeshArray) #here Zin should be MeshArray_wh instead (requires updating add_lonlat!)
     dx,dy=(x - floor(x) + 0.5,y - floor(y) + 0.5)
     i_c = Int(floor(x)) + 1
     j_c = Int(floor(y)) + 1
@@ -466,6 +466,7 @@ end
 
 ```
 lon,lat,n=Drifters.histogram2d(I.🔴,lon=-179:2:179,lat=-89:2:89)
+#lon,lat,n=Drifters.histogram2d(I.🔴,lon=1:2:359,lat=-89:2:89)
 heatmap(lon,lat,n)
 ```
 """

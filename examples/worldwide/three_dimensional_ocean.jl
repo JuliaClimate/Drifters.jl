@@ -8,7 +8,7 @@ using InteractiveUtils
 begin
 	using Drifters, CairoMakie, Climatology
 	OCCAmodule=Drifters.OCCA
-	initial_positions=Drifters.init.initial_positions
+	initial_positions=Drifters.init.deprecated_initial_positions
 	"Done with loading packages"
 end
 
@@ -47,7 +47,7 @@ md"""## Compute Displacements"""
 
 # ╔═╡ 938fdaa8-357d-477e-8fa2-e6da53806242
 begin
-	T=(0.0,10*86400.0)
+	T=(0.0,1000*86400.0)
 	∫!(I,T)
 end
 
@@ -55,9 +55,13 @@ end
 md"""## Visualize Displacements"""
 
 # ╔═╡ 8e371f54-d7f7-4f59-a2e1-9f673486f1fa
-plot( DriftersDataset( data=(I=I,), options=(plot_type=:plot_start_end,) ) )
+begin
+    DD=DriftersDataset( data=(I=I,), options=(plot_type=:plot_start_end,markersize=8) )
+    plot(DD)
+end
 
 # ╔═╡ a6f4b5a0-7818-41a6-a4e5-30d80a727625
+
 
 
 
@@ -71,10 +75,10 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 Drifters = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
-MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 
 [compat]
-Climatology = "~0.5.14"
+CairoMakie = "~0.15.11"
+Climatology = "~0.5.18"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -83,7 +87,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "d356b2f673d443e10dddebbe5674a4e41f04d040"
+project_hash = "24364d6b30c87cc6d47d89882c2404bef7210378"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -724,9 +728,9 @@ version = "1.7.0"
 
 [[deps.Drifters]]
 deps = ["CSV", "CyclicArrays", "DataDeps", "DataFrames", "Dataverse", "Dates", "Distributions", "Glob", "JLD2", "MeshArrays", "NetCDF", "OrdinaryDiffEq", "OrdinaryDiffEqLowOrderRK", "Random", "Statistics"]
-git-tree-sha1 = "d6e7b6d801d89b7867d22e799e95ac0f0ed2db3b"
+git-tree-sha1 = "c258bcdc8e484914f6187f39c2d20c8ba35c5e3d"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
-version = "0.6.17"
+version = "0.6.18"
 
     [deps.Drifters.extensions]
     DriftersClimatologyExt = ["Climatology"]
@@ -934,9 +938,9 @@ version = "1.3.7"
 
 [[deps.ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
-git-tree-sha1 = "cddeab6487248a39dae1a960fff0ac17b2a28888"
+git-tree-sha1 = "52856013604f3442ab8ef776ae576b533a6de301"
 uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "1.3.3"
+version = "1.4.0"
 weakdeps = ["StaticArrays"]
 
     [deps.ForwardDiff.extensions]
@@ -2490,9 +2494,9 @@ version = "1.12.0"
 
 [[deps.SparseColumnPivotedQR]]
 deps = ["LinearAlgebra", "PrecompileTools", "SparseArrays"]
-git-tree-sha1 = "775081cfe24b1089f62290c52efa38297171be83"
+git-tree-sha1 = "aa3872796237441bc82f51b6f094aaf97386a717"
 uuid = "a57abbd0-fea5-4d57-96be-5e525945e8e4"
-version = "2.0.0"
+version = "2.1.1"
 weakdeps = ["AMD"]
 
     [deps.SparseColumnPivotedQR.extensions]

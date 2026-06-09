@@ -99,7 +99,8 @@ just a constant drift backinto the mixed layer
 of 1/thickness. 1 has unit of diffusivity. 
 """
 function f_piecewise(u,p,t)
-    depth_p,thickness_p,kappa0_p = p
+    depth_p,thickness_p,kappa0_p,seafloor_p,depthscale_p = p
+    #not currently used : seafloor_p,depthscale_p
     depth = _at(depth_p,t)
     thickness = _at(thickness_p,t)
     kappa0 = _at(kappa0_p,t)
@@ -272,7 +273,7 @@ function create_sde_updator(kappa,rf)
 	function updator(u_0,tf;dt=10)
 		tspan = (0.0,tf)
 		p = nothing
-		prob = SDEProblem(𝒻,ℊ,u_0,tspan,p)
+		prob = SDEProblem(𝒻,ℊ,u_0,tspan,p) #this should be in the extension, where SDEProblem exists
 		sol=solve(prob,EulerHeun(),dt=dt,callback = ocean_reflect());
 		return sol.u[end]
 	end

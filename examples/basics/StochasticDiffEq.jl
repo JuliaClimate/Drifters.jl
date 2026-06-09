@@ -78,6 +78,50 @@ fb
 # ╔═╡ 9ef462b4-a99c-43e8-9fea-6ba63a1393eb
 f
 
+# ╔═╡ 6cc22abf-02be-44bb-b663-56940ded4c15
+md"""## Using Individuals
+
+- Here is a simplified version of a mixed layer over quiet layer. 
+- This example illustrates the longer term approach in `Drfiters.jl`.
+
+"""
+
+# ╔═╡ 2bc80b9c-8b1e-4598-a52b-463aaf216f8b
+function plot_one_traj(sol)
+    tmp=[u[1] for u in sol.u]; lines(tmp)
+    tmp=[u[2] for u in sol.u]; lines!(tmp)
+    tmp=[u[3] for u in sol.u]; lines!(tmp)
+    current_figure()
+end
+
+# ╔═╡ 8ddff0db-9f07-481a-adc2-3be372c87b68
+function plot_all_trajs(sol_all)
+    fig=Figure(); ax=Axis(fig[1,1],xlabel="time",ylabel="depth")
+    nsol=length(sol_all)
+    for (i,sol) in enumerate(sol_all)
+        tmp=[u[3] for u in sol.u]
+        if sol.u[1][3]>0.5
+            lines!(sol.t,-1000*tmp,color=:black,linewidth=1.0)
+        else
+            lines!(sol.t,-1000*tmp,color=i,colormap=:turbo,colorrange=(0,nsol),linewidth=0.2)
+        end
+    end
+    current_figure()
+end
+
+# ╔═╡ c20fba8d-39a1-4a08-b692-4334085d4d19
+let
+n=2; u=zeros(1,1,n); v=zeros(1,1,n); w=zeros(1,1,n+1);
+F=FlowFields(u,u,v,v,w,w,[0,100.0])
+
+p=100; x=zeros(100); y=zeros(100); z=rand(p); 
+I=Individuals(F,x,y,z,(D=(problem_type=:SDE,),))
+sol=∫!(I)
+
+plot_one_traj(sol.u[1])
+plot_all_trajs(sol.u)
+end
+
 # ╔═╡ aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
 md"""## Summary
 
@@ -100,6 +144,7 @@ Includes `Julia` packages and helper functions.
 
 
 
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -111,7 +156,7 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 
 [compat]
 CairoMakie = "~0.15.11"
-Drifters = "~0.6.17"
+Drifters = "~0.6.18"
 PlutoUI = "~0.7.83"
 StochasticDiffEq = "~7.0.0"
 """
@@ -122,7 +167,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "2309180a66ef218fb73ed2dcf7a7ed443d5ed159"
+project_hash = "7e376f8f28143eecb93a32a73239c96df8eb2547"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -651,9 +696,9 @@ version = "4.17.0"
 
 [[deps.DiffEqNoiseProcess]]
 deps = ["CommonSolve", "DiffEqBase", "Distributions", "GPUArraysCore", "LinearAlgebra", "Markdown", "PoissonRandom", "QuadGK", "Random", "RecipesBase", "RecursiveArrayTools", "ResettableStacks", "SciMLBase", "StaticArraysCore", "Statistics"]
-git-tree-sha1 = "34327f9feb11c2f072ad7b43693fb5698fa86a67"
+git-tree-sha1 = "bd078194af24a5674a6bad822669f9489d6b8c10"
 uuid = "77a26b50-5914-5dd7-bc55-306e6241c503"
-version = "5.31.1"
+version = "5.32.0"
 
     [deps.DiffEqNoiseProcess.extensions]
     DiffEqNoiseProcessOptimExt = "Optim"
@@ -778,9 +823,9 @@ version = "1.7.0"
 
 [[deps.Drifters]]
 deps = ["CSV", "CyclicArrays", "DataDeps", "DataFrames", "Dataverse", "Dates", "Distributions", "Glob", "JLD2", "MeshArrays", "NetCDF", "OrdinaryDiffEq", "OrdinaryDiffEqLowOrderRK", "Random", "Statistics"]
-git-tree-sha1 = "d6e7b6d801d89b7867d22e799e95ac0f0ed2db3b"
+git-tree-sha1 = "c258bcdc8e484914f6187f39c2d20c8ba35c5e3d"
 uuid = "bd752fb7-3f37-44cb-a8fb-f461137b623f"
-version = "0.6.17"
+version = "0.6.18"
 
     [deps.Drifters.extensions]
     DriftersClimatologyExt = ["Climatology"]
@@ -988,9 +1033,9 @@ version = "1.3.7"
 
 [[deps.ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
-git-tree-sha1 = "cddeab6487248a39dae1a960fff0ac17b2a28888"
+git-tree-sha1 = "52856013604f3442ab8ef776ae576b533a6de301"
 uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "1.3.3"
+version = "1.4.0"
 weakdeps = ["StaticArrays"]
 
     [deps.ForwardDiff.extensions]
@@ -3204,6 +3249,10 @@ version = "4.1.0+0"
 # ╟─96c9b046-6e40-44b1-a19c-b7061f22470d
 # ╠═d78532b9-b17e-4a4a-bbab-e249bf852eba
 # ╠═9ef462b4-a99c-43e8-9fea-6ba63a1393eb
+# ╟─6cc22abf-02be-44bb-b663-56940ded4c15
+# ╠═c20fba8d-39a1-4a08-b692-4334085d4d19
+# ╟─2bc80b9c-8b1e-4598-a52b-463aaf216f8b
+# ╠═8ddff0db-9f07-481a-adc2-3be372c87b68
 # ╟─aa7aa58b-e2e7-4b40-aeab-38137f8d4e2d
 # ╠═1df22a2f-c344-4d71-b44d-9a821c14e548
 # ╟─082d6309-c7fe-4a90-94c0-e65336e43a3c
