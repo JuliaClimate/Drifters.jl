@@ -37,16 +37,16 @@ end
 include("API.jl")
 include("compute.jl")
 include("data_wrangling.jl")
-include("toy_models.jl")
 include("initial_positions.jl")
 include("files.jl")
-include("Downloads.jl")
+include("downloads.jl")
 
-include("example_ECCO.jl")
-include("example_OCCA.jl")
-include("example_GOM.jl")
-include("example_Oscar.jl")
-include("example_SDE.jl")
+include("examples/toy_models.jl")
+include("examples/ECCO.jl")
+include("examples/OCCA.jl")
+include("examples/GOM.jl")
+include("examples/Oscar.jl")
+include("examples/SDE.jl")
 
 export Individuals, ∫!, solve!, DataFrame, groupby
 export FlowFields, convert_to_FlowFields, to_C_grid!
