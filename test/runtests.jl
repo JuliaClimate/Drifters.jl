@@ -75,7 +75,7 @@ end
 
     k=0
     P,D=ECCOmodule.init_FlowFields(k=k); np=100
-    df0 = Drifters.init.init_global_randn(np , D)
+    df0 = Drifters.init.initial_positions_2d(np , D.Γ)
     df = Drifters.init.init_regional_3d(np , D)
     S = ECCOmodule.init_storage(np,100,length(D.Γ.RC),50)
     I = Individuals(P,df.x,df.y,df.z,df.fid,
@@ -152,7 +152,7 @@ end
     P,D=ECCOmodule.init_FlowFields(k=1)
 
     file_input=joinpath(p0,"initial_10_1.csv")
-    df = Drifters.init.read_initial_positions(10,filename=file_input)
+    df = Drifters.read_initial_positions(10,filename=file_input)
     I=Individuals(P,df.x,df.y,df.f,(D=D,))
 
     zer=(eltype(I.P.T)==Drifters.DateTime ? Drifters.DateTime(2000,1,1) : 0.0)

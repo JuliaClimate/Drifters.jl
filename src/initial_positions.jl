@@ -1,40 +1,69 @@
 
 module init
 
-using Drifters, MeshArrays, DataFrames, CSV
+using Drifters, MeshArrays, DataFrames
 import Drifters: randn_lonlat
 
-#deprecated function name:
-init_positions(np ::Int; filename="global_ocean_circulation.csv") =
-    read_initial_positions(np; filename=filename)
-
 """
-    read_initial_positions(np ::Int; filename="global_ocean_circulation.csv")
+    initial_positions_2d(nchunk::Int, Γ; mask=nothing)
 
-"""
-function read_initial_positions(np ::Int; filename="global_ocean_circulation.csv")
-    if filename=="global_ocean_circulation.csv"
-        p=dirname(pathof(Drifters))
-        fil=joinpath(p,"../examples/worldwide/global_ocean_circulation.csv")
-    else
-        fil=filename
-    end
-    return DataFrame(CSV.File(fil))[1:np,:]
-end
-
-"""
-    init_global_randn(np ::Int , D::NamedTuple)
-
-Randomly distribute `np` points over the Earth, within `D.msk` 
+Randomly distribute `np` points over the Earth, within `mask` 
 region, and return position in grid index space (`i,j,subdomain`).
 """
-function init_global_randn(np ::Int , D::NamedTuple)
-    (lon, lat) = randn_lonlat(maximum([2*np 10]))
-    (_,_,_,_,f,x,y)=InterpolationFactors(D.Γ,lon,lat)
-    m=findall( (f.!==0).*((!isnan).(x)) )
-    n=findall(nearest_to_xy(D.msk,x[m],y[m],f[m]).==1.0)[1:np]
-    return DataFrame(x=x[m[n]],y=y[m[n]],fid=f[m[n]],lon=lon[m[n]],lat=lat[m[n]])
+function initial_positions_2d(nchunk::Int, Γ; mask=nothing)
+    (lon, lat) = randn_lonlat(maximum([2*nchunk 10]))
+    (_,_,_,_,f,x,y) = InterpolationFactors(Γ, lon, lat)
+
+    M = Bool.((f.!==0).*((!isnan).(x)))
+    for i in 1:length(M)
+        if M[i]
+            Bool((x[i]<=0).+(x[i]>=Γ.XC.fSize[f[i]][1])) ? (M[i]=false) : nothing
+            Bool((y[i]<=0).+(y[i]>=Γ.XC.fSize[f[i]][2])) ? (M[i]=false) : nothing
+        end
+    end
+    
+    m = findall(M)
+    mask_vals = mask !== nothing ? msk_at_xy(x[m], y[m], mask) : ones(length(m))
+    
+    return DataFrame(
+        x=x[m], 
+        y=y[m], 
+        fid=f[m], 
+        lon=lon[m], 
+        lat=lat[m], 
+        M=mask_vals
+    )
 end
+
+function initial_positions_2d(np::Int, Γ, nchunk; mask=nothing)
+	result = DataFrame(
+		x=fill(NaN, np), 
+		y=fill(NaN, np), 
+		fid=fill(0, np), 
+		lon=fill(NaN, np), 
+		lat=fill(NaN, np), 
+		M=fill(NaN, np)
+	)
+	
+	idx = 1  # pointer to current position
+	
+	while idx <= np
+		xy0 = initial_positions_2d(nchunk, Γ; mask=mask)
+		xy_valid = xy0[xy0.M .== 1.0, :]
+		
+		# How many rows can we fit before reaching np?
+		n_to_add = min(nrow(xy_valid), np - idx + 1)
+		
+		# Write in place
+		result[idx:(idx + n_to_add - 1), :] = xy_valid[1:n_to_add, :]
+		idx += n_to_add
+	end
+	
+	return result
+end
+
+#for backwards compatibility :
+init_global_randn(np ::Int , D::NamedTuple)=initial_positions_2d(np, D.Γ)
 
 """
     init_regional_3d(np::Int, D::NamedTuple;

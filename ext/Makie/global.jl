@@ -125,3 +125,19 @@ function read_pol()
 	fil=MeshArrays.demo.download_polygons("countries.geojson")
 	pol=MeshArrays.read_polygons(fil)
 end
+
+## alternative 
+
+function plot_initial_positions(D,df00,df0)
+	#fi=Figure(); ax=Axis(fi[1,1])
+	λ=Drifters.MeshArrays.interpolation_setup()
+	heatmap(D.Γ.Depth,interpolation=λ,colormap=:grays,colorbar=false)
+	fi=current_figure()
+    gdf=groupby(df00,[:ii,:jj])
+    for gg in gdf
+        ii=gg.ii[1]; jj=gg.jj[1]
+		scatter!(gg.lon,gg.lat,color=ii+(jj-1)*14,colorrange=(1,6*14),colormap=:thermal,markersize=0.25)
+	end
+	scatter!(df0.lon,df0.lat,color=:green2,markersize=0.5)
+	fi
+end
