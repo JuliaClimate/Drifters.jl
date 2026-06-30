@@ -4,8 +4,8 @@ module DriftersMakieExt
 	import Drifters: Individuals, DriftersDataset, DataFrame, demo, gcdist, MeshArrays
 	import Makie: plot
 
-	function plot(I::Individuals)
-		plot(DriftersDataset(data=(I=I,), options=(plot_type=:plot_start_end,)))
+	function plot(I::Individuals,plot_type=:plot_start_end)
+		plot(DriftersDataset(data=(I=I,), options=(plot_type=plot_type,)))
 	end
 
 	function plot(x::DriftersDataset)
@@ -23,6 +23,12 @@ module DriftersMakieExt
 				plot_drifters_jcon(x.data.gdf;x.options...)
 			elseif string(o.plot_type)=="Oscar_plot"
 				Oscar_plot(x.data.df;x.options...)
+			elseif string(o.plot_type)=="density_z"
+				Drifters_density1d_plot(x.data.df)
+			elseif string(o.plot_type)=="density_xy"
+				Drifters_density2d_plot(x.data.df)
+			elseif string(o.plot_type)=="initial_positions"
+				plot_initial_positions(x.data.D,x.data.df00,x.data.df0)
 			else
 				println("unknown option (b)")	
 			end
@@ -37,5 +43,6 @@ include("Makie/StochasticDiffEq.jl")
 include("Makie/simple.jl")
 include("Makie/global.jl")
 include("Makie/jcon_paper.jl")
+include("Makie/density_plots.jl")
 
 end
