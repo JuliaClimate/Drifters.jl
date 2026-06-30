@@ -24,11 +24,12 @@ module DriftersMakieExt
 			elseif string(o.plot_type)=="Oscar_plot"
 				Oscar_plot(x.data.df;x.options...)
 			elseif string(o.plot_type)=="density_z"
-				Drifters_density1d_plot(x.data.df)
+				Drifters_density1d_plot(x.data[:I].🔴)
 			elseif string(o.plot_type)=="density_xy"
-				Drifters_density2d_plot(x.data.df)
+				Drifters_density2d_plot(x.data[:I].🔴)
 			elseif string(o.plot_type)=="initial_positions"
-				plot_initial_positions(x.data.D,x.data.df00,x.data.df0)
+				#example : DriftersDataset(data=(I=I,tile=df0,all=df00), options=(plot_type=:initial_positions,));
+				plot_initial_positions(x.data[:I].D,x.data[:all],x.data[:tile])
 			else
 				println("unknown option (b)")	
 			end
