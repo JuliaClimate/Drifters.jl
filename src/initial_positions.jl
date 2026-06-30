@@ -1,26 +1,8 @@
 
 module init
 
-using Drifters, MeshArrays, DataFrames, CSV
+using Drifters, MeshArrays, DataFrames
 import Drifters: randn_lonlat
-
-#deprecated function name:
-init_positions(np ::Int; filename="global_ocean_circulation.csv") =
-    read_initial_positions(np; filename=filename)
-
-"""
-    read_initial_positions(np ::Int; filename="global_ocean_circulation.csv")
-
-"""
-function read_initial_positions(np ::Int; filename="global_ocean_circulation.csv")
-    if filename=="global_ocean_circulation.csv"
-        p=dirname(pathof(Drifters))
-        fil=joinpath(p,"../examples/worldwide/global_ocean_circulation.csv")
-    else
-        fil=filename
-    end
-    return DataFrame(CSV.File(fil))[1:np,:]
-end
 
 """
     initial_positions_2d(nchunk::Int, Γ; mask=nothing)

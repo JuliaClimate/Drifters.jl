@@ -39,6 +39,7 @@ include("compute.jl")
 include("data_wrangling.jl")
 include("toy_models.jl")
 include("initial_positions.jl")
+include("files.jl")
 include("Downloads.jl")
 
 include("example_ECCO.jl")
