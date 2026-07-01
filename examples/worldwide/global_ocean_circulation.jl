@@ -117,18 +117,36 @@ begin
 	
 	Climatology.get_ecco_velocity_if_needed()
 
-    test1=:DateTime
-    if test1==:DateTime
-        D0=Drifters.DateTime(1992,1,1)
-        D1=Drifters.DateTime(2011,1,1)
-        TA = backward_time ? Drifters.TimeAxis(D1,D0,D0,D1,true) : Drifters.TimeAxis(D0,D1,D0,D1,true)
-    elseif test1==:seconds
-        mon=86400.0*365.0/12.0; t_final=100*365*86400.0
-        TA=Drifters.TimeAxis(0.0,t_final,0.0,t_final,true)
-    else
-        error("unknown option")
+    function set_times(time_units,backward_time)
+        TD = backward_time ? :backward : :forward
+        TS = backward_time ? -1 : 1
+
+        if time_units==:DateTime
+            D0=Drifters.DateTime(1992,1,1)
+            D1=Drifters.DateTime(2012,1,1)
+            TA = backward_time ? Drifters.TimeAxis(D1,D0,D0,D1,true) : Drifters.TimeAxis(D0,D1,D0,D1,true)
+
+            T= backward_time ? 
+                    (Drifters.DateTime(2012,1,1),Drifters.DateTime(2011,12,15)) :
+                    (Drifters.DateTime(1992,1,1),Drifters.DateTime(1992,1,15))
+            times=Drifters.start_times(24,initial_date=T[2],direction=TD)
+        elseif time_units==:seconds
+            mon=86400.0*365.0/12.0; t_final=TS*20*365*86400.0
+            TA=Drifters.TimeAxis(0.0,t_final,0.0,t_final,true)
+
+            T=(0.0,TS*mon/2)
+            times=Drifters.start_times(24,time_unit=:seconds,period=:month,direction=TD).-T[2]
+        else
+            error("unknown option")
+        end
+
+        return TA,T,times
     end
-	P,D=ECCOmodule.init_FlowFields(k=k, time_axis=TA)
+
+    time_units=:DateTime
+    TA,T,times=set_times(time_units,backward_time)
+
+    P,D=ECCOmodule.init_FlowFields(k=k, time_axis=TA)
 #	P,D=ECCOmodule.init_FlowFields(k=k)
 
 	println("Done with Setting Up FlowFields")
@@ -210,11 +228,6 @@ md"""### 3.3 Monthly Simulation Loop
 
 # ╔═╡ a3e45927-5d53-42be-b7b7-489d6e7a6fe5
 if !do_replay
-    if eltype(I.P.T)==Drifters.DateTime
-    	T=(Drifters.DateTime(2000,1,1),Drifters.DateTime(2000,1,16))
-    else
-        T=(0.0,I.P.T[2])
-    end
     D.🔄(P,D,T[1])
 	my∫!(I,T)
 	✔1="Done with Initial Integration"
