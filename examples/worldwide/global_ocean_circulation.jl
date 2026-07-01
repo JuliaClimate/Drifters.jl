@@ -66,8 +66,11 @@ begin
 	
     path_IC = path_input
     file_IC = joinpath(path_IC,"initial_10_1.csv")
-	backward_time = false
-	file_base = basename(file_IC)[1:end-4]
+
+    time_direction = :forward
+    backward_time=(time_direction==:backward)
+
+    file_base = basename(file_IC)[1:end-4]
 	backward_time ? file_base=file_base*"_◀◀" : file_base=file_base*"_▶▶"
 
 #  - _optional :_ zrng = $(bind_zrng) = vertical coordindate range 
@@ -117,25 +120,27 @@ begin
 	
 	Climatology.get_ecco_velocity_if_needed()
 
-    function set_times(time_units,backward_time)
-        TD = backward_time ? :backward : :forward
+    #note : set_times now in Drifters.ECCO
+    import Drifters: DateTime, start_times, TimeAxis
+    function set_times(time_units=:DateTime,time_direction=:forward)
+        backward_time=(time_direction==:backward)
         TS = backward_time ? -1 : 1
 
         if time_units==:DateTime
-            D0=Drifters.DateTime(1992,1,1)
-            D1=Drifters.DateTime(2012,1,1)
-            TA = backward_time ? Drifters.TimeAxis(D1,D0,D0,D1,true) : Drifters.TimeAxis(D0,D1,D0,D1,true)
+            D0=DateTime(1992,1,1)
+            D1=DateTime(2012,1,1)
+            TA = backward_time ? TimeAxis(D1,D0,D0,D1,true) : TimeAxis(D0,D1,D0,D1,true)
 
             T= backward_time ? 
-                    (Drifters.DateTime(2012,1,1),Drifters.DateTime(2011,12,15)) :
-                    (Drifters.DateTime(1992,1,1),Drifters.DateTime(1992,1,15))
-            times=Drifters.start_times(24,initial_date=T[2],direction=TD)
+                    (DateTime(2012,1,1),DateTime(2011,12,15)) :
+                    (DateTime(1992,1,1),DateTime(1992,1,15))
+            times=start_times(24,initial_date=T[2],direction=time_direction)
         elseif time_units==:seconds
             mon=86400.0*365.0/12.0; t_final=TS*20*365*86400.0
-            TA=Drifters.TimeAxis(0.0,t_final,0.0,t_final,true)
+            TA=TimeAxis(0.0,t_final,0.0,t_final,true)
 
             T=(0.0,TS*mon/2)
-            times=Drifters.start_times(24,time_unit=:seconds,period=:month,direction=TD).-T[2]
+            times=start_times(24,time_unit=:seconds,period=:month,direction=time_direction).-T[2]
         else
             error("unknown option")
         end
@@ -144,7 +149,7 @@ begin
     end
 
     time_units=:DateTime
-    TA,T,times=set_times(time_units,backward_time)
+    TA,T,times=set_times(time_units,time_direction)
 
     P,D=ECCOmodule.init_FlowFields(k=k, time_axis=TA)
 #	P,D=ECCOmodule.init_FlowFields(k=k)

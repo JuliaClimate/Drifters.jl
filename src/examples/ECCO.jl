@@ -5,7 +5,7 @@ import Dates: DateTime, Year, Month, Day
 
 import Drifters: postprocess_MeshArray, add_lonlat!, OrdinaryDiffEq
 import Drifters: time_in_seconds, time_in_DateTime, monthly_records
-import Drifters: TimeAxis, TimePeriod
+import Drifters: TimeAxis, TimePeriod, start_times
 
 import OrdinaryDiffEq: solve, Tsit5, ODEProblem
 import OrdinaryDiffEq.SciMLBase: EnsembleProblem
@@ -19,6 +19,37 @@ import Drifters.MeshArrays: gcmgrid, MeshArray, exchange
 export init_FlowFields, init_storage
 export custom∫, custom🔧, custom🔴, custom∫!
 #export reset_📌!, init_z_if_needed
+
+"""
+    set_times(time_units=:DateTime,time_direction=:forward)
+
+Set TimeAxis, initial time interval, times vector.
+"""
+function set_times(time_units=:DateTime,time_direction=:forward)
+    backward_time=(time_direction==:backward)
+    TS = backward_time ? -1 : 1
+
+    if time_units==:DateTime
+        D0=DateTime(1992,1,1)
+        D1=DateTime(2012,1,1)
+        TA = backward_time ? TimeAxis(D1,D0,D0,D1,true) : TimeAxis(D0,D1,D0,D1,true)
+
+        T= backward_time ? 
+                (DateTime(2012,1,1),DateTime(2011,12,15)) :
+                (DateTime(1992,1,1),DateTime(1992,1,15))
+        times=start_times(24,initial_date=T[2],direction=time_direction)
+    elseif time_units==:seconds
+        mon=86400.0*365.0/12.0; t_final=TS*20*365*86400.0
+        TA=TimeAxis(0.0,t_final,0.0,t_final,true)
+
+        T=(0.0,TS*mon/2)
+        times=start_times(24,time_unit=:seconds,period=:month,direction=time_direction).-T[2]
+    else
+        error("unknown option")
+    end
+
+    return TA,T,times
+end
 
 """
     reset_📌!(I::Individuals,frac::Number,📌::Array)
