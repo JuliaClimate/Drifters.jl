@@ -27,6 +27,10 @@ MeshArrays.GridLoad(MeshArrays.GridSpec(ID=:onedegree))
     D0=Drifters.Dates.DateTime(2000,1,1); D1=D0+Drifters.Year(1)
     TA=Drifters.TimeAxis(D0,D1,D0,D1,true)
     @test isa(TA,Drifters.TimeAxis)
+
+    Drifters.ECCO.set_times(:DateTime,:forward)
+    TA,T,times=Drifters.ECCO.set_times(:seconds,:backward)
+    @test isa(TA,Drifters.TimeAxis)
 end
 
 @testset "SDE" begin
