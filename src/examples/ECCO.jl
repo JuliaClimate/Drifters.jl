@@ -188,24 +188,24 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
 
     θ0=read_tracers(m0,P,D,"THETA",D.datasets)
     θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
-    D.θ0[:]=Float32.(θ0[:,1])
+    θ0=Float32.(θ0[:,1])
 
     θ1=read_tracers(m1,P,D,"THETA",D.datasets)
     θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
-    D.θ1[:]=Float32.(θ1[:,1])
+    θ1=Float32.(θ1[:,1])
 
     S0=read_tracers(m0,P,D,"SALT",D.datasets)
     S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
-    D.S0[:]=Float32.(S0[:,1])
+    S0=Float32.(S0[:,1])
 
     S1=read_tracers(m1,P,D,"SALT",D.datasets)
     S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
-    D.S1[:]=Float32.(S1[:,1])
+    S1=Float32.(S1[:,1])
 
-    D.θ0[:]=exchange(D.θ0).MA
-    D.θ1[:]=exchange(D.θ1).MA
-    D.S0[:]=exchange(D.S0).MA
-    D.S1[:]=exchange(D.S1).MA
+    D.θ0[:]=exchange(θ0).MA
+    D.θ1[:]=exchange(θ1).MA
+    D.S0[:]=exchange(S0).MA
+    D.S1[:]=exchange(S1).MA
 
     P.T[:]=[t0,t1]
 end
@@ -266,11 +266,17 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     P.u1[:,:]=Float32.(u1[:,:])
     P.v0[:,:]=Float32.(v0[:,:])
     P.v1[:,:]=Float32.(v1[:,:])
+
+    nFaces=P.w0.grid.nFaces
     for k=1:nr
         tmpw=exchange(-w0[:,k]).MA
-        P.w0[:,k]=Float32.(tmpw./D.Γ.DRC[k])
+        for f in 1:nFaces
+            P.w0[f,k]=Float32.(tmpw[f]./D.Γ.DRC[k])
+        end
         tmpw=exchange(-w1[:,k]).MA
-        P.w1[:,k]=Float32.(tmpw./D.Γ.DRC[k])
+        for f in 1:nFaces
+            P.w1[f,k]=Float32.(tmpw[f]./D.Γ.DRC[k])
+        end
     end
     P.w0[:,1]=0*exchange(-w0[:,1]).MA
     P.w1[:,1]=0*exchange(-w1[:,1]).MA
