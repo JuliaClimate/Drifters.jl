@@ -2,6 +2,7 @@
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 MITgcm = "dce5fa8e-68ce-4431-a242-9469c69627a0"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
