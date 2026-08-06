@@ -171,14 +171,14 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
 
     (U,V)=read_velocities(P.u0.grid,m0,D.pth,D.datasets)
     u0=velocity_factor*U[:,D.k]; v0=velocity_factor*V[:,D.k]
-    u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
-    u0=u0.*D.iDXC; v0=v0.*D.iDYC; #normalize to grid units
+    replace!(u0, NaN=>0.0); replace!(v0, NaN=>0.0)
+    u0 .= u0.*D.iDXC; v0 .= v0.*D.iDYC; #normalize to grid units
     (u0,v0)=exchange(u0,v0) #add 1 point at each edge for u and v
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U[:,D.k]; v1=velocity_factor*V[:,D.k]
-    u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
-    u1=u1.*D.iDXC; v1=v1.*D.iDYC; #normalize to grid units
+    replace!(u1, NaN=>0.0); replace!(v1, NaN=>0.0)
+    u1 .= u1.*D.iDXC; v1 .= v1.*D.iDYC; #normalize to grid units
     (u1,v1)=exchange(u1,v1) #add 1 point at each edge for u and v
 
     P.u0[:]=Float32.(u0.MA[:])
@@ -187,19 +187,19 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
     P.v1[:]=Float32.(v1.MA[:])
 
     θ0=read_tracers(m0,P,D,"THETA",D.datasets)
-    θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
+    replace!(θ0, NaN=>0.0) #mask with 0s rather than NaNs
     θ0=Float32.(θ0[:,1])
 
     θ1=read_tracers(m1,P,D,"THETA",D.datasets)
-    θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
+    replace!(θ1, NaN=>0.0) #mask with 0s rather than NaNs
     θ1=Float32.(θ1[:,1])
 
     S0=read_tracers(m0,P,D,"SALT",D.datasets)
-    S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
+    replace!(S0, NaN=>0.0) #mask with 0s rather than NaNs
     S0=Float32.(S0[:,1])
 
     S1=read_tracers(m1,P,D,"SALT",D.datasets)
-    S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
+    replace!(S1, NaN=>0.0) #mask with 0s rather than NaNs
     S1=Float32.(S1[:,1])
 
     D.θ0[:]=exchange(θ0).MA
@@ -232,9 +232,9 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
 
     (U,V)=read_velocities(P.u0.grid,m0,D.pth,D.datasets)
     u0=velocity_factor*U; v0=velocity_factor*V
-    u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
+    replace!(u0, NaN=>0.0); replace!(v0, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
-        u0[:,k]=u0[:,k].*D.iDXC; v0[:,k]=v0[:,k].*D.iDYC; #normalize to grid units
+        u0[:,k] .= u0[:,k].*D.iDXC; v0[:,k] .= v0[:,k].*D.iDYC; #normalize to grid units
         (tmpu,tmpv)=exchange(u0[:,k],v0[:,k]) #add 1 point at each edge for u and v
         u0[:,k]=tmpu.MA
         v0[:,k]=tmpv.MA
@@ -242,9 +242,9 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U; v1=velocity_factor*V
-    u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
+    replace!(u1, NaN=>0.0); replace!(v1, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
-        u1[:,k]=u1[:,k].*D.iDXC; v1[:,k]=v1[:,k].*D.iDYC; #normalize to grid units
+        u1[:,k] .= u1[:,k].*D.iDXC; v1[:,k] .= v1[:,k].*D.iDYC; #normalize to grid units
         (tmpu,tmpv)=exchange(u1[:,k],v1[:,k]) #add 1 point at each edge for u and v
         u1[:,k]=tmpu.MA
         v1[:,k]=tmpv.MA
@@ -259,8 +259,8 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
         tmp2=read_data_mdsio(joinpath(D.pth,filelist[m1]),:WVELMASS)
         w1=velocity_factor*read(tmp2,P.u0.grid)
     end
-    w0[findall(isnan.(w0))]=0.0 
-    w1[findall(isnan.(w1))]=0.0 
+    replace!(w0, NaN=>0.0)
+    replace!(w1, NaN=>0.0) 
 
     P.u0[:,:]=Float32.(u0[:,:])
     P.u1[:,:]=Float32.(u1[:,:])
@@ -284,19 +284,19 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     P.w1[:,nr+1]=0*exchange(-w1[:,1]).MA
 
     θ0=read_tracers(m0,P,D,"THETA",D.datasets)
-    θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
+    replace!(θ0, NaN=>0.0) #mask with 0s rather than NaNs
     D.θ0[:,:]=Float32.(θ0[:,:])
 
     θ1=read_tracers(m1,P,D,"THETA",D.datasets)
-    θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
+    replace!(θ1, NaN=>0.0) #mask with 0s rather than NaNs
     D.θ1[:,:]=Float32.(θ1[:,:])
 
     S0=read_tracers(m0,P,D,"SALT",D.datasets)
-    S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
+    replace!(S0, NaN=>0.0) #mask with 0s rather than NaNs
     D.S0[:,:]=Float32.(S0[:,:])
 
     S1=read_tracers(m1,P,D,"SALT",D.datasets)
-    S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
+    replace!(S1, NaN=>0.0) #mask with 0s rather than NaNs
     D.S1[:,:]=Float32.(S1[:,:])
 
     for k=1:nr
