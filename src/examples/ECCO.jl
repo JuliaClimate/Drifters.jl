@@ -188,24 +188,19 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
 
     θ0=read_tracers(m0,P,D,"THETA",D.datasets)
     replace!(θ0, NaN=>0.0) #mask with 0s rather than NaNs
-    θ0=Float32.(θ0[:,1])
+    D.θ0[:]=exchange(Float32.(θ0[:,1])).MA
 
     θ1=read_tracers(m1,P,D,"THETA",D.datasets)
     replace!(θ1, NaN=>0.0) #mask with 0s rather than NaNs
-    θ1=Float32.(θ1[:,1])
+    D.θ1[:]=exchange(Float32.(θ1[:,1])).MA
 
     S0=read_tracers(m0,P,D,"SALT",D.datasets)
     replace!(S0, NaN=>0.0) #mask with 0s rather than NaNs
-    S0=Float32.(S0[:,1])
+    D.S0[:]=exchange(Float32.(S0[:,1])).MA
 
     S1=read_tracers(m1,P,D,"SALT",D.datasets)
     replace!(S1, NaN=>0.0) #mask with 0s rather than NaNs
-    S1=Float32.(S1[:,1])
-
-    D.θ0[:]=exchange(θ0).MA
-    D.θ1[:]=exchange(θ1).MA
-    D.S0[:]=exchange(S0).MA
-    D.S1[:]=exchange(S1).MA
+    D.S1[:]=exchange(Float32.(S1[:,1])).MA
 
     P.T[:]=[t0,t1]
 end
