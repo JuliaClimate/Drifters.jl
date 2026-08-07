@@ -184,13 +184,13 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
     (U,V)=read_velocities(P.u0.grid,m0,D.pth,D.datasets)
     u0=velocity_factor*U[:,D.k]; v0=velocity_factor*V[:,D.k]
     replace!(u0, NaN=>0.0); replace!(v0, NaN=>0.0)
-    @. u0 = u0*D.iDXC; @. v0 = v0*D.iDYC; #normalize to grid units
+    u0=u0.*D.iDXC; v0=v0.*D.iDYC; #normalize to grid units
     (u0,v0)=exchange(u0,v0) #add 1 point at each edge for u and v
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U[:,D.k]; v1=velocity_factor*V[:,D.k]
     replace!(u1, NaN=>0.0); replace!(v1, NaN=>0.0)
-    @. u1 = u1*D.iDXC; @. v1 = v1*D.iDYC; #normalize to grid units
+    u1=u1.*D.iDXC; v1=v1.*D.iDYC; #normalize to grid units
     (u1,v1)=exchange(u1,v1) #add 1 point at each edge for u and v
 
     P.u0[:]=Float32.(u0.MA[:])
@@ -241,7 +241,7 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     u0=velocity_factor*U; v0=velocity_factor*V
     replace!(u0, NaN=>0.0); replace!(v0, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
-        @. u0[:,k] = u0[:,k]*D.iDXC; @. v0[:,k] = v0[:,k]*D.iDYC; #normalize to grid units
+        u0[:,k]=u0[:,k].*D.iDXC; v0[:,k]=v0[:,k].*D.iDYC; #normalize to grid units
         (tmpu,tmpv)=exchange(u0[:,k],v0[:,k]) #add 1 point at each edge for u and v
         u0[:,k]=tmpu.MA
         v0[:,k]=tmpv.MA
@@ -251,7 +251,7 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     u1=velocity_factor*U; v1=velocity_factor*V
     replace!(u1, NaN=>0.0); replace!(v1, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
-        @. u1[:,k] = u1[:,k]*D.iDXC; @. v1[:,k] = v1[:,k]*D.iDYC; #normalize to grid units
+        u1[:,k]=u1[:,k].*D.iDXC; v1[:,k]=v1[:,k].*D.iDYC; #normalize to grid units
         (tmpu,tmpv)=exchange(u1[:,k],v1[:,k]) #add 1 point at each edge for u and v
         u1[:,k]=tmpu.MA
         v1[:,k]=tmpv.MA
