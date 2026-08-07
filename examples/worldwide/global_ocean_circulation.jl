@@ -190,12 +190,13 @@ begin
 
 	if !(k==0)
 		𝑆 = ECCOmodule.init_storage(np,100,1,50)
-		I = Individuals(P,df.x,df.y,df.fid,(D=merge(D,𝑆),∫=ECCOmodule.custom∫))
+		I = Individuals(P,df.x,df.y,df.fid,(D=merge(D,𝑆),
+            ∫=ECCOmodule.custom∫))
 		my∫! = ∫!
 	else		
 		𝑆 = ECCOmodule.init_storage(np,100,length(D.Γ.RC),50)
-		I = Individuals(P,df.x,df.y,df.z,df.fid,
-			(D=merge(D,𝑆),∫=ECCOmodule.custom∫,
+		I = Individuals(P,df.x,df.y,df.z,df.fid,(D=merge(D,𝑆),
+            ∫=ECCOmodule.custom∫,
             🔧=ECCOmodule.custom🔧,
             🔴=deepcopy(ECCOmodule.custom🔴)))
 		my∫! = ECCOmodule.custom∫!
