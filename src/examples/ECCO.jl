@@ -130,26 +130,26 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
         msk=Γ.hFacC
         msk=1.0*(msk .> 0.0)
         (_,nr)=size(msk)
-        exmsk=exchange(msk)
+        msk_wh=exchange(msk)
         P=FlowFields(exchange(MeshArray(γ,Float32,nr)).MA,exchange(MeshArray(γ,Float32,nr)).MA,
             exchange(MeshArray(γ,Float32,nr)).MA,exchange(MeshArray(γ,Float32,nr)).MA,
             exchange(MeshArray(γ,Float32,nr+1)).MA,exchange(MeshArray(γ,Float32,nr+1)).MA,
             T,func,time_axis=TA)
         D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
              XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
-             k=k, msk=msk, exmsk=exmsk,
+             k=k, msk=msk, msk_wh=msk_wh,
              θ0=exchange(MeshArray(γ,Float32,nr)), θ1=exchange(MeshArray(γ,Float32,nr)),
              S0=exchange(MeshArray(γ,Float32,nr)), S1=exchange(MeshArray(γ,Float32,nr)))
     else
         msk=Γ.hFacC[:, k]
         msk=1.0*(msk .> 0.0)
-        exmsk=exchange(msk)
+        msk_wh=exchange(msk)
         P=FlowFields(exchange(MeshArray(γ,Float32)).MA,exchange(MeshArray(γ,Float32)).MA,
             exchange(MeshArray(γ,Float32)).MA,exchange(MeshArray(γ,Float32)).MA,
             T,func,time_axis=TA)
         D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
              XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
-             k=k, msk=msk, exmsk=exmsk,
+             k=k, msk=msk, msk_wh=msk_wh,
              θ0=exchange(MeshArray(γ,Float32)), θ1=exchange(MeshArray(γ,Float32)),
              S0=exchange(MeshArray(γ,Float32)), S1=exchange(MeshArray(γ,Float32)))
     end
@@ -452,7 +452,7 @@ function custom🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
 	df.d=D.Γ.RF[1 .+ k].*(1 .- w)+D.Γ.RF[2 .+ k].*w
 
     #for k in 1:nr
-    # D.batch_T[:,k]=interp_to_xy(df,D.θ1[:,k])./interp_to_xy(df,D.exmsk[:,k])
+    # D.batch_T[:,k]=interp_to_xy(df,D.θ1[:,k])./interp_to_xy(df,D.msk_wh[:,k])
     #end
 
     x=df[!,:x];
@@ -464,15 +464,15 @@ function custom🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
 
     θ1_halo = D.θ1.MA
     S1_halo = D.S1.MA
-    exmsk_halo = D.exmsk.MA
-    nr=size(exmsk_halo,2)
+    msk_halo = D.msk_wh.MA
+    nr=size(msk_halo,2)
 
     #need time interpolation (df.t)
     for k in 1:nr, jj in 1:length(i_c)
-        tmp0=(1.0-dx[jj])*(1.0-dy[jj])*exmsk_halo[f[jj],k][i_c[jj],j_c[jj]]+
-        (dx[jj])*(1.0-dy[jj])*exmsk_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
-        (1.0-dx[jj])*(dy[jj])*exmsk_halo[f[jj],k][i_c[jj],j_c[jj]+1]+
-        (dx[jj])*(dy[jj])*exmsk_halo[f[jj],k][i_c[jj]+1,j_c[jj]+1]
+        tmp0=(1.0-dx[jj])*(1.0-dy[jj])*msk_halo[f[jj],k][i_c[jj],j_c[jj]]+
+        (dx[jj])*(1.0-dy[jj])*msk_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
+        (1.0-dx[jj])*(dy[jj])*msk_halo[f[jj],k][i_c[jj],j_c[jj]+1]+
+        (dx[jj])*(dy[jj])*msk_halo[f[jj],k][i_c[jj]+1,j_c[jj]+1]
         #
         tmp1=(1.0-dx[jj])*(1.0-dy[jj])*θ1_halo[f[jj],k][i_c[jj],j_c[jj]]+
         (dx[jj])*(1.0-dy[jj])*θ1_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
