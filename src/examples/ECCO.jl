@@ -20,6 +20,14 @@ export init_FlowFields, init_storage
 export custom∫, custom🔧, custom🔴, custom∫!
 #export reset_📌!, init_z_if_needed
 
+# Helper for NaN replacement in MeshArrays
+function Base.replace!(A::MeshArrays.AbstractMeshArray, old_new::Pair)
+  for face in A.f
+    replace!(face, old_new)
+  end
+  return A
+end
+
 """
     set_times(time_units=:DateTime,time_direction=:forward)
 
@@ -122,25 +130,29 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
         msk=Γ.hFacC
         msk=1.0*(msk .> 0.0)
         (_,nr)=size(msk)
-        exmsk=exchange(msk).MA
-        P=FlowFields(exchange(MeshArray(γ,Float32,nr)),exchange(MeshArray(γ,Float32,nr)),
-            exchange(MeshArray(γ,Float32,nr)),exchange(MeshArray(γ,Float32,nr)),
-            exchange(MeshArray(γ,Float32,nr+1)),exchange(MeshArray(γ,Float32,nr+1)),
+        msk_wh=exchange(msk)
+        P=FlowFields(exchange(MeshArray(γ,Float32,nr)).MA,exchange(MeshArray(γ,Float32,nr)).MA,
+            exchange(MeshArray(γ,Float32,nr)).MA,exchange(MeshArray(γ,Float32,nr)).MA,
+            exchange(MeshArray(γ,Float32,nr+1)).MA,exchange(MeshArray(γ,Float32,nr+1)).MA,
             T,func,time_axis=TA)
+        D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
+             XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
+             k=k, msk=msk, msk_wh=msk_wh,
+             θ0=exchange(MeshArray(γ,Float32,nr)), θ1=exchange(MeshArray(γ,Float32,nr)),
+             S0=exchange(MeshArray(γ,Float32,nr)), S1=exchange(MeshArray(γ,Float32,nr)))
     else
         msk=Γ.hFacC[:, k]
         msk=1.0*(msk .> 0.0)
-        exmsk=exchange(msk).MA
-        P=FlowFields(exchange(MeshArray(γ,Float32)),exchange(MeshArray(γ,Float32)),
-            exchange(MeshArray(γ,Float32)),exchange(MeshArray(γ,Float32)),
+        msk_wh=exchange(msk)
+        P=FlowFields(exchange(MeshArray(γ,Float32)).MA,exchange(MeshArray(γ,Float32)).MA,
+            exchange(MeshArray(γ,Float32)).MA,exchange(MeshArray(γ,Float32)).MA,
             T,func,time_axis=TA)
+        D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
+             XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
+             k=k, msk=msk, msk_wh=msk_wh,
+             θ0=exchange(MeshArray(γ,Float32)), θ1=exchange(MeshArray(γ,Float32)),
+             S0=exchange(MeshArray(γ,Float32)), S1=exchange(MeshArray(γ,Float32)))
     end
-        
-    D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
-         XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
-         k=k, msk=msk, exmsk=exmsk, 
-         θ0=similar(msk), θ1=similar(msk),
-         S0=similar(msk), S1=similar(msk))
 
     #add parameters related to gridded domain decomposition
     D = merge(D , MeshArrays.NeighborTileIndices_cs(Γ))
@@ -171,13 +183,13 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
 
     (U,V)=read_velocities(P.u0.grid,m0,D.pth,D.datasets)
     u0=velocity_factor*U[:,D.k]; v0=velocity_factor*V[:,D.k]
-    u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
+    replace!(u0, NaN=>0.0); replace!(v0, NaN=>0.0)
     u0=u0.*D.iDXC; v0=v0.*D.iDYC; #normalize to grid units
     (u0,v0)=exchange(u0,v0) #add 1 point at each edge for u and v
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U[:,D.k]; v1=velocity_factor*V[:,D.k]
-    u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
+    replace!(u1, NaN=>0.0); replace!(v1, NaN=>0.0)
     u1=u1.*D.iDXC; v1=v1.*D.iDYC; #normalize to grid units
     (u1,v1)=exchange(u1,v1) #add 1 point at each edge for u and v
 
@@ -187,25 +199,20 @@ function update_FlowFields!(P::uvMeshArrays,D::NamedTuple,t::Union{AbstractFloat
     P.v1[:]=Float32.(v1.MA[:])
 
     θ0=read_tracers(m0,P,D,"THETA",D.datasets)
-    θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
-    θ0=Float32.(θ0[:,1])
+    replace!(θ0, NaN=>0.0)
+    D = merge(D, (θ0=exchange(Float32.(θ0[:,1])),))
 
     θ1=read_tracers(m1,P,D,"THETA",D.datasets)
-    θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
-    θ1=Float32.(θ1[:,1])
+    replace!(θ1, NaN=>0.0)
+    D = merge(D, (θ1=exchange(Float32.(θ1[:,1])),))
 
     S0=read_tracers(m0,P,D,"SALT",D.datasets)
-    S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
-    S0=Float32.(S0[:,1])
+    replace!(S0, NaN=>0.0)
+    D = merge(D, (S0=exchange(Float32.(S0[:,1])),))
 
     S1=read_tracers(m1,P,D,"SALT",D.datasets)
-    S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
-    S1=Float32.(S1[:,1])
-
-    D.θ0[:]=exchange(θ0).MA
-    D.θ1[:]=exchange(θ1).MA
-    D.S0[:]=exchange(S0).MA
-    D.S1[:]=exchange(S1).MA
+    replace!(S1, NaN=>0.0)
+    D = merge(D, (S1=exchange(Float32.(S1[:,1])),))
 
     P.T[:]=[t0,t1]
 end
@@ -232,23 +239,19 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
 
     (U,V)=read_velocities(P.u0.grid,m0,D.pth,D.datasets)
     u0=velocity_factor*U; v0=velocity_factor*V
-    u0[findall(isnan.(u0))]=0.0; v0[findall(isnan.(v0))]=0.0 #mask with 0s rather than NaNs
+    replace!(u0, NaN=>0.0); replace!(v0, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
         u0[:,k]=u0[:,k].*D.iDXC; v0[:,k]=v0[:,k].*D.iDYC; #normalize to grid units
-        (tmpu,tmpv)=exchange(u0[:,k],v0[:,k]) #add 1 point at each edge for u and v
-        u0[:,k]=tmpu.MA
-        v0[:,k]=tmpv.MA
     end
+    (tmpu0,tmpv0)=exchange(u0,v0) #add 1 point at each edge for u and v
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U; v1=velocity_factor*V
-    u1[findall(isnan.(u1))]=0.0; v1[findall(isnan.(v1))]=0.0 #mask with 0s rather than NaNs
+    replace!(u1, NaN=>0.0); replace!(v1, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
         u1[:,k]=u1[:,k].*D.iDXC; v1[:,k]=v1[:,k].*D.iDYC; #normalize to grid units
-        (tmpu,tmpv)=exchange(u1[:,k],v1[:,k]) #add 1 point at each edge for u and v
-        u1[:,k]=tmpu.MA
-        v1[:,k]=tmpv.MA
     end
+    (tmpu1,tmpv1)=exchange(u1,v1) #add 1 point at each edge for u and v
     if D.datasets==:ECCO4
         w0=velocity_factor*read_data_ECCO(m0,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
         w1=velocity_factor*read_data_ECCO(m1,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
@@ -259,52 +262,47 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
         tmp2=read_data_mdsio(joinpath(D.pth,filelist[m1]),:WVELMASS)
         w1=velocity_factor*read(tmp2,P.u0.grid)
     end
-    w0[findall(isnan.(w0))]=0.0 
-    w1[findall(isnan.(w1))]=0.0 
+    replace!(w0, NaN=>0.0)
+    replace!(w1, NaN=>0.0) 
 
-    P.u0[:,:]=Float32.(u0[:,:])
-    P.u1[:,:]=Float32.(u1[:,:])
-    P.v0[:,:]=Float32.(v0[:,:])
-    P.v1[:,:]=Float32.(v1[:,:])
+    P.u0[:,:]=Float32.(tmpu0.MA[:,:])
+    P.u1[:,:]=Float32.(tmpu1.MA[:,:])
+    P.v0[:,:]=Float32.(tmpv0.MA[:,:])
+    P.v1[:,:]=Float32.(tmpv1.MA[:,:])
 
     nFaces=P.w0.grid.nFaces
+    w0 = -1 .* w0; w1 = -1 .* w1
+    tmpw0=exchange(w0).MA
+    tmpw1=exchange(w1).MA
     for k=1:nr
-        tmpw=exchange(-w0[:,k]).MA
         for f in 1:nFaces
-            P.w0[f,k]=Float32.(tmpw[f]./D.Γ.DRC[k])
-        end
-        tmpw=exchange(-w1[:,k]).MA
-        for f in 1:nFaces
-            P.w1[f,k]=Float32.(tmpw[f]./D.Γ.DRC[k])
+            P.w0[f,k]=Float32.(tmpw0[f,k]./D.Γ.DRC[k])
+            P.w1[f,k]=Float32.(tmpw1[f,k]./D.Γ.DRC[k])
         end
     end
-    P.w0[:,1]=0*exchange(-w0[:,1]).MA
-    P.w1[:,1]=0*exchange(-w1[:,1]).MA
-    P.w0[:,nr+1]=0*exchange(-w0[:,1]).MA
-    P.w1[:,nr+1]=0*exchange(-w1[:,1]).MA
+    P.w0[:,1]=0*tmpw0[:,1]
+    P.w1[:,1]=0*tmpw1[:,1]
+    P.w0[:,nr+1]=0*tmpw0[:,1]
+    P.w1[:,nr+1]=0*tmpw1[:,1]
 
     θ0=read_tracers(m0,P,D,"THETA",D.datasets)
-    θ0[findall(isnan.(θ0))]=0.0 #mask with 0s rather than NaNs
-    D.θ0[:,:]=Float32.(θ0[:,:])
+    replace!(θ0, NaN=>0.0)
 
     θ1=read_tracers(m1,P,D,"THETA",D.datasets)
-    θ1[findall(isnan.(θ1))]=0.0 #mask with 0s rather than NaNs
-    D.θ1[:,:]=Float32.(θ1[:,:])
+    replace!(θ1, NaN=>0.0)
 
     S0=read_tracers(m0,P,D,"SALT",D.datasets)
-    S0[findall(isnan.(S0))]=0.0 #mask with 0s rather than NaNs
-    D.S0[:,:]=Float32.(S0[:,:])
+    replace!(S0, NaN=>0.0)
 
     S1=read_tracers(m1,P,D,"SALT",D.datasets)
-    S1[findall(isnan.(S1))]=0.0 #mask with 0s rather than NaNs
-    D.S1[:,:]=Float32.(S1[:,:])
+    replace!(S1, NaN=>0.0)
 
-    for k=1:nr
-        D.θ0[:,k]=exchange(D.θ0[:,k]).MA
-        D.θ1[:,k]=exchange(D.θ1[:,k]).MA
-        D.S0[:,k]=exchange(D.S0[:,k]).MA
-        D.S1[:,k]=exchange(D.S1[:,k]).MA
-    end
+    D = merge(D, (
+        θ0=exchange(Float32.(θ0[:,:])),
+        θ1=exchange(Float32.(θ1[:,:])),
+        S0=exchange(Float32.(S0[:,:])),
+        S1=exchange(Float32.(S1[:,:])),
+    ))
 
     P.T[:]=[t0,t1]
 end
@@ -449,7 +447,7 @@ function custom🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
 	df.d=D.Γ.RF[1 .+ k].*(1 .- w)+D.Γ.RF[2 .+ k].*w
 
     #for k in 1:nr
-    # D.batch_T[:,k]=interp_to_xy(df,D.θ1[:,k])./interp_to_xy(df,D.exmsk[:,k])
+    # D.batch_T[:,k]=interp_to_xy(df,D.θ1[:,k])./interp_to_xy(df,D.msk_wh[:,k])
     #end
 
     x=df[!,:x];
@@ -458,26 +456,29 @@ function custom🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
     dx,dy=(x - floor.(x) .+ 0.5,y - floor.(y) .+ 0.5);
     i_c = Int32.(floor.(x)) .+ 1;
     j_c = Int32.(floor.(y)) .+ 1;
-    
-    nr=size(D.exmsk,2)
+
+    θ1_halo = D.θ1.MA
+    S1_halo = D.S1.MA
+    msk_halo = D.msk_wh.MA
+    nr=size(msk_halo,2)
 
     #need time interpolation (df.t)
     for k in 1:nr, jj in 1:length(i_c)
-        tmp0=(1.0-dx[jj])*(1.0-dy[jj])*D.exmsk[f[jj],k][i_c[jj],j_c[jj]]+
-        (dx[jj])*(1.0-dy[jj])*D.exmsk[f[jj],k][i_c[jj]+1,j_c[jj]]+
-        (1.0-dx[jj])*(dy[jj])*D.exmsk[f[jj],k][i_c[jj],j_c[jj]+1]+
-        (dx[jj])*(dy[jj])*D.exmsk[f[jj],k][i_c[jj]+1,j_c[jj]+1]
+        tmp0=(1.0-dx[jj])*(1.0-dy[jj])*msk_halo[f[jj],k][i_c[jj],j_c[jj]]+
+        (dx[jj])*(1.0-dy[jj])*msk_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
+        (1.0-dx[jj])*(dy[jj])*msk_halo[f[jj],k][i_c[jj],j_c[jj]+1]+
+        (dx[jj])*(dy[jj])*msk_halo[f[jj],k][i_c[jj]+1,j_c[jj]+1]
         #
-        tmp1=(1.0-dx[jj])*(1.0-dy[jj])*D.θ1[f[jj],k][i_c[jj],j_c[jj]]+
-        (dx[jj])*(1.0-dy[jj])*D.θ1[f[jj],k][i_c[jj]+1,j_c[jj]]+
-        (1.0-dx[jj])*(dy[jj])*D.θ1[f[jj],k][i_c[jj],j_c[jj]+1]+
-        (dx[jj])*(dy[jj])*D.θ1[f[jj],k][i_c[jj]+1,j_c[jj]+1]
+        tmp1=(1.0-dx[jj])*(1.0-dy[jj])*θ1_halo[f[jj],k][i_c[jj],j_c[jj]]+
+        (dx[jj])*(1.0-dy[jj])*θ1_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
+        (1.0-dx[jj])*(dy[jj])*θ1_halo[f[jj],k][i_c[jj],j_c[jj]+1]+
+        (dx[jj])*(dy[jj])*θ1_halo[f[jj],k][i_c[jj]+1,j_c[jj]+1]
         D.batch_T[jj,k]=tmp1/tmp0
         #
-        tmp1=(1.0-dx[jj])*(1.0-dy[jj])*D.S1[f[jj],k][i_c[jj],j_c[jj]]+
-        (dx[jj])*(1.0-dy[jj])*D.S1[f[jj],k][i_c[jj]+1,j_c[jj]]+
-        (1.0-dx[jj])*(dy[jj])*D.S1[f[jj],k][i_c[jj],j_c[jj]+1]+
-        (dx[jj])*(dy[jj])*D.S1[f[jj],k][i_c[jj]+1,j_c[jj]+1]
+        tmp1=(1.0-dx[jj])*(1.0-dy[jj])*S1_halo[f[jj],k][i_c[jj],j_c[jj]]+
+        (dx[jj])*(1.0-dy[jj])*S1_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
+        (1.0-dx[jj])*(dy[jj])*S1_halo[f[jj],k][i_c[jj],j_c[jj]+1]+
+        (dx[jj])*(dy[jj])*S1_halo[f[jj],k][i_c[jj]+1,j_c[jj]+1]
         D.batch_S[jj,k]=tmp1/tmp0
     end
 
