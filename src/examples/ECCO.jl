@@ -130,7 +130,7 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
         msk=Γ.hFacC
         msk=1.0*(msk .> 0.0)
         (_,nr)=size(msk)
-        exmsk=exchange(msk).MA
+        exmsk=exchange(msk)
         P=FlowFields(exchange(MeshArray(γ,Float32,nr)).MA,exchange(MeshArray(γ,Float32,nr)).MA,
             exchange(MeshArray(γ,Float32,nr)).MA,exchange(MeshArray(γ,Float32,nr)).MA,
             exchange(MeshArray(γ,Float32,nr+1)).MA,exchange(MeshArray(γ,Float32,nr+1)).MA,
@@ -143,7 +143,7 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
     else
         msk=Γ.hFacC[:, k]
         msk=1.0*(msk .> 0.0)
-        exmsk=exchange(msk).MA
+        exmsk=exchange(msk)
         P=FlowFields(exchange(MeshArray(γ,Float32)).MA,exchange(MeshArray(γ,Float32)).MA,
             exchange(MeshArray(γ,Float32)).MA,exchange(MeshArray(γ,Float32)).MA,
             T,func,time_axis=TA)
@@ -464,14 +464,15 @@ function custom🔧(sol,F::uvwMeshArrays,D::NamedTuple;id=missing,T=missing)
 
     θ1_halo = D.θ1.MA
     S1_halo = D.S1.MA
-    nr=size(D.exmsk,2)
+    exmsk_halo = D.exmsk.MA
+    nr=size(exmsk_halo,2)
 
     #need time interpolation (df.t)
     for k in 1:nr, jj in 1:length(i_c)
-        tmp0=(1.0-dx[jj])*(1.0-dy[jj])*D.exmsk[f[jj],k][i_c[jj],j_c[jj]]+
-        (dx[jj])*(1.0-dy[jj])*D.exmsk[f[jj],k][i_c[jj]+1,j_c[jj]]+
-        (1.0-dx[jj])*(dy[jj])*D.exmsk[f[jj],k][i_c[jj],j_c[jj]+1]+
-        (dx[jj])*(dy[jj])*D.exmsk[f[jj],k][i_c[jj]+1,j_c[jj]+1]
+        tmp0=(1.0-dx[jj])*(1.0-dy[jj])*exmsk_halo[f[jj],k][i_c[jj],j_c[jj]]+
+        (dx[jj])*(1.0-dy[jj])*exmsk_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
+        (1.0-dx[jj])*(dy[jj])*exmsk_halo[f[jj],k][i_c[jj],j_c[jj]+1]+
+        (dx[jj])*(dy[jj])*exmsk_halo[f[jj],k][i_c[jj]+1,j_c[jj]+1]
         #
         tmp1=(1.0-dx[jj])*(1.0-dy[jj])*θ1_halo[f[jj],k][i_c[jj],j_c[jj]]+
         (dx[jj])*(1.0-dy[jj])*θ1_halo[f[jj],k][i_c[jj]+1,j_c[jj]]+
