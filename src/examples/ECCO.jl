@@ -242,20 +242,16 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     replace!(u0, NaN=>0.0); replace!(v0, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
         u0[:,k]=u0[:,k].*D.iDXC; v0[:,k]=v0[:,k].*D.iDYC; #normalize to grid units
-        (tmpu,tmpv)=exchange(u0[:,k],v0[:,k]) #add 1 point at each edge for u and v
-        u0[:,k]=tmpu.MA
-        v0[:,k]=tmpv.MA
     end
+    (tmpu0,tmpv0)=exchange(u0,v0) #add 1 point at each edge for u and v
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U; v1=velocity_factor*V
     replace!(u1, NaN=>0.0); replace!(v1, NaN=>0.0) #mask with 0s rather than NaNs
     for k=1:nr
         u1[:,k]=u1[:,k].*D.iDXC; v1[:,k]=v1[:,k].*D.iDYC; #normalize to grid units
-        (tmpu,tmpv)=exchange(u1[:,k],v1[:,k]) #add 1 point at each edge for u and v
-        u1[:,k]=tmpu.MA
-        v1[:,k]=tmpv.MA
     end
+    (tmpu1,tmpv1)=exchange(u1,v1) #add 1 point at each edge for u and v
     if D.datasets==:ECCO4
         w0=velocity_factor*read_data_ECCO(m0,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
         w1=velocity_factor*read_data_ECCO(m1,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
@@ -269,26 +265,25 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     replace!(w0, NaN=>0.0)
     replace!(w1, NaN=>0.0) 
 
-    P.u0[:,:]=Float32.(u0[:,:])
-    P.u1[:,:]=Float32.(u1[:,:])
-    P.v0[:,:]=Float32.(v0[:,:])
-    P.v1[:,:]=Float32.(v1[:,:])
+    P.u0[:,:]=Float32.(tmpu0.MA[:,:])
+    P.u1[:,:]=Float32.(tmpu1.MA[:,:])
+    P.v0[:,:]=Float32.(tmpv0.MA[:,:])
+    P.v1[:,:]=Float32.(tmpv1.MA[:,:])
 
     nFaces=P.w0.grid.nFaces
+    w0 = -1 .* w0; w1 = -1 .* w1
+    tmpw0=exchange(w0).MA
+    tmpw1=exchange(w1).MA
     for k=1:nr
-        tmpw=exchange(-w0[:,k]).MA
         for f in 1:nFaces
-            P.w0[f,k]=Float32.(tmpw[f]./D.Γ.DRC[k])
-        end
-        tmpw=exchange(-w1[:,k]).MA
-        for f in 1:nFaces
-            P.w1[f,k]=Float32.(tmpw[f]./D.Γ.DRC[k])
+            P.w0[f,k]=Float32.(tmpw0[f,k]./D.Γ.DRC[k])
+            P.w1[f,k]=Float32.(tmpw1[f,k]./D.Γ.DRC[k])
         end
     end
-    P.w0[:,1]=0*exchange(-w0[:,1]).MA
-    P.w1[:,1]=0*exchange(-w1[:,1]).MA
-    P.w0[:,nr+1]=0*exchange(-w0[:,1]).MA
-    P.w1[:,nr+1]=0*exchange(-w1[:,1]).MA
+    P.w0[:,1]=0*tmpw0[:,1]
+    P.w1[:,1]=0*tmpw1[:,1]
+    P.w0[:,nr+1]=0*tmpw0[:,1]
+    P.w1[:,nr+1]=0*tmpw1[:,1]
 
     θ0=read_tracers(m0,P,D,"THETA",D.datasets)
     replace!(θ0, NaN=>0.0)
