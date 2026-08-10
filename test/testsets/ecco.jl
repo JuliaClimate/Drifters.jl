@@ -9,7 +9,7 @@
         np=100
         df0 = Drifters.init.initial_positions_2d(np , D.Γ)
         df = Drifters.init.init_regional_3d(np , D)
-        fil=tempname()*".csv"; CSV.write(df,fil)
+        fil=tempname()*".csv"; CSV.write(fil,df)
     else
         println("rereading initial condition")
         np=1000
