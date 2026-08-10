@@ -3,7 +3,20 @@
     Individuals = Drifters.Individuals
 
     k=0
-    P,D=ECCOmodule.init_FlowFields(k=k); np=100
+    P,D=ECCOmodule.init_FlowFields(k=k)
+    if false
+        println("generating ini cond")
+        np=100
+        df0 = Drifters.init.initial_positions_2d(np , D.Γ)
+        df = Drifters.init.init_regional_3d(np , D)
+        fil=tempname()*".csv"; CSV.write(df,fil)
+    else
+        println("rereading ini cond")
+        np=1000
+        fil="ini_pos_ecco.csv"
+        df=CSV.read(fil,DataFrame)
+    end
+
     df0 = Drifters.init.initial_positions_2d(np , D.Γ)
     df = Drifters.init.init_regional_3d(np , D)
     S = ECCOmodule.init_storage(np,100,length(D.Γ.RC),50)
