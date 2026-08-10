@@ -135,11 +135,17 @@ function setup_FlowFields(k::Int,Γ::NamedTuple,func::Function,pth::String;
             exchange(MeshArray(γ,Float32,nr)).MA,exchange(MeshArray(γ,Float32,nr)).MA,
             exchange(MeshArray(γ,Float32,nr+1)).MA,exchange(MeshArray(γ,Float32,nr+1)).MA,
             T,func,time_axis=TA)
+        (tmpu,tmpv)   = MeshArrays.exchange_alloc(MeshArray(γ,Float64,nr), MeshArray(γ,Float64,nr))
+        (tmpu1,tmpv1) = MeshArrays.exchange_alloc(MeshArray(γ,Float64,nr), MeshArray(γ,Float64,nr))
+        tmpw0       = MeshArrays.exchange_alloc(MeshArray(γ,Float64,nr+1))
+        tmpw1       = MeshArrays.exchange_alloc(MeshArray(γ,Float64,nr+1))
         D = (🔄 = update_FlowFields!, pth=pth, datasets=datasets,
              XC=XC, YC=YC, iDXC=iDXC, iDYC=iDYC,
              k=k, msk=msk, msk_wh=msk_wh,
-             θ0=exchange(MeshArray(γ,Float32,nr)), θ1=exchange(MeshArray(γ,Float32,nr)),
-             S0=exchange(MeshArray(γ,Float32,nr)), S1=exchange(MeshArray(γ,Float32,nr)))
+             tmpu=tmpu, tmpv=tmpv, tmpu1=tmpu1, tmpv1=tmpv1,
+             tmpw0=tmpw0, tmpw1=tmpw1,
+             θ0=MeshArrays.exchange_alloc(MeshArray(γ,Float32,nr)), θ1=MeshArrays.exchange_alloc(MeshArray(γ,Float32,nr)),
+             S0=MeshArrays.exchange_alloc(MeshArray(γ,Float32,nr)), S1=MeshArrays.exchange_alloc(MeshArray(γ,Float32,nr)))
     else
         msk=Γ.hFacC[:, k]
         msk=1.0*(msk .> 0.0)
@@ -243,7 +249,7 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     for k=1:nr
         u0[:,k]=u0[:,k].*D.iDXC; v0[:,k]=v0[:,k].*D.iDYC; #normalize to grid units
     end
-    (tmpu0,tmpv0)=exchange(u0,v0) #add 1 point at each edge for u and v
+    (tmpu0,tmpv0)=MeshArrays.exchange!(D.tmpu,D.tmpv,u0,v0) #add 1 point at each edge for u and v
 
     (U,V)=read_velocities(P.u0.grid,m1,D.pth,D.datasets)
     u1=velocity_factor*U; v1=velocity_factor*V
@@ -251,7 +257,7 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     for k=1:nr
         u1[:,k]=u1[:,k].*D.iDXC; v1[:,k]=v1[:,k].*D.iDYC; #normalize to grid units
     end
-    (tmpu1,tmpv1)=exchange(u1,v1) #add 1 point at each edge for u and v
+    (tmpu1,tmpv1)=MeshArrays.exchange!(D.tmpu1,D.tmpv1,u1,v1) #add 1 point at each edge for u and v
     if D.datasets==:ECCO4
         w0=velocity_factor*read_data_ECCO(m0,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
         w1=velocity_factor*read_data_ECCO(m1,"WVELMASS",joinpath(D.pth,"WVELMASS"),P.u0.grid,:)
@@ -272,8 +278,8 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
 
     nFaces=P.w0.grid.nFaces
     w0 = -1 .* w0; w1 = -1 .* w1
-    tmpw0=exchange(w0).MA
-    tmpw1=exchange(w1).MA
+    MeshArrays.exchange!(D.tmpw0, w0); tmpw0=D.tmpw0.MA
+    MeshArrays.exchange!(D.tmpw1, w1); tmpw1=D.tmpw1.MA
     for k=1:nr
         for f in 1:nFaces
             P.w0[f,k]=Float32.(tmpw0[f,k]./D.Γ.DRC[k])
@@ -297,12 +303,10 @@ function update_FlowFields!(P::uvwMeshArrays,D::NamedTuple,t::Union{AbstractFloa
     S1=read_tracers(m1,P,D,"SALT",D.datasets)
     replace!(S1, NaN=>0.0)
 
-    D = merge(D, (
-        θ0=exchange(Float32.(θ0[:,:])),
-        θ1=exchange(Float32.(θ1[:,:])),
-        S0=exchange(Float32.(S0[:,:])),
-        S1=exchange(Float32.(S1[:,:])),
-    ))
+    MeshArrays.exchange!(D.θ0, Float32.(θ0[:,:]))
+    MeshArrays.exchange!(D.θ1, Float32.(θ1[:,:]))
+    MeshArrays.exchange!(D.S0, Float32.(S0[:,:]))
+    MeshArrays.exchange!(D.S1, Float32.(S1[:,:]))
 
     P.T[:]=[t0,t1]
 end
