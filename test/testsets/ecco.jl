@@ -4,14 +4,14 @@
 
     k=0
     P,D=ECCOmodule.init_FlowFields(k=k)
-    if false
-        println("generating ini cond")
+    if true
+        println("generating initial condition")
         np=100
         df0 = Drifters.init.initial_positions_2d(np , D.Γ)
         df = Drifters.init.init_regional_3d(np , D)
         fil=tempname()*".csv"; CSV.write(df,fil)
     else
-        println("rereading ini cond")
+        println("rereading initial condition")
         np=1000
         fil="ini_pos_ecco.csv"
         df=CSV.read(fil,DataFrame)
