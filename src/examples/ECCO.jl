@@ -20,14 +20,6 @@ export init_FlowFields, init_storage
 export custom∫, custom🔧, custom🔴, custom∫!
 #export reset_📌!, init_z_if_needed
 
-# Helper for NaN replacement in MeshArrays
-function Base.replace!(A::MeshArrays.AbstractMeshArray, old_new::Pair)
-  for face in A.f
-    replace!(face, old_new)
-  end
-  return A
-end
-
 """
     set_times(time_units=:DateTime,time_direction=:forward)
 
