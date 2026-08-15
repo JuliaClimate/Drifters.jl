@@ -1,15 +1,19 @@
 using Documenter, Literate, PlutoSliderServer, Drifters
 
-import MITgcm; MITgcm.getdata("mitgcmsmall")
+#use this environment variable to bypass downloads / API calls that require server access
+_SKIP_DOWNLOADS = parse(Bool,get(ENV, "SKIP_DOWNLOADS", "false"))
+
+import MITgcm
+_SKIP_DOWNLOADS ? nothing : MITgcm.getdata("mitgcmsmall")
 
 using Climatology
 
 #download data dependencies if needed
 Drifters.datadeps.getdata("flt_example")
-Climatology.get_ecco_velocity_if_needed();
-Climatology.get_occa_velocity_if_needed();
-Climatology.get_ecco_variable_if_needed("THETA")
-Climatology.get_ecco_variable_if_needed("SALT")
+_SKIP_DOWNLOADS ? nothing : Climatology.get_ecco_velocity_if_needed();
+_SKIP_DOWNLOADS ? nothing : Climatology.get_occa_velocity_if_needed();
+_SKIP_DOWNLOADS ? nothing : Climatology.get_ecco_variable_if_needed("THETA")
+_SKIP_DOWNLOADS ? nothing : Climatology.get_ecco_variable_if_needed("SALT")
 
 # generate tutorials and how-to guides using Literate
 src = joinpath(@__DIR__, "src/")
