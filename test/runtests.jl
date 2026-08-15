@@ -3,15 +3,17 @@
 const _RUN = split(get(ENV, "JULIA_TESTSETS", "all"), ",")
 include_maybe(name) = ("all" in _RUN || name in _RUN) && include("testsets/$name.jl")
 
+#use this environment variable to bypass downloads / API calls that require server access
+_SKIP_DOWNLOADS = parse(Bool,get(ENV, "SKIP_DOWNLOADS", "false"))
+
 using Test, Documenter, Drifters, Suppressor, CairoMakie
 import StochasticDiffEq, MITgcm, Climatology
 
 import Drifters: MeshArrays, NetCDF, CSV, DataFrames, JLD2
 
-skip_download_testing=true
 skip_docs_testing=true
 
-if !skip_download_testing
+if !_SKIP_DOWNLOADS
     MITgcm.getdata("mitgcmsmall")
     Climatology.get_ecco_velocity_if_needed()
     Climatology.get_occa_velocity_if_needed()
@@ -30,4 +32,4 @@ include_maybe("simple")
 include_maybe("downloads")
 include_maybe("global")
 include_maybe("various")
-skip_download_testing ? nothing : include_maybe("doctests")
+_SKIP_DOWNLOADS ? nothing : include_maybe("doctests")
