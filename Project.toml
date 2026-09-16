@@ -33,7 +33,7 @@ DriftersMakieExt = ["Makie"]
 DriftersStochasticDiffEqExt = ["StochasticDiffEq"]
 
 [compat]
-CSV = "0.10"
+CSV = "0.10, 1"
 Climatology = "0.5"
 CyclicArrays = "0.5"
 DataDeps = "0.7, 1"
