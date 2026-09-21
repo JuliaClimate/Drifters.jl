@@ -34,7 +34,7 @@ DriftersStochasticDiffEqExt = ["StochasticDiffEq"]
 
 [compat]
 CSV = "0.10"
-Climatology = "0.5"
+Climatology = "0.5, 0.6"
 CyclicArrays = "0.5"
 DataDeps = "0.7, 1"
 DataFrames = "1"
